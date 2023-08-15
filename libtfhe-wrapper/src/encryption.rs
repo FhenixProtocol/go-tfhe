@@ -7,7 +7,7 @@ use std::panic::{catch_unwind, UnwindSafe};
 
 use tfhe::prelude::FheTrivialEncrypt;
 use tfhe::{
-    CompactFheUint16List, CompactFheUint32List, CompactFheUint8, CompactFheUint8List,
+    CompactFheUint16, CompactFheUint32, CompactFheUint8,
     CompactPublicKey, FheUint16, FheUint32, FheUint8,
 };
 
@@ -31,13 +31,13 @@ pub unsafe extern "C" fn encrypt(
 
         let r = match int_type {
             FheUintType::Uint8 => {
-                _encrypt_impl::<_, CompactFheUint8List, FheUint8>(msg as u8, false, public_key)
+                _encrypt_impl::<_, CompactFheUint8, FheUint8>(msg as u8, false, public_key)
             }
             FheUintType::Uint16 => {
-                _encrypt_impl::<_, CompactFheUint16List, FheUint16>(msg as u16, false, public_key)
+                _encrypt_impl::<_, CompactFheUint16, FheUint16>(msg as u16, false, public_key)
             }
             FheUintType::Uint32 => {
-                _encrypt_impl::<_, CompactFheUint32List, FheUint32>(msg as u32, false, public_key)
+                _encrypt_impl::<_, CompactFheUint32, FheUint32>(msg as u32, false, public_key)
             }
         };
 
@@ -116,7 +116,7 @@ fn _encrypt_impl<T, Compact, Expanded>(
 ) -> Vec<u8>
 where
     T: std::fmt::Display,
-    Compact: for<'a> FheEncrypt<&'a [T], CompactPublicKey>,
+    Compact: FheTryEncrypt<T, CompactPublicKey>,
     Compact: serde::Serialize,
     Expanded: FheEncrypt<T, CompactPublicKey>,
     Expanded: serde::Serialize,
@@ -124,8 +124,7 @@ where
     let result = if expanded {
         bincode::serialize(&Expanded::encrypt(value, public_key)).expect("ciphertext serialization")
     } else {
-        let value: [T; 1] = [value];
-        bincode::serialize(&Compact::encrypt(&value, public_key)).expect("ciphertext serialization")
+        bincode::serialize(&Compact::try_encrypt(value, public_key).unwrap()).expect("ciphertext serialization")
     };
 
     result
