@@ -254,13 +254,13 @@ func Add(skPath string, ckPath string) error {
 		return fmt.Errorf("load key failed")
 	}
 
-	num := big.NewInt(1000)
+	num := big.NewInt(10)
 
-	num1, err := tfhelib.NewCipherText(*num, 1)
+	num1, err := tfhelib.NewCipherText(*num, 0)
 	if err != nil {
 		return fmt.Errorf("error from tfhe NewCipherText: %s", err)
 	}
-	num2, err := tfhelib.NewCipherText(*num, 1)
+	num2, err := tfhelib.NewCipherText(*num, 0)
 	if err != nil {
 		return fmt.Errorf("error from tfhe NewCipherText: %s", err)
 	}

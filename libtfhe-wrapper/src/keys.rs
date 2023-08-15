@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use tfhe::{
     generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, ClientKey,
-    CompactPublicKey, CompressedPublicKey, ConfigBuilder, PublicKey,
+    CompactPublicKey, ConfigBuilder,
 };
 
 lazy_static! {
