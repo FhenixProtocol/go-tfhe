@@ -5,10 +5,11 @@ package tfhe
 import (
 	"crypto/ed25519"
 	"fmt"
-	"github.com/fhenixprotocol/go-tfhe/internal/api"
-	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
 	"os"
 	"path/filepath"
+
+	"github.com/fhenixprotocol/go-tfhe/internal/api"
+	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
 )
 
 // Represents a TFHE ciphertext.
@@ -101,9 +102,9 @@ func InitTfhe(config *Config) error {
 	if config == nil {
 		return fmt.Errorf("config cannot be empty")
 	}
-	if api.LoadKeysDone {
-		return nil
-	}
+	// if api.LoadKeysDone {
+	// 	return nil
+	// }
 
 	api.SetConfig(*config)
 
@@ -126,33 +127,45 @@ func InitTfhe(config *Config) error {
 		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
 	}
 
+	fmt.Printf("TOMMM InitTfhe 1 server key path %s\n", serverKeyPath)
 	serverKey, err := os.ReadFile(serverKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 2")
 		return err
 	}
 
+	println("TOMMM InitTfhe 3")
 	clientKey, err := os.ReadFile(clientKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 4")
 		return err
 	}
 
+	println("TOMMM InitTfhe 5")
 	publicKey, err := os.ReadFile(publicKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 6")
 		return err
 	}
 
+	println("TOMMM InitTfhe 7")
 	_, err = LoadServerKey(serverKey)
 	if err != nil {
+		println("TOMMM InitTfhe 8")
 		return err
 	}
 
+	println("TOMMM InitTfhe 9")
 	_, err = LoadClientKey(clientKey)
 	if err != nil {
+		println("TOMMM InitTfhe 10")
 		return err
 	}
 
+	println("TOMMM InitTfhe 11")
 	_, err = LoadPublicKey(publicKey)
 	if err != nil {
+		println("TOMMM InitTfhe 12")
 		return err
 	}
 

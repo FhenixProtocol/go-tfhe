@@ -36,6 +36,7 @@ pub unsafe extern "C" fn deserialize_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+    println!("TOMMM In deserialize_server_key()");
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
             bincode::deserialize::<ServerKey>(key.read().unwrap()).unwrap();
@@ -44,6 +45,8 @@ pub unsafe extern "C" fn deserialize_server_key(
 
         let mut server_key = SERVER_KEY.lock().unwrap();
         *server_key = true;
+
+        println!("TOMMM In deserialize_server_key() server key: {:?}", key);
 
         true
     })
