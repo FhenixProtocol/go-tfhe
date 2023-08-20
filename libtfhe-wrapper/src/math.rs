@@ -18,9 +18,13 @@ pub unsafe extern "C" fn op_uint8(
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+
+    let lhs_slice = lhs.read().unwrap();
+    let rhs_slice = rhs.read().unwrap();
+
     common_op(
-        deserialize_fhe_uint8(lhs).unwrap(),
-        deserialize_fhe_uint8(rhs).unwrap(),
+        deserialize_fhe_uint8(lhs_slice).unwrap(),
+        deserialize_fhe_uint8(rhs_slice).unwrap(),
         operation,
         err_msg,
     )
@@ -33,9 +37,13 @@ pub unsafe extern "C" fn op_uint16(
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+
+    let lhs_slice = lhs.read().unwrap();
+    let rhs_slice = rhs.read().unwrap();
+
     common_op(
-        deserialize_fhe_uint16(lhs).unwrap(),
-        deserialize_fhe_uint16(rhs).unwrap(),
+        deserialize_fhe_uint16(lhs_slice).unwrap(),
+        deserialize_fhe_uint16(rhs_slice).unwrap(),
         operation,
         err_msg,
     )
@@ -48,9 +56,13 @@ pub unsafe extern "C" fn op_uint32(
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+
+    let lhs_slice = lhs.read().unwrap();
+    let rhs_slice = rhs.read().unwrap();
+
     common_op(
-        deserialize_fhe_uint32(lhs).unwrap(),
-        deserialize_fhe_uint32(rhs).unwrap(),
+        deserialize_fhe_uint32(lhs_slice).unwrap(),
+        deserialize_fhe_uint32(rhs_slice).unwrap(),
         operation,
         err_msg,
     )
