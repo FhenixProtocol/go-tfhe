@@ -3,25 +3,25 @@ use tfhe::{FheUint16, FheUint32, FheUint8, CompactFheUint8, CompactFheUint16, Co
 
 // todo: fix all of this
 
-pub(crate) unsafe fn deserialize_fhe_uint8(
-    slice: ByteSliceView,
+pub(crate) fn deserialize_fhe_uint8(
+    slice: &[u8],
 ) -> Result<FheUint8, Box<bincode::ErrorKind>> {
-    let x: CompactFheUint8 = bincode::deserialize::<CompactFheUint8>(slice.read().unwrap())?;
+    let x: CompactFheUint8 = bincode::deserialize::<CompactFheUint8>(slice)?;
     Ok(x.expand())
 }
 
 // Function for deserializing FheUint16
 pub(crate) fn deserialize_fhe_uint16(
-    slice: ByteSliceView,
+    slice: &[u8],
 ) -> Result<FheUint16, Box<bincode::ErrorKind>> {
-    let x: CompactFheUint16 =bincode::deserialize::<CompactFheUint16>(slice.read().unwrap())?;
+    let x: CompactFheUint16 =bincode::deserialize::<CompactFheUint16>(slice)?;
     Ok(x.expand())
 }
 
 // Function for deserializing FheUint32
 pub(crate) fn deserialize_fhe_uint32(
-    slice: ByteSliceView,
+    slice: &[u8],
 ) -> Result<FheUint32, Box<bincode::ErrorKind>> {
-    let x: CompactFheUint32 = bincode::deserialize::<CompactFheUint32>(slice.read().unwrap())?;
+    let x: CompactFheUint32 = bincode::deserialize::<CompactFheUint32>(slice)?;
     Ok(x.expand())
 }

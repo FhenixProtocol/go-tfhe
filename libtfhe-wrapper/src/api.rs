@@ -63,21 +63,29 @@ pub unsafe extern "C" fn deserialize_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+
+    let client_key_slice = key.read().unwrap();
+
+    let r = deserialize_client_key_safe(client_key_slice);
+
+    handle_c_error_default(r, err_msg) as bool
+}
+
+pub fn deserialize_client_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
-            bincode::deserialize::<ClientKey>(key.read().unwrap()).unwrap();
+            bincode::deserialize::<ClientKey>(key).unwrap();
 
         let mut client_key = CLIENT_KEY.lock().unwrap();
         *client_key = Some(maybe_key_deserialized);
 
         true
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_client_key: {:?}", err);
-        RustError::generic_error("lol")
-    });
-
-    handle_c_error_default(r, err_msg) as bool
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_client_key: {:?}", err);
+            RustError::generic_error("lol")
+        });
+    r
 }
 
 #[no_mangle]
@@ -85,21 +93,29 @@ pub unsafe extern "C" fn deserialize_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+
+    let public_key_slice = key.read().unwrap();
+
+    let r = deserialize_public_key_safe(public_key_slice);
+
+    handle_c_error_default(r, err_msg) as bool
+}
+
+pub fn deserialize_public_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
-            bincode::deserialize::<CompactPublicKey>(key.read().unwrap()).unwrap();
+            bincode::deserialize::<CompactPublicKey>(key).unwrap();
 
         let mut client_key = PUBLIC_KEY.lock().unwrap();
         *client_key = Some(maybe_key_deserialized);
 
         true
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_public_key: {:?}", err);
-        RustError::generic_error(":(")
-    });
-
-    handle_c_error_default(r, err_msg) as bool
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_public_key: {:?}", err);
+            RustError::generic_error(":(")
+        });
+    r
 }
 
 #[no_mangle]

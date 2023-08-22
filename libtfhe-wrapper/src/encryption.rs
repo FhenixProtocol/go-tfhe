@@ -21,6 +21,13 @@ pub unsafe extern "C" fn encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    let r = encrypt_safe(msg, int_type);
+
+    let result = handle_c_error_binary(r, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
     let public_key_guard = PUBLIC_KEY.lock().unwrap();
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
@@ -50,19 +57,17 @@ pub unsafe extern "C" fn encrypt(
         // println!("Serialize u8 took: {}us", stop);
         r
     })
-    .map_err(|err| {
-        eprintln!("Panic in encrypt: {:?}", err);
+        .map_err(|err| {
+            eprintln!("Panic in encrypt: {:?}", err);
 
-        match *public_key_guard {
-            Some(ref ck) => println!("public key: {:?}", ck),
-            None => println!("Public key not set"), // Return an error or handle this case appropriately.
-        };
+            match *public_key_guard {
+                Some(ref ck) => println!("public key: {:?}", ck),
+                None => println!("Public key not set"), // Return an error or handle this case appropriately.
+            };
 
-        RustError::generic_error("lol2")
-    });
-
-    let result = handle_c_error_binary(r, err_msg);
-    UnmanagedVector::new(Some(result))
+            RustError::generic_error("lol2")
+        });
+    r
 }
 
 #[no_mangle]
@@ -136,6 +141,15 @@ pub unsafe extern "C" fn decrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> u64 {
+    let ciphertext_slice = ciphertext.read().unwrap();
+
+    let r = decrypt_safe(ciphertext_slice, int_type);
+
+    let result = handle_c_error_default(r, err_msg);
+    result
+}
+
+pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, RustError> {
     let client_key_guard = CLIENT_KEY.lock().unwrap();
 
     let r: Result<u64, RustError> = catch_unwind(|| {
@@ -158,13 +172,11 @@ pub unsafe extern "C" fn decrypt(
 
         res
     })
-    .map_err(|err| {
-        eprintln!("Panic in client_key_encrypt_fhe_uint8: {:?}", err);
-        RustError::generic_error("lol2")
-    });
-
-    let result = handle_c_error_default(r, err_msg);
-    result
+        .map_err(|err| {
+            eprintln!("Panic in client_key_encrypt_fhe_uint8: {:?}", err);
+            RustError::generic_error("lol2")
+        });
+    r
 }
 
 // the way this is implemented cannot be parsed generically :(
