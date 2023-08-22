@@ -45,6 +45,10 @@ var LoadKeysDone bool
 var KeyRequirePublic []byte
 var KeyRequirePrivate []byte
 
+var CKS []byte
+var PKS []byte
+var SKS []byte
+
 func Add(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
 
