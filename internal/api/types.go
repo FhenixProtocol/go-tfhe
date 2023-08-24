@@ -3,6 +3,7 @@ package api
 // #include "bindings.h"
 import "C"
 import (
+	"bytes"
 	"encoding/hex"
 	"golang.org/x/crypto/sha3"
 	"hash"
@@ -20,10 +21,13 @@ const HashLength = 32
 
 type Hash [HashLength]byte
 
+func isZero(data []byte) bool {
+	return bytes.Count(data, []byte{0}) == len(data)
+}
+
 func (ct *Ciphertext) Hash() Hash {
 
-	if ct.hash == nil {
-		// cache
+	if ct.hash == nil || isZero(ct.hash) {
 		ct.hash = Keccak256(ct.Serialization)
 	}
 
@@ -52,13 +56,11 @@ func (h Hash) Hex() string {
 
 // Keccak256 calculates and returns the Keccak256 hash of the input data.
 func Keccak256(data ...[]byte) []byte {
-	b := make([]byte, 32)
 	d := NewKeccakState()
-	for _, b := range data {
-		d.Write(b)
+	for _, datum := range data {
+		d.Write(datum)
 	}
-	d.Sum(b)
-	return b
+	return d.Sum(nil)
 }
 
 // NewKeccakState creates a new KeccakState

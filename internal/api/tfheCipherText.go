@@ -25,6 +25,7 @@ func NewCipherText(value big.Int, t UintType) (*Ciphertext, error) {
 	return &Ciphertext{
 		Serialization: res,
 		UintType:      t,
+		hash:          Keccak256(res),
 	}, nil
 }
 
@@ -38,6 +39,7 @@ func NewCipherTextTrivial(value big.Int, t UintType) (*Ciphertext, error) {
 	return &Ciphertext{
 		Serialization: res,
 		UintType:      t,
+		hash:          Keccak256(res),
 	}, nil
 }
 
@@ -49,6 +51,7 @@ func NewCipherTextFromBytes(ctBytes []byte, t UintType) (*Ciphertext, error) {
 	return &Ciphertext{
 		Serialization: ctBytes,
 		UintType:      t,
+		hash:          Keccak256(ctBytes),
 	}, nil
 }
 
@@ -63,6 +66,7 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 		Serialization: res,
 		UintType:      t,
 		random:        true,
+		hash:          Keccak256(res),
 	}, nil
 }
 
