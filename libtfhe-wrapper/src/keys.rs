@@ -52,7 +52,7 @@ pub unsafe extern "C" fn generate_full_keys(
     let serialized_server_key = bincode::serialize(&sks).unwrap();
     let serialized_public_key = bincode::serialize(&pks).unwrap();
 
-    if let Err(e) = std::fs::write(cks_path_str, &serialized_secret_key) {
+    if let Err(e) = std::fs::write(cks_path_str, serialized_secret_key) {
         println!(
             "Failed to write cks to path: {:?}. Error: {:?}",
             cks_path_str, e
@@ -76,5 +76,5 @@ pub unsafe extern "C" fn generate_full_keys(
         return false;
     };
 
-    return true;
+    true
 }

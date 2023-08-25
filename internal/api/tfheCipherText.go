@@ -15,11 +15,24 @@ type Ciphertext struct {
 	UintType      UintType
 }
 
-func NewCipherText(value big.Int, t UintType) (*Ciphertext, error) {
+func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error) {
 
 	res, err := Encrypt(value, t)
 	if err != nil {
 		return nil, err
+	}
+
+	if !compact {
+		res, err = ExpandCompressedValue(res, t)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Ciphertext{
+			Serialization: res,
+			UintType:      t,
+			hash:          Keccak256(res),
+		}, nil
 	}
 
 	return &Ciphertext{
@@ -43,10 +56,22 @@ func NewCipherTextTrivial(value big.Int, t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
-func NewCipherTextFromBytes(ctBytes []byte, t UintType) (*Ciphertext, error) {
+func NewCipherTextFromBytes(ctBytes []byte, t UintType, compact bool) (*Ciphertext, error) {
 
 	//if len(ctBytes) != expected len
 	// cry
+	if compact {
+		res, err := ExpandCompressedValue(ctBytes, t)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Ciphertext{
+			Serialization: res,
+			UintType:      t,
+			hash:          Keccak256(res),
+		}, nil
+	}
 
 	return &Ciphertext{
 		Serialization: ctBytes,
@@ -70,18 +95,6 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
-//func NewCipherTextWithKey(value big.Int, sks []byte, t api.FheUintType) (*Ciphertext, error) {
-//
-//	res, err := api.Encrypt(value, 0)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return &Ciphertext{
-//		Serialization: res,
-//	}, nil
-//}
-
 func (ct *Ciphertext) IsRandom() bool {
 	return ct.random
 }
@@ -92,18 +105,21 @@ func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot add uints of different types")
 	}
 
-	res, err := Add(ct.Serialization, rhs.Serialization, uint8(ct.UintType))
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), add)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ciphertext{
 		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
 	}, nil
 }
 
 func (ct *Ciphertext) Decrypt() (*big.Int, error) {
-	return big.NewInt(0), nil
+	res, err := Decrypt(ct.Serialization, ct.UintType)
+	return big.NewInt(int64(res)), err
 }
 
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
@@ -111,13 +127,14 @@ func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot subtract uints of different types")
 	}
 
-	res, err := Sub(ct.Serialization, rhs.Serialization, uint8(ct.UintType))
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), sub)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ciphertext{
 		Serialization: res,
+		UintType:      ct.UintType,
 	}, nil
 }
 
@@ -126,13 +143,14 @@ func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot multiply uints of different types")
 	}
 
-	res, err := Mul(ct.Serialization, rhs.Serialization, uint8(ct.UintType))
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), mul)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ciphertext{
 		Serialization: res,
+		UintType:      ct.UintType,
 	}, nil
 }
 
@@ -141,13 +159,14 @@ func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot compare uints of different types")
 	}
 
-	res, err := Lt(ct.Serialization, rhs.Serialization, uint8(ct.UintType))
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lt)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ciphertext{
 		Serialization: res,
+		UintType:      ct.UintType,
 	}, nil
 }
 
@@ -156,12 +175,13 @@ func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot compare uints of different types")
 	}
 
-	res, err := Lte(ct.Serialization, rhs.Serialization, uint8(ct.UintType))
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lte)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Ciphertext{
 		Serialization: res,
+		UintType:      ct.UintType,
 	}, nil
 }

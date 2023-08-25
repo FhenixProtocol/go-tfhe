@@ -143,4 +143,7 @@ test-alpine: release-build-alpine
 format:
 	find . -name '*.go' -type f | xargs gofumpt -w -s
 	find . -name '*.go' -type f | xargs misspell -w
-	find . -name '*.go' -type f | xargs goimports -w -local github.com/CosmWasm/wasmvm
+
+.PHONY: clippy
+clippy:
+	cd libtfhe-wrapper && cargo clippy

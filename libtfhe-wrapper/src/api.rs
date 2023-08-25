@@ -1,12 +1,12 @@
 use crate::keys::{CLIENT_KEY, PUBLIC_KEY, SERVER_KEY};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{catch_unwind};
 use tfhe::{
-    set_server_key, ClientKey, CompactPublicKey, FheUint16, FheUint32, FheUint8, ServerKey,
+    set_server_key, ClientKey, CompactPublicKey, ServerKey,
 };
 
-use serde::Serialize;
+use crate::math::{op_uint8, op_uint16, op_uint32};
 
-use crate::error::{handle_c_error_binary, handle_c_error_default, handle_c_error_ptr, RustError};
+use crate::error::{handle_c_error_binary, handle_c_error_default, RustError};
 
 use crate::memory::{ByteSliceView, UnmanagedVector};
 
@@ -29,7 +29,23 @@ pub enum FheUintType {
 }
 
 #[repr(C)]
+#[allow(non_camel_case_types)]
 pub struct c_void {}
+
+#[no_mangle]
+pub unsafe extern "C" fn math_operation(
+    lhs: ByteSliceView,
+    rhs: ByteSliceView,
+    operation: Op,
+    uint_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    match uint_type {
+        FheUintType::Uint8 => op_uint8(lhs, rhs, operation, err_msg),
+        FheUintType::Uint16 => op_uint16(lhs, rhs, operation, err_msg),
+        FheUintType::Uint32 => op_uint32(lhs, rhs, operation, err_msg),
+    }
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn deserialize_server_key(
@@ -55,7 +71,7 @@ pub unsafe extern "C" fn deserialize_server_key(
         RustError::generic_error("lol")
     });
 
-    handle_c_error_default(r, err_msg) as bool
+    handle_c_error_default(r, err_msg)
 }
 
 #[no_mangle]
@@ -68,7 +84,7 @@ pub unsafe extern "C" fn deserialize_client_key(
 
     let r = deserialize_client_key_safe(client_key_slice);
 
-    handle_c_error_default(r, err_msg) as bool
+    handle_c_error_default(r, err_msg)
 }
 
 pub fn deserialize_client_key_safe(key: &[u8]) -> Result<bool, RustError> {
@@ -98,7 +114,7 @@ pub unsafe extern "C" fn deserialize_public_key(
 
     let r = deserialize_public_key_safe(public_key_slice);
 
-    handle_c_error_default(r, err_msg) as bool
+    handle_c_error_default(r, err_msg)
 }
 
 pub fn deserialize_public_key_safe(key: &[u8]) -> Result<bool, RustError> {
