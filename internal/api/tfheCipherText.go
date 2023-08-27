@@ -2,6 +2,7 @@ package api
 
 import "C"
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 )
@@ -15,10 +16,13 @@ type Ciphertext struct {
 	UintType      UintType
 }
 
+func isZero(data []byte) bool {
+	return bytes.Count(data, []byte{0}) == len(data)
+}
+
 func (ct *Ciphertext) Hash() Hash {
 
-	if ct.hash == nil {
-		// cache
+	if ct.hash == nil || isZero(ct.hash) {
 		ct.hash = Keccak256(ct.Serialization)
 	}
 
@@ -26,7 +30,6 @@ func (ct *Ciphertext) Hash() Hash {
 	h.SetBytes(ct.hash)
 	return h
 }
-
 
 func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error) {
 
