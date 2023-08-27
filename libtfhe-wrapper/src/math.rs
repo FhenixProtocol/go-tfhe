@@ -90,6 +90,7 @@ fn common_op<
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    // todo (eshel) verify that the key is loaded into zama lib
     let server_key_guard = SERVER_KEY.lock().unwrap();
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {

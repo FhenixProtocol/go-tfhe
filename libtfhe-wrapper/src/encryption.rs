@@ -67,6 +67,7 @@ pub unsafe extern "C" fn encrypt(
 }
 
 pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
+    // todo (eshel) verify that the key is loaded into zama lib
     let public_key_guard = PUBLIC_KEY.lock().unwrap();
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
@@ -114,6 +115,7 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    // todo (eshel) verify that the key is loaded into zama lib
     let server_key_guard = SERVER_KEY.lock().unwrap();
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
@@ -180,6 +182,7 @@ pub unsafe extern "C" fn decrypt(
 }
 
 pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, RustError> {
+    // todo (eshel) verify that the key is loaded into zama lib
     let client_key_guard = CLIENT_KEY.lock().unwrap();
 
     let client_key = match *client_key_guard {
