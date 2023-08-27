@@ -14,6 +14,14 @@ import (
 	"unsafe"
 )
 
+type UintType uint32
+
+const (
+	Uint8  UintType = C.FheUintType_Uint8
+	Uint16 UintType = C.FheUintType_Uint16
+	Uint32 UintType = C.FheUintType_Uint32
+)
+
 // Value types
 type (
 	cint   = C.int

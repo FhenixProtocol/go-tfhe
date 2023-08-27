@@ -6,50 +6,47 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
-	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/fhenixprotocol/go-tfhe/internal/oracle/memorydb"
 )
 
-type LevelDBOracle struct {
-	db *leveldb.DB
+type MemoryDb struct {
+	db *memorydb.Database
 }
 
-type levelDbRequireMessage struct {
+type dbRequireMessage struct {
 	Value bool `json:"value"`
 }
 
-func (o LevelDBOracle) requireKey(ciphertext []byte) string {
+func (o MemoryDb) requireKey(ciphertext []byte) string {
 	// Take the Keccak256 and remove the leading 0x.
 	return hex.EncodeToString(api.Keccak256(ciphertext))[2:]
 }
 
-func NewLevelDBOracle(dbPath string) (*LevelDBOracle, error) {
-	db, err := leveldb.OpenFile(dbPath, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &LevelDBOracle{db: db}, nil
+func NewLevelDBOracle(_ string) (*MemoryDb, error) {
+	db := memorydb.New()
+	return &MemoryDb{db: db}, nil
 }
 
-func (o LevelDBOracle) Close() {
-	o.db.Close()
+func (o MemoryDb) Close() {
+	_ = o.db.Close()
 }
 
-func (o LevelDBOracle) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
+func (o MemoryDb) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
 	key := o.requireKey(ct.Serialization)
-	j, err := json.Marshal(levelDbRequireMessage{decryptedNotZero})
+	j, err := json.Marshal(dbRequireMessage{decryptedNotZero})
 	if err != nil {
 		return err
 	}
-	return o.db.Put([]byte(key), j, nil)
+	return o.db.Put([]byte(key), j)
 }
 
-func (o LevelDBOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
+func (o MemoryDb) GetRequire(ct *api.Ciphertext) (bool, error) {
 	ciphertext := ct.Serialization
 	key := o.requireKey(ciphertext)
 
-	data, err := o.db.Get([]byte(key), nil)
+	data, err := o.db.Get([]byte(key))
 	if err != nil {
-		if errors.Is(err, leveldb.ErrNotFound) {
+		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
 			// Key does not exist
 			return false, nil
 		}
@@ -57,7 +54,7 @@ func (o LevelDBOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
 		return false, err
 	}
 
-	msg := levelDbRequireMessage{}
+	msg := dbRequireMessage{}
 	if err := json.Unmarshal(data, &msg); err != nil {
 		// failed to validate signature
 		return false, fmt.Errorf("failed to unmarshal require signature")
