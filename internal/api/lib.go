@@ -27,20 +27,22 @@ type (
 	cint   = C.int
 	cbool  = C.bool
 	cusize = C.size_t
-	cu8    = C.uint8_t
-	cu32   = C.uint32_t
-	cu64   = C.uint64_t
-	ci8    = C.int8_t
-	ci32   = C.int32_t
-	ci64   = C.int64_t
+	// cu8    = C.uint8_t
+	// cu32   = C.uint32_t
+	cu64 = C.uint64_t
+	// ci8    = C.int8_t
+	ci32 = C.int32_t
+	// ci64   = C.int64_t
 )
 
+type OperationType C.Op
+
 const (
-	add = C.Op_Add
-	sub = C.Op_Sub
-	mul = C.Op_Mul
-	lt  = C.Op_Lt
-	lte = C.Op_Lte
+	add OperationType = C.Op_Add
+	sub               = C.Op_Sub
+	mul               = C.Op_Mul
+	lt                = C.Op_Lt
+	lte               = C.Op_Lte
 )
 
 // Pointers
@@ -57,7 +59,7 @@ var CKS []byte
 var PKS []byte
 var SKS []byte
 
-func Add(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
+func mathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
 
 	num1 := makeView(lhs)
@@ -66,140 +68,7 @@ func Add(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
 	num2 := makeView(rhs)
 	defer runtime.KeepAlive(num2)
 
-	res := C.UnmanagedVector{}
-	var err error
-	switch uintType {
-	case 0:
-		res, err = C.op_uint8(num1, num2, add, &errmsg)
-		if err != nil {
-			return nil, errorWithMessage(err, errmsg)
-		}
-	case 1:
-		res, err = C.op_uint16(num1, num2, add, &errmsg)
-		if err != nil {
-			return nil, errorWithMessage(err, errmsg)
-		}
-	case 2:
-		res, err = C.op_uint32(num1, num2, add, &errmsg)
-		if err != nil {
-			return nil, errorWithMessage(err, errmsg)
-		}
-	default:
-		return nil, fmt.Errorf("invalid uint type")
-	}
-
-	return copyAndDestroyUnmanagedVector(res), nil
-}
-
-func Sub(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
-	errmsg := uninitializedUnmanagedVector()
-
-	num1 := makeView(lhs)
-	defer runtime.KeepAlive(num1)
-
-	num2 := makeView(rhs)
-	defer runtime.KeepAlive(num2)
-
-	res := C.UnmanagedVector{}
-	var err error
-	switch uintType {
-	case 0:
-		res, err = C.op_uint8(num1, num2, sub, &errmsg)
-	case 1:
-		res, err = C.op_uint16(num1, num2, sub, &errmsg)
-	case 2:
-		res, err = C.op_uint32(num1, num2, sub, &errmsg)
-	default:
-		return nil, fmt.Errorf("invalid uint type")
-	}
-
-	if err != nil {
-		return nil, errorWithMessage(err, errmsg)
-	}
-
-	return copyAndDestroyUnmanagedVector(res), nil
-}
-
-func Mul(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
-	errmsg := uninitializedUnmanagedVector()
-
-	num1 := makeView(lhs)
-	defer runtime.KeepAlive(num1)
-
-	num2 := makeView(rhs)
-	defer runtime.KeepAlive(num2)
-
-	res := C.UnmanagedVector{}
-	var err error
-	switch uintType {
-	case 0:
-		res, err = C.op_uint8(num1, num2, mul, &errmsg)
-	case 1:
-		res, err = C.op_uint16(num1, num2, mul, &errmsg)
-	case 2:
-		res, err = C.op_uint32(num1, num2, mul, &errmsg)
-	default:
-		return nil, fmt.Errorf("invalid uint type")
-	}
-
-	if err != nil {
-		return nil, errorWithMessage(err, errmsg)
-	}
-
-	return copyAndDestroyUnmanagedVector(res), nil
-}
-
-func Lt(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
-	errmsg := uninitializedUnmanagedVector()
-
-	num1 := makeView(lhs)
-	defer runtime.KeepAlive(num1)
-
-	num2 := makeView(rhs)
-	defer runtime.KeepAlive(num2)
-
-	res := C.UnmanagedVector{}
-	var err error
-	switch uintType {
-	case 0:
-		res, err = C.op_uint8(num1, num2, lt, &errmsg)
-	case 1:
-		res, err = C.op_uint16(num1, num2, lt, &errmsg)
-	case 2:
-		res, err = C.op_uint32(num1, num2, lt, &errmsg)
-	default:
-		return nil, fmt.Errorf("invalid uint type")
-	}
-
-	if err != nil {
-		return nil, errorWithMessage(err, errmsg)
-	}
-
-	return copyAndDestroyUnmanagedVector(res), nil
-}
-
-func Lte(lhs []byte, rhs []byte, uintType uint8) ([]byte, error) {
-	errmsg := uninitializedUnmanagedVector()
-
-	num1 := makeView(lhs)
-	defer runtime.KeepAlive(num1)
-
-	num2 := makeView(rhs)
-	defer runtime.KeepAlive(num2)
-
-	res := C.UnmanagedVector{}
-	var err error
-	switch uintType {
-	case 0:
-		res, err = C.op_uint8(num1, num2, lte, &errmsg)
-	case 1:
-		res, err = C.op_uint16(num1, num2, lte, &errmsg)
-	case 2:
-		res, err = C.op_uint32(num1, num2, lte, &errmsg)
-	default:
-		return nil, fmt.Errorf("invalid uint type")
-	}
-
+	res, err := C.math_operation(num1, num2, ci32(op), C.FheUintType(uintType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}
@@ -280,6 +149,20 @@ func EncryptTrivial(value big.Int, intType UintType) ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
 
 	res, err := C.trivial_encrypt(cu64(val), C.FheUintType(intType), &errmsg)
+	if err != nil {
+		return nil, errorWithMessage(err, errmsg)
+	}
+
+	return copyAndDestroyUnmanagedVector(res), nil
+
+}
+
+func ExpandCompressedValue(cipherText []byte, intType UintType) ([]byte, error) {
+	ctView := makeView(cipherText)
+	defer runtime.KeepAlive(ctView)
+	errmsg := uninitializedUnmanagedVector()
+
+	res, err := C.expand_compressed(ctView, C.FheUintType(intType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}

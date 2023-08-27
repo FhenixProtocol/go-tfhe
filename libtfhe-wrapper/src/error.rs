@@ -42,6 +42,7 @@ impl From<std::string::FromUtf8Error> for RustError {
 enum ErrnoValue {
     Success = 0,
     Other = 1,
+    #[allow(dead_code)]
     OutOfGas = 2,
 }
 
@@ -58,9 +59,10 @@ pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
         // That's not nice but we can live with it.
     }
 
-    let errno = match err {
-        _ => ErrnoValue::Other,
-    } as i32;
+    // let errno = match err {
+    //     _ => ErrnoValue::Other,
+    // } as i32;
+    let errno = ErrnoValue::Other as i32;
     set_errno(Errno(errno));
 }
 
@@ -68,6 +70,7 @@ pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
 /// Otherwise it returns a null pointer, writes the error message to `error_msg` and sets [errno].
 ///
 /// [errno]: https://utcc.utoronto.ca/~cks/space/blog/programming/GoCgoErrorReturns
+#[allow(dead_code)]
 pub fn handle_c_error_ptr<T>(
     result: Result<*mut T, RustError>,
     error_msg: Option<&mut UnmanagedVector>,

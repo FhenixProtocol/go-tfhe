@@ -10,6 +10,7 @@ const HashLength = 32
 
 type Hash [HashLength]byte
 
+
 func BytesToHash(b []byte) Hash {
 	var h Hash
 	h.SetBytes(b)
@@ -30,13 +31,11 @@ func (h Hash) Hex() string {
 
 // Keccak256 calculates and returns the Keccak256 hash of the input data.
 func Keccak256(data ...[]byte) []byte {
-	b := make([]byte, 32)
 	d := NewKeccakState()
-	for _, b := range data {
-		d.Write(b)
+	for _, datum := range data {
+		d.Write(datum)
 	}
-	d.Sum(b)
-	return b
+	return d.Sum(nil)
 }
 
 // NewKeccakState creates a new KeccakState

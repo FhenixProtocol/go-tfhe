@@ -1,177 +1,68 @@
-//package main
-//
-//import (
-//	"encoding/hex"
-//	"fmt"
-//	"math/big"
-//	"os"
-//
-//	tfhelib "github.com/fhenixprotocol/go-tfhe"
-//)
-//
-//// This is just a demo to ensure we can compile a static go binary
-//func main() {
-//	file := os.Args[1]
-//
-//	if file == "version" {
-//		libtfheVersion, err := tfhelib.Version()
-//		if err != nil {
-//			panic(err)
-//		}
-//		fmt.Printf("Tfhe-rs version: %s\n", libtfheVersion)
-//		return
-//	}
-//
-//	path := os.Args[2]
-//
-//	if file == "encrypt" {
-//		clientKeyFile, err := os.ReadFile(path)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		ok, err := tfhelib.LoadClientKey(clientKeyFile)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe: %s", err)
-//			return
-//		}
-//		if !ok {
-//			fmt.Printf("Load key failed")
-//			return
-//		}
-//
-//		fmt.Printf("Load key success")
-//
-//		num := big.NewInt(10)
-//
-//		res, err := tfhelib.NewCipherText(*num, 0)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe NewCipherText: %s", err)
-//			return
-//		}
-//		bytes := res.Serialization
-//
-//		fmt.Printf("Got ciphertext: %s", hex.EncodeToString(bytes))
-//		return
-//	}
-//
-//	if file == "deserialize-sks" {
-//		serverKey := []byte("test")
-//		ok, err := tfhelib.LoadServerKey(serverKey)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe: %s", err)
-//		}
-//
-//		fmt.Printf("Tfhe-rs result: %t\n", ok)
-//		return
-//
-//	}
-//
-//	if file == "add" {
-//		path := os.Args[2]
-//		serverKeyFile, err := os.ReadFile(path)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		ok, err := tfhelib.LoadServerKey(serverKeyFile)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe: %s", err)
-//			return
-//		}
-//		if !ok {
-//			fmt.Printf("Load key failed")
-//			return
-//		}
-//
-//		clientKey := os.Args[3]
-//		clientKeyFile, err := os.ReadFile(clientKey)
-//		if err != nil {
-//			panic(err)
-//		}
-//
-//		ok, err = tfhelib.LoadClientKey(clientKeyFile)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe: %s", err)
-//			return
-//		}
-//		if !ok {
-//			fmt.Printf("Load key failed")
-//			return
-//		}
-//
-//		num := big.NewInt(10)
-//
-//		num1, err := tfhelib.NewCipherText(*num, 0)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe NewCipherText: %s", err)
-//			return
-//		}
-//		num2, err := tfhelib.NewCipherText(*num, 0)
-//		if err != nil {
-//			fmt.Printf("Error from tfhe NewCipherText: %s", err)
-//			return
-//		}
-//
-//		res, err := num1.Add(num2)
-//		if err != nil {
-//			fmt.Printf("Error while adding: %s", err)
-//			return
-//		}
-//
-//		fmt.Printf("Success! Got result %s", hex.EncodeToString(res.Serialization))
-//	}
-//}
-
 package main
 
 import (
 	"encoding/hex"
-	"flag"
 	"fmt"
 	tfhelib "github.com/fhenixprotocol/go-tfhe"
+	"github.com/spf13/cobra"
 	"math/big"
 	"os"
 )
 
-var (
-	fileFlag = flag.String("operation", "", "Indicate the operation: version, encrypt, deserialize-sks, add")
-	sksPath  = flag.String("server-key", "", "Server key path")
-	pksPath  = flag.String("public-key", "", "Public key path")
-)
-
 func main() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-		flag.PrintDefaults()
+
+	var rootCmd = &cobra.Command{Use: "myApp"}
+
+	var cmdKeygen = &cobra.Command{
+		Use:   "keygen",
+		Short: "Generate keys",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return GenerateKeys()
+		},
 	}
 
-	flag.Parse()
+	var cmdVersion = &cobra.Command{
+		Use:   "version",
+		Short: "Display version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Version()
+		},
+	}
 
-	if len(os.Args) == 1 {
-		flag.Usage()
+	var pksPath string
+	var cmdEncrypt = &cobra.Command{
+		Use:   "encrypt",
+		Short: "Encrypt data",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Encrypt(pksPath)
+		},
+	}
+	cmdEncrypt.Flags().StringVarP(&pksPath, "pks", "p", "./keys/pks", "Path to public key store")
+
+	var sksPath string
+	var cmdDeserializeSKS = &cobra.Command{
+		Use:   "deserialize-sks",
+		Short: "Deserialize secret key store",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Deserialize(sksPath)
+		},
+	}
+	cmdDeserializeSKS.Flags().StringVarP(&sksPath, "sks", "s", "./keys/sks", "Path to secret key store")
+
+	var cmdAdd = &cobra.Command{
+		Use:   "add",
+		Short: "Add two example numbers and return the result",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return Add(sksPath, pksPath)
+		},
+	}
+	cmdAdd.Flags().StringVarP(&sksPath, "sks", "s", "./keys/sks", "Path to server key")
+	cmdAdd.Flags().StringVarP(&pksPath, "pks", "p", "./keys/pks", "Path to public key")
+
+	rootCmd.AddCommand(cmdKeygen, cmdVersion, cmdEncrypt, cmdDeserializeSKS, cmdAdd)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	var err error
-	switch *fileFlag {
-	case "keygen":
-		err = GenerateKeys()
-	case "version":
-		err = Version()
-	case "encrypt":
-		err = Encrypt(*pksPath)
-	case "deserialize-sks":
-		err = Deserialize(*sksPath)
-	case "add":
-		err = Add(*sksPath, *pksPath)
-	default:
-		fmt.Println("Invalid file operation.")
-		return
-	}
-
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
 	}
 }
 
@@ -227,7 +118,7 @@ func Deserialize(path string) error {
 	return nil
 }
 
-func Add(skPath string, ckPath string) error {
+func Add(skPath string, pksPath string) error {
 	serverKeyFile, err := os.ReadFile(skPath)
 	if err != nil {
 		return err
@@ -241,12 +132,12 @@ func Add(skPath string, ckPath string) error {
 		return fmt.Errorf("load key failed")
 	}
 
-	clientKeyFile, err := os.ReadFile(ckPath)
+	publicKeyFile, err := os.ReadFile(pksPath)
 	if err != nil {
 		return err
 	}
 
-	ok, err = tfhelib.LoadPublicKey(clientKeyFile)
+	ok, err = tfhelib.LoadPublicKey(publicKeyFile)
 	if err != nil {
 		return fmt.Errorf("error from tfhe: %s", err)
 	}
@@ -256,11 +147,11 @@ func Add(skPath string, ckPath string) error {
 
 	num := big.NewInt(10)
 
-	num1, err := tfhelib.NewCipherText(*num, 0)
+	num1, err := tfhelib.NewCipherText(*num, 0, false)
 	if err != nil {
 		return fmt.Errorf("error from tfhe NewCipherText: %s", err)
 	}
-	num2, err := tfhelib.NewCipherText(*num, 0)
+	num2, err := tfhelib.NewCipherText(*num, 0, false)
 	if err != nil {
 		return fmt.Errorf("error from tfhe NewCipherText: %s", err)
 	}
