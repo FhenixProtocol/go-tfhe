@@ -15,6 +15,18 @@ type Ciphertext struct {
 	UintType      UintType
 }
 
+func (ct *Ciphertext) Hash() Hash {
+
+	if ct.hash == nil {
+		// cache
+		ct.hash = Keccak256(ct.Serialization)
+	}
+
+	var h Hash
+	h.SetBytes(ct.hash)
+	return h
+}
+
 func NewCipherText(value big.Int, t UintType) (*Ciphertext, error) {
 
 	res, err := Encrypt(value, t)
