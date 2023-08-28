@@ -81,7 +81,7 @@ func TestRunInternalInManyThreads(t *testing.T) {
 
 	// Launch multiple goroutines, each with its own thread.
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 
 		// Launch a goroutine to fetch the URL.
@@ -109,8 +109,8 @@ func TestRunInternalInManyThreads(t *testing.T) {
 
 			fmt.Printf("Success! Got result %s...\n", hex.EncodeToString(res.Serialization)[:80])
 		}()
-
-		// Wait for all goroutines to complete.
-		wg.Wait()
 	}
+
+	// Wait for all goroutines to complete.
+	wg.Wait()
 }

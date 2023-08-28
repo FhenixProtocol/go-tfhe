@@ -48,6 +48,7 @@ profile.cov
 
 **/yarn-error.log
 
-
 target
 build
+internal/api/*.so
+
