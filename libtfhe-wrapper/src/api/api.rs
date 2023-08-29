@@ -47,10 +47,10 @@ pub unsafe extern "C" fn deserialize_server_key(
 
         true
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_server_key: {:?}", err);
-        RustError::generic_error("lol")
-    });
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_server_key: {:?}", err);
+            RustError::generic_error("lol")
+        });
 
     handle_c_error_default(r, err_msg) as bool
 }
@@ -69,10 +69,10 @@ pub unsafe extern "C" fn deserialize_client_key(
 
         true
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_client_key: {:?}", err);
-        RustError::generic_error("lol")
-    });
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_client_key: {:?}", err);
+            RustError::generic_error("lol")
+        });
 
     handle_c_error_default(r, err_msg) as bool
 }
@@ -91,10 +91,10 @@ pub unsafe extern "C" fn deserialize_public_key(
 
         true
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_public_key: {:?}", err);
-        RustError::generic_error(":(")
-    });
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_public_key: {:?}", err);
+            RustError::generic_error(":(")
+        });
 
     handle_c_error_default(r, err_msg) as bool
 }
@@ -113,10 +113,10 @@ pub unsafe extern "C" fn get_public_key(err_msg: Option<&mut UnmanagedVector>) -
 
         bincode::serialize(public_key).unwrap()
     })
-    .map_err(|err| {
-        eprintln!("Panic in deserialize_public_key: {:?}", err);
-        RustError::generic_error(":(")
-    });
+        .map_err(|err| {
+            eprintln!("Panic in deserialize_public_key: {:?}", err);
+            RustError::generic_error(":(")
+        });
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
