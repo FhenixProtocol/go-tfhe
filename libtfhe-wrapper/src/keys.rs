@@ -1,80 +1,77 @@
-use lazy_static::lazy_static;
-use std::sync::{Arc, Mutex};
+use once_cell::sync::OnceCell;
 
-use tfhe::{
-    generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, ClientKey,
-    CompactPublicKey, ConfigBuilder,
-};
+use crate::error::RustError;
+use tfhe::{ClientKey, CompactPublicKey, ServerKey};
 
-lazy_static! {
-    pub static ref SERVER_KEY: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
-    pub static ref PUBLIC_KEY: Arc<Mutex<Option<CompactPublicKey>>> = Arc::new(Mutex::new(None));
-    pub static ref CLIENT_KEY: Arc<Mutex<Option<ClientKey>>> = Arc::new(Mutex::new(None));
+pub struct GlobalKeys {}
+
+impl GlobalKeys {
+    pub fn get_public_key() -> Option<&'static CompactPublicKey> {
+        PUBLIC_KEY.get()
+    }
+    pub fn get_client_key() -> Option<&'static ClientKey> {
+        CLIENT_KEY.get()
+    }
+
+    pub fn is_server_key_set() -> &'static bool {
+        SERVER_KEY.get().unwrap_or(&false)
+    }
+
+    pub fn set_public_key(key: CompactPublicKey) -> Result<(), CompactPublicKey> {
+        PUBLIC_KEY.set(key)
+    }
+
+    pub fn set_client_key(key: ClientKey) -> Result<(), ClientKey> {
+        CLIENT_KEY.set(key)
+    }
+
+    pub fn set_server_key(key: bool) -> Result<(), bool> {
+        SERVER_KEY.set(key)
+    }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn generate_full_keys(
-    path_to_cks: *const std::ffi::c_char,
-    path_to_sks: *const std::ffi::c_char,
-    path_to_pks: *const std::ffi::c_char,
-) -> bool {
-    let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, None)
-        .build();
-    let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
-        (
-            std::ffi::CStr::from_ptr(path_to_cks),
-            std::ffi::CStr::from_ptr(path_to_sks),
-            std::ffi::CStr::from_ptr(path_to_pks),
-        )
-    };
+pub static SERVER_KEY: OnceCell<bool> = OnceCell::with_value(false);
+pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
+pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
-    let cks_path_str = match c_str_cks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
+pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let maybe_key_deserialized = bincode::deserialize::<ClientKey>(key).map_err(|err| {
+        log::debug!("failed to deserialize client key: {:?}", err);
+        RustError::generic_error("Failed to deserialize client key");
+    })?;
 
-    let sks_path_str = match c_str_sks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
+    GlobalKeys::set_client_key(maybe_key_deserialized).map_err(|err| {
+        log::debug!("Failed to set client key: {:?}", err);
+        RustError::generic_error("Failed to set client key");
+    })?;
 
-    let pks_path_str = match c_str_pks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
+    Ok(())
+}
 
-    // Client-side
-    let (cks, sks) = generate_keys(config);
-    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let maybe_key_deserialized = bincode::deserialize::<CompactPublicKey>(key).map_err(|err| {
+        log::debug!("failed to deserialize public key: {:?}", err);
+        RustError::generic_error("Failed to deserialize public key");
+    })?;
 
-    let serialized_secret_key = bincode::serialize(&cks).unwrap();
-    let serialized_server_key = bincode::serialize(&sks).unwrap();
-    let serialized_public_key = bincode::serialize(&pks).unwrap();
+    GlobalKeys::set_public_key(maybe_key_deserialized).map_err(|err| {
+        log::debug!("Failed to set public key: {:?}", err);
+        RustError::generic_error("Failed to set public key");
+    })?;
 
-    if let Err(e) = std::fs::write(cks_path_str, serialized_secret_key) {
-        println!(
-            "Failed to write cks to path: {:?}. Error: {:?}",
-            cks_path_str, e
-        );
-        return false;
-    };
+    Ok(())
+}
 
-    if let Err(e) = std::fs::write(sks_path_str, serialized_server_key) {
-        println!(
-            "Failed to write sks to path: {:?}. Error: {:?}",
-            sks_path_str, e
-        );
-        return false;
-    };
+pub fn load_server_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let server_key = bincode::deserialize::<ServerKey>(key).map_err(|err| {
+        log::debug!("Failed to set server key: {:?}", err);
+        RustError::generic_error("failed to set server key: bad input")
+    })?;
 
-    if let Err(e) = std::fs::write(pks_path_str, serialized_public_key) {
-        println!(
-            "Failed to write pks to path: {:?}. Error: {:?}",
-            pks_path_str, e
-        );
-        return false;
-    };
+    tfhe::set_server_key(server_key);
 
-    true
+    GlobalKeys::set_server_key(true).map_err(|_| {
+        log::debug!("Failed to set server key");
+        RustError::generic_error("failed to set server key: set failed")
+    })
 }
