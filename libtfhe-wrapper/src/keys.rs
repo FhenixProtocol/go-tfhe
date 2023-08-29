@@ -37,12 +37,12 @@ pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
     let maybe_key_deserialized = bincode::deserialize::<ClientKey>(key).map_err(|err| {
         log::debug!("failed to deserialize client key: {:?}", err);
-        RustError::generic_error("Failed to deserialize client key");
+        RustError::generic_error("Failed to deserialize client key")
     })?;
 
     GlobalKeys::set_client_key(maybe_key_deserialized).map_err(|err| {
         log::debug!("Failed to set client key: {:?}", err);
-        RustError::generic_error("Failed to set client key");
+        RustError::generic_error("Failed to set client key")
     })?;
 
     Ok(())
@@ -51,12 +51,12 @@ pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
 pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
     let maybe_key_deserialized = bincode::deserialize::<CompactPublicKey>(key).map_err(|err| {
         log::debug!("failed to deserialize public key: {:?}", err);
-        RustError::generic_error("Failed to deserialize public key");
+        RustError::generic_error("Failed to deserialize public key")
     })?;
 
     GlobalKeys::set_public_key(maybe_key_deserialized).map_err(|err| {
         log::debug!("Failed to set public key: {:?}", err);
-        RustError::generic_error("Failed to set public key");
+        RustError::generic_error("Failed to set public key")
     })?;
 
     Ok(())

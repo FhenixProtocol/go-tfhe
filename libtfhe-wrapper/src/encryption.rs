@@ -49,7 +49,7 @@ pub fn expand_compressed_safe(
 }
 pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
     let public_key = match GlobalKeys::get_public_key() {
-        Some(key) => key,
+        Some(key) => Ok(key),
         None => Err(RustError::generic_error("public key not set")), // Return an error or handle this case appropriately.
     }?;
 
@@ -80,8 +80,8 @@ pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, 
 
 pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, RustError> {
     let client_key = match GlobalKeys::get_client_key() {
-        Some(ck) => ck,
-        None => RustError::generic_error("client key not set"),
+        Some(ck) => Ok(ck),
+        None => Err(RustError::generic_error("client key not set")),
     }?;
 
     let res = match int_type {
@@ -110,8 +110,8 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
     Ok(res)
 }
 
-fn _encrypt_trivial_impl<T, Expanded>(value: T) -> Result(Vec<u8>, RustError)
-where
+fn _encrypt_trivial_impl<T, Expanded>(value: T) -> Result<Vec<u8>, RustError>
+    where
     T: std::fmt::Display,
     Expanded: FheTrivialEncrypt<T>,
     Expanded: serde::Serialize,
@@ -119,7 +119,7 @@ where
     // todo: separate serialization from encryption so we can change it on-the-fly
     bincode::serialize(&Expanded::encrypt_trivial(value)).map_err(|err| {
         log::error!("Error serializing trivial encryption: {:?}", err);
-        RustError::generic_error("error serializing trivial encryption");
+        RustError::generic_error("error serializing trivial encryption")
     })
 }
 
@@ -127,7 +127,7 @@ fn _encrypt_impl<T, Compact, Expanded>(
     value: T,
     compact: bool,
     public_key: &CompactPublicKey,
-) -> Result(Vec<u8>, RustError)
+) -> Result<Vec<u8>, RustError>
 where
     T: std::fmt::Display,
     Compact: FheTryEncrypt<T, CompactPublicKey>,

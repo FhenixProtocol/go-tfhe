@@ -142,22 +142,17 @@ pub unsafe extern "C" fn load_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> () {
-    let server_key_slice = key.read().ok_or(|| {
+    if let Some(server_key_slice) = key.read() {
+        let r = load_server_key_safe(server_key_slice);
+
+        handle_c_error_default(r, err_msg)
+    } else {
         log::debug!("Failed to read input server key");
         set_error(
             RustError::generic_error("failed to read input server key"),
             err_msg,
         );
-        return;
-    });
-
-    if server_key_slice.is_err() {
-        return;
     }
-
-    let r = load_server_key_safe(server_key_slice.unwrap());
-
-    handle_c_error_default(r, err_msg)
 }
 
 #[no_mangle]
@@ -165,22 +160,17 @@ pub unsafe extern "C" fn load_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> () {
-    let client_key_slice = key.read().ok_or(|| {
+    if let Some(client_key_slice) = key.read() {
+        let r = deserialize_client_key_safe(client_key_slice);
+
+        handle_c_error_default(r, err_msg)
+    } else {
         log::debug!("Failed to read input client key");
         set_error(
             RustError::generic_error("failed to read input client key"),
             err_msg,
         );
-        return;
-    });
-
-    if client_key_slice.is_err() {
-        return;
-    }
-
-    let r = deserialize_client_key_safe(client_key_slice.unwrap());
-
-    handle_c_error_default(r, err_msg)
+    };
 }
 
 #[no_mangle]
@@ -188,21 +178,18 @@ pub unsafe extern "C" fn load_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> () {
-    let public_key_slice = key.read().ok_or(|| {
+    if let Some(public_key_slice) = key.read() {
+
+        let r = deserialize_public_key_safe(public_key_slice);
+
+        handle_c_error_default(r, err_msg)
+    } else {
         log::debug!("Failed to read input public key");
         set_error(
             RustError::generic_error("failed to read public key"),
             err_msg,
         );
-        return;
-    });
-    if public_key_slice.is_err() {
-        return;
     }
-
-    let r = deserialize_public_key_safe(public_key_slice.unwrap());
-
-    handle_c_error_default(r, err_msg)
 }
 
 #[no_mangle]

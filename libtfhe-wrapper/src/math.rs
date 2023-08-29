@@ -30,12 +30,9 @@ macro_rules! define_op_fn {
     ($func_name:ident, $deserialize_func:ident, $type:ty) => {
         #[export_name = stringify!($func_name)]
         pub fn $func_name(lhs: &[u8], rhs: &[u8], operation: Op) -> Result<Vec<u8>, RustError> {
-            let lhs_slice = lhs.read().unwrap();
-            let rhs_slice = rhs.read().unwrap();
-
             common_op(
-                $deserialize_func(lhs_slice, false).unwrap(),
-                $deserialize_func(rhs_slice, false).unwrap(),
+                $deserialize_func(lhs, false).unwrap(),
+                $deserialize_func(rhs, false).unwrap(),
                 operation,
             )
         }
