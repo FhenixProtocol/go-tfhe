@@ -5,10 +5,11 @@ package tfhe
 import (
 	"crypto/ed25519"
 	"fmt"
-	"github.com/fhenixprotocol/go-tfhe/internal/api"
-	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
 	"os"
 	"path/filepath"
+
+	"github.com/fhenixprotocol/go-tfhe/internal/api"
+	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
 )
 
 // Represents a TFHE ciphertext.
@@ -98,10 +99,31 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 }
 
 func InitTfhe(config *Config) error {
+	var err error
+
 	if config == nil {
 		return fmt.Errorf("config cannot be empty")
 	}
 	if api.LoadKeysDone {
+		fmt.Println("Already loaded keys! Reloading the rust library.. (TEMPORARY PLS FIX)")
+		_, err = LoadServerKey(api.SKS)
+		if err != nil {
+			println("TOMMM basa")
+			return err
+		}
+
+		_, err = LoadClientKey(api.CKS)
+		if err != nil {
+			println("TOMMM basa")
+			return err
+		}
+
+		_, err = LoadPublicKey(api.PKS)
+		if err != nil {
+			println("TOMMM basa")
+			return err
+		}
+
 		return nil
 	}
 
@@ -126,33 +148,45 @@ func InitTfhe(config *Config) error {
 		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
 	}
 
-	serverKey, err := os.ReadFile(serverKeyPath)
+	fmt.Printf("TOMMM InitTfhe 1 server key path %s\n", serverKeyPath)
+	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 2")
 		return err
 	}
 
-	clientKey, err := os.ReadFile(clientKeyPath)
+	println("TOMMM InitTfhe 3")
+	api.CKS, err = os.ReadFile(clientKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 4")
 		return err
 	}
 
-	publicKey, err := os.ReadFile(publicKeyPath)
+	println("TOMMM InitTfhe 5")
+	api.PKS, err = os.ReadFile(publicKeyPath)
 	if err != nil {
+		println("TOMMM InitTfhe 6")
 		return err
 	}
 
-	_, err = LoadServerKey(serverKey)
+	println("TOMMM InitTfhe 7")
+	_, err = LoadServerKey(api.SKS)
 	if err != nil {
+		println("TOMMM InitTfhe 8")
 		return err
 	}
 
-	_, err = LoadClientKey(clientKey)
+	println("TOMMM InitTfhe 9")
+	_, err = LoadClientKey(api.CKS)
 	if err != nil {
+		println("TOMMM InitTfhe 10")
 		return err
 	}
 
-	_, err = LoadPublicKey(publicKey)
+	println("TOMMM InitTfhe 11")
+	_, err = LoadPublicKey(api.PKS)
 	if err != nil {
+		println("TOMMM InitTfhe 12")
 		return err
 	}
 

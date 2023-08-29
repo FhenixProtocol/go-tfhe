@@ -38,6 +38,8 @@ errno = "0.3.1"
 thiserror = "1.0.38"
 lazy_static = "1.4.0"
 
+log = "0.4.19"
+
 [dev-dependencies]
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 tempfile = "3.4.0"

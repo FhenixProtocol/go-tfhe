@@ -1,12 +1,12 @@
 use crate::keys::{CLIENT_KEY, PUBLIC_KEY, SERVER_KEY};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{catch_unwind};
 use tfhe::{
-    set_server_key, ClientKey, CompactPublicKey, FheUint16, FheUint32, FheUint8, ServerKey,
+    set_server_key, ClientKey, CompactPublicKey, ServerKey,
 };
 
-use serde::Serialize;
+use crate::math::{op_uint8, op_uint16, op_uint32};
 
-use crate::error::{handle_c_error_binary, handle_c_error_default, handle_c_error_ptr, RustError};
+use crate::error::{handle_c_error_binary, handle_c_error_default, RustError};
 
 use crate::memory::{ByteSliceView, UnmanagedVector};
 
@@ -29,13 +29,30 @@ pub enum FheUintType {
 }
 
 #[repr(C)]
+#[allow(non_camel_case_types)]
 pub struct c_void {}
+
+#[no_mangle]
+pub unsafe extern "C" fn math_operation(
+    lhs: ByteSliceView,
+    rhs: ByteSliceView,
+    operation: Op,
+    uint_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    match uint_type {
+        FheUintType::Uint8 => op_uint8(lhs, rhs, operation, err_msg),
+        FheUintType::Uint16 => op_uint16(lhs, rhs, operation, err_msg),
+        FheUintType::Uint32 => op_uint32(lhs, rhs, operation, err_msg),
+    }
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn deserialize_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+    println!("TOMMM In deserialize_server_key()");
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
             bincode::deserialize::<ServerKey>(key.read().unwrap()).unwrap();
@@ -45,14 +62,16 @@ pub unsafe extern "C" fn deserialize_server_key(
         let mut server_key = SERVER_KEY.lock().unwrap();
         *server_key = true;
 
+        println!("TOMMM In deserialize_server_key() server key: {:?}", key);
+
         true
     })
-        .map_err(|err| {
-            eprintln!("Panic in deserialize_server_key: {:?}", err);
-            RustError::generic_error("lol")
-        });
+    .map_err(|err| {
+        eprintln!("Panic in deserialize_server_key: {:?}", err);
+        RustError::generic_error("lol")
+    });
 
-    handle_c_error_default(r, err_msg) as bool
+    handle_c_error_default(r, err_msg)
 }
 
 #[no_mangle]
@@ -60,9 +79,18 @@ pub unsafe extern "C" fn deserialize_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+
+    let client_key_slice = key.read().unwrap();
+
+    let r = deserialize_client_key_safe(client_key_slice);
+
+    handle_c_error_default(r, err_msg)
+}
+
+pub fn deserialize_client_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
-            bincode::deserialize::<ClientKey>(key.read().unwrap()).unwrap();
+            bincode::deserialize::<ClientKey>(key).unwrap();
 
         let mut client_key = CLIENT_KEY.lock().unwrap();
         *client_key = Some(maybe_key_deserialized);
@@ -73,8 +101,7 @@ pub unsafe extern "C" fn deserialize_client_key(
             eprintln!("Panic in deserialize_client_key: {:?}", err);
             RustError::generic_error("lol")
         });
-
-    handle_c_error_default(r, err_msg) as bool
+    r
 }
 
 #[no_mangle]
@@ -82,9 +109,18 @@ pub unsafe extern "C" fn deserialize_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
+
+    let public_key_slice = key.read().unwrap();
+
+    let r = deserialize_public_key_safe(public_key_slice);
+
+    handle_c_error_default(r, err_msg)
+}
+
+pub fn deserialize_public_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
         let maybe_key_deserialized =
-            bincode::deserialize::<CompactPublicKey>(key.read().unwrap()).unwrap();
+            bincode::deserialize::<CompactPublicKey>(key).unwrap();
 
         let mut client_key = PUBLIC_KEY.lock().unwrap();
         *client_key = Some(maybe_key_deserialized);
@@ -95,8 +131,7 @@ pub unsafe extern "C" fn deserialize_public_key(
             eprintln!("Panic in deserialize_public_key: {:?}", err);
             RustError::generic_error(":(")
         });
-
-    handle_c_error_default(r, err_msg) as bool
+    r
 }
 
 #[no_mangle]
@@ -113,10 +148,10 @@ pub unsafe extern "C" fn get_public_key(err_msg: Option<&mut UnmanagedVector>) -
 
         bincode::serialize(public_key).unwrap()
     })
-        .map_err(|err| {
-            eprintln!("Panic in deserialize_public_key: {:?}", err);
-            RustError::generic_error(":(")
-        });
+    .map_err(|err| {
+        eprintln!("Panic in deserialize_public_key: {:?}", err);
+        RustError::generic_error(":(")
+    });
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))

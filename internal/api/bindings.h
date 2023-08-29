@@ -33,22 +33,6 @@ enum Op {
 typedef int32_t Op;
 
 /**
- * A view into an externally owned byte slice (Go `[]byte`).
- * Use this for the current call only. A view cannot be copied for safety reasons.
- * If you need a copy, use [`ByteSliceView::to_owned`].
- *
- * Go's nil value is fully supported, such that we can differentiate between nil and an empty slice.
- */
-typedef struct ByteSliceView {
-  /**
-   * True if and only if the byte slice is nil in Go. If this is true, the other fields must be ignored.
-   */
-  bool is_nil;
-  const uint8_t *ptr;
-  uintptr_t len;
-} ByteSliceView;
-
-/**
  * An optional Vector type that requires explicit creation and destruction
  * and can be sent via FFI.
  * It can be created from `Option<Vec<u8>>` and be converted into `Option<Vec<u8>>`.
@@ -168,6 +152,28 @@ typedef struct UnmanagedVector {
   uintptr_t cap;
 } UnmanagedVector;
 
+/**
+ * A view into an externally owned byte slice (Go `[]byte`).
+ * Use this for the current call only. A view cannot be copied for safety reasons.
+ * If you need a copy, use [`ByteSliceView::to_owned`].
+ *
+ * Go's nil value is fully supported, such that we can differentiate between nil and an empty slice.
+ */
+typedef struct ByteSliceView {
+  /**
+   * True if and only if the byte slice is nil in Go. If this is true, the other fields must be ignored.
+   */
+  bool is_nil;
+  const uint8_t *ptr;
+  uintptr_t len;
+} ByteSliceView;
+
+struct UnmanagedVector math_operation(struct ByteSliceView lhs,
+                                      struct ByteSliceView rhs,
+                                      Op operation,
+                                      FheUintType uint_type,
+                                      struct UnmanagedVector *err_msg);
+
 bool deserialize_server_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
 
 bool deserialize_client_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
@@ -175,6 +181,10 @@ bool deserialize_client_key(struct ByteSliceView key, struct UnmanagedVector *er
 bool deserialize_public_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
 
 struct UnmanagedVector get_public_key(struct UnmanagedVector *err_msg);
+
+struct UnmanagedVector expand_compressed(struct ByteSliceView ciphertext,
+                                         FheUintType int_type,
+                                         struct UnmanagedVector *err_msg);
 
 struct UnmanagedVector encrypt(uint64_t msg, FheUintType int_type, struct UnmanagedVector *err_msg);
 
@@ -187,21 +197,6 @@ uint64_t decrypt(struct ByteSliceView ciphertext,
                  struct UnmanagedVector *err_msg);
 
 bool generate_full_keys(const char *path_to_cks, const char *path_to_sks, const char *path_to_pks);
-
-struct UnmanagedVector op_uint8(struct ByteSliceView lhs,
-                                struct ByteSliceView rhs,
-                                Op operation,
-                                struct UnmanagedVector *err_msg);
-
-struct UnmanagedVector op_uint16(struct ByteSliceView lhs,
-                                 struct ByteSliceView rhs,
-                                 Op operation,
-                                 struct UnmanagedVector *err_msg);
-
-struct UnmanagedVector op_uint32(struct ByteSliceView lhs,
-                                 struct ByteSliceView rhs,
-                                 Op operation,
-                                 struct UnmanagedVector *err_msg);
 
 struct UnmanagedVector new_unmanaged_vector(bool nil, const uint8_t *ptr, uintptr_t length);
 
