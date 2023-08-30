@@ -147,3 +147,24 @@ format:
 .PHONY: clippy
 clippy:
 	cd libtfhe-wrapper && cargo clippy
+
+.PHONY: wasm-go
+wasm-go:
+	GOOS=js GOARCH=wasm go build -o build/main.wasm ./cmd/
+
+.PHONY: wasm-rust
+wasm-rust:
+	cd libtfhe-wrapper && cargo build --release --examples --target wasm32-unknown-unknown
+
+.PHONY: wasm-all
+wasm-all: wasm-go wasm-rust
+	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
+
+.PHONY: start-web-server
+	cp builder/web-wasm-test.html build/test.html
+	cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" build/
+	cd build && goexec 'http.ListenAndServe(`localhost:8082`, http.FileServer(http.Dir(`.`)))'
+
+.PHONY: merge-wasm
+merge-wasm:
+	wasm-merge --enable-reference-types --enable-multi-memories --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm

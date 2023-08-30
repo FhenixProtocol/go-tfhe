@@ -1,6 +1,5 @@
 package api
 
-import "C"
 import (
 	"bytes"
 	"fmt"
@@ -121,7 +120,7 @@ func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, fmt.Errorf("cannot add uints of different types")
 	}
 
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), add)
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), add) //op_add
 	if err != nil {
 		return nil, err
 	}

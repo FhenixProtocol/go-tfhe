@@ -38,6 +38,10 @@ pub fn generate_full_keys(
     0
 }
 
+pub fn version() -> u32 {
+    return 2
+}
+
 // #[wasm_bindgen]
 // pub fn math_operation_wasm(
 //     lhs: &[u8],

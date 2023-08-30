@@ -1,4 +1,6 @@
-package api
+//go:build cgo
+
+package amd64
 
 // #include <stdlib.h>
 // #include "bindings.h"
@@ -59,7 +61,7 @@ var CKS []byte
 var PKS []byte
 var SKS []byte
 
-func mathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
+func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
 
 	num1 := makeView(lhs)

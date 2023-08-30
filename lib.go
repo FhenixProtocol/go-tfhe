@@ -1,5 +1,3 @@
-//go:build cgo
-
 package tfhe
 
 import (
@@ -304,8 +302,6 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 //	return api.VerifyRequireSignature(message, signature)
 //}
 
-func Version() (string, error) {
-	version, err := api.LibTfheVersion()
-
-	return version, err
+func Version() uint32 {
+	return api.LibTfheVersion()
 }

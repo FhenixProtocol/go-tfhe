@@ -1,4 +1,4 @@
-package api
+package amd64
 
 /*
 #include "bindings.h"

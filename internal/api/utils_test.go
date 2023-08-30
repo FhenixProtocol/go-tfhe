@@ -1,7 +1,7 @@
 package api_test
 
 import (
-	"github.com/fhenixprotocol/go-tfhe/internal/api"
+	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
 	"os"
 	"path"
 )
@@ -16,33 +16,33 @@ func setupKeysForTests() error {
 	pksPath := path.Join(tmpDir, "pks")
 	sksPath := path.Join(tmpDir, "sks")
 
-	err = api.GenerateFheKeys(cksPath, sksPath, pksPath)
+	err = amd64.GenerateFheKeys(cksPath, sksPath, pksPath)
 	if err != nil {
 		return err
 	}
 
-	api.SKS, err = os.ReadFile(sksPath)
+	amd64.SKS, err = os.ReadFile(sksPath)
 	if err != nil {
 		return err
 	}
-	api.CKS, err = os.ReadFile(cksPath)
+	amd64.CKS, err = os.ReadFile(cksPath)
 	if err != nil {
 		return err
 	}
-	api.PKS, err = os.ReadFile(pksPath)
+	amd64.PKS, err = os.ReadFile(pksPath)
 	if err != nil {
 		return err
 	}
 
-	_, err = api.DeserializePublicKey(api.PKS)
+	_, err = amd64.DeserializePublicKey(amd64.PKS)
 	if err != nil {
 		return err
 	}
-	_, err = api.DeserializeServerKey(api.SKS)
+	_, err = amd64.DeserializeServerKey(amd64.SKS)
 	if err != nil {
 		return err
 	}
-	_, err = api.DeserializeClientKey(api.CKS)
+	_, err = amd64.DeserializeClientKey(amd64.CKS)
 	if err != nil {
 		return err
 	}
