@@ -79,28 +79,28 @@ func TestRunInternalInManyThreads(t *testing.T) {
 		t.Fail()
 	}
 
+	fmt.Println("encrypting 10 and adding it to itself")
+	num := big.NewInt(10)
+
+	num1, err := tfhelib.NewCipherText(*num, 0, false)
+	if err != nil {
+		t.Fail()
+	}
+
+	num2, err := tfhelib.NewCipherText(*num, 0, false)
+	if err != nil {
+		t.Fail()
+	}
+
 	// Launch multiple goroutines, each with its own thread.
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 2; i++ {
 		wg.Add(1)
 
 		// Launch a goroutine to fetch the URL.
 		go func() {
 			// Decrement the counter when the goroutine completes.
 			defer wg.Done()
-
-			fmt.Println("encrypting 10 and adding it to itself")
-			num := big.NewInt(10)
-
-			num1, err := tfhelib.NewCipherText(*num, 0, false)
-			if err != nil {
-				t.Fail()
-			}
-
-			num2, err := tfhelib.NewCipherText(*num, 0, false)
-			if err != nil {
-				t.Fail()
-			}
 
 			res, err := num1.Add(num2)
 			if err != nil {

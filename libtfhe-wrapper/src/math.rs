@@ -5,6 +5,7 @@ use crate::memory::{ByteSliceView, UnmanagedVector};
 use serde::Serialize;
 use std::ops::{Add, Mul, Sub};
 use std::panic::{catch_unwind, UnwindSafe};
+use std::thread;
 use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
@@ -92,6 +93,8 @@ fn common_op<
 ) -> UnmanagedVector {
     // todo (eshel) verify that the key is loaded into zama lib
     let server_key_guard = SERVER_KEY.lock().unwrap();
+    println!("operation: the current thread Id is: {:?}", thread::current().id());
+    println!("trivial_encrypt: the server key guard is: {:?}", server_key_guard);
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
         match *server_key_guard {

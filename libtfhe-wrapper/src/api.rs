@@ -60,7 +60,9 @@ pub unsafe extern "C" fn deserialize_server_key(
         set_server_key(maybe_key_deserialized);
 
         let mut server_key = SERVER_KEY.lock().unwrap();
+        println!("before load, server key: {:?}", server_key);
         *server_key = true;
+        println!("after load, server key: {:?}", server_key);
 
         println!("TOMMM In deserialize_server_key() server key: {:?}", key);
 
@@ -93,7 +95,9 @@ pub fn deserialize_client_key_safe(key: &[u8]) -> Result<bool, RustError> {
             bincode::deserialize::<ClientKey>(key).unwrap();
 
         let mut client_key = CLIENT_KEY.lock().unwrap();
+        println!("before load, client key is_some: {:?}", client_key.is_some());
         *client_key = Some(maybe_key_deserialized);
+        println!("after load, client key is_some: {:?}", client_key.is_some());
 
         true
     })
@@ -123,7 +127,9 @@ pub fn deserialize_public_key_safe(key: &[u8]) -> Result<bool, RustError> {
             bincode::deserialize::<CompactPublicKey>(key).unwrap();
 
         let mut client_key = PUBLIC_KEY.lock().unwrap();
+        println!("before load, public key is_some: {:?}", client_key.is_some());
         *client_key = Some(maybe_key_deserialized);
+        println!("after load, public key is_some: {:?}", client_key.is_some());
 
         true
     })
