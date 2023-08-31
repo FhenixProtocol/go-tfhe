@@ -1,21 +1,26 @@
 use crate::keys::GlobalKeys;
 use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
 
-use tfhe::{
-    generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK,
-    CompactPublicKey, ConfigBuilder,
-};
+#[cfg(target_arch = "wasm32")]
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
+
+#[cfg(not(target_arch = "wasm32"))]
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
+
+use tfhe::{generate_keys, CompactPublicKey, ConfigBuilder};
 
 use crate::keys::deserialize_client_key_safe;
 
 use crate::math::{op_uint16, op_uint32, op_uint8};
 
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
+
 use crate::error::RustError;
 
 use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
 
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
+use crate::api::FheUintType::{Uint16, Uint32, Uint8};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -36,6 +41,17 @@ pub enum FheUintType {
     Uint32 = 2,
 }
 
+impl From<u32> for FheUintType {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => Uint8,
+            1 => Uint16,
+            2 => Uint32,
+            _ => Uint32,
+        }
+    }
+}
+
 #[repr(C)]
 #[allow(non_camel_case_types)]
 pub struct c_void {}
@@ -47,7 +63,7 @@ pub unsafe extern "C" fn generate_full_keys(
     path_to_pks: *const std::ffi::c_char,
 ) -> bool {
     let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, None)
+        .enable_custom_integers(KEYGEN_PARAMS, None)
         .build();
     let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
         (
@@ -179,7 +195,6 @@ pub unsafe extern "C" fn load_public_key(
     err_msg: Option<&mut UnmanagedVector>,
 ) -> () {
     if let Some(public_key_slice) = key.read() {
-
         let r = deserialize_public_key_safe(public_key_slice);
 
         handle_c_error_default(r, err_msg)

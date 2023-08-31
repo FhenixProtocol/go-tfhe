@@ -6,7 +6,7 @@ static VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), "\0"); // Add trailing
 ///
 /// The string is owned by the lib and must not be mutated or destroyed by the caller.
 #[no_mangle]
-pub extern "C" fn version_str() -> *const c_char {
+pub extern "C" fn version() -> *const c_char {
     VERSION.as_ptr() as *const _
 }
 
@@ -18,12 +18,12 @@ mod tests {
     #[test]
     fn version_works() {
         // Returns the same pointer every time
-        let ptr1 = version_str();
-        let ptr2 = version_str();
+        let ptr1 = version();
+        let ptr2 = version();
         assert_eq!(ptr1, ptr2);
 
         // Contains correct data
-        let version_ptr = version_str();
+        let version_ptr = version();
         let version_str = unsafe { CStr::from_ptr(version_ptr) }.to_str().unwrap();
         // assert_eq!(version_str, "1.2.3");
 

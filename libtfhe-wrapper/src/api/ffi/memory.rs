@@ -204,8 +204,8 @@ impl U8SliceView {
 pub struct UnmanagedVector {
     /// True if and only if this is None. If this is true, the other fields must be ignored.
     is_none: bool,
-    ptr: *mut u8,
-    len: usize,
+    pub ptr: *mut u8,
+    pub len: usize,
     cap: usize,
 }
 

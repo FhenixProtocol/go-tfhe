@@ -7,6 +7,7 @@ ALPINE_TESTER := ghcr.io/scrtlabs/tfhe-builder-alpine:0.0.1
 
 USER_ID := $(shell id -u)
 USER_GROUP = $(shell id -g)
+GO_ROOT = $(shell go env GOROOT)
 
 SHARED_LIB_SRC = "" # File name of the shared library as created by the Rust build system
 SHARED_LIB_DST = "" # File name of the shared library that we store
@@ -161,8 +162,9 @@ wasm-all: wasm-go wasm-rust
 	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
 
 .PHONY: start-web-server
+start-web-server:
 	cp builder/web-wasm-test.html build/test.html
-	cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" build/
+	cp "${GO_ROOT}/misc/wasm/wasm_exec.js" build/
 	cd build && goexec 'http.ListenAndServe(`localhost:8082`, http.FileServer(http.Dir(`.`)))'
 
 .PHONY: merge-wasm
