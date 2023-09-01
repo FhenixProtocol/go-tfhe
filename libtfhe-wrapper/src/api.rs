@@ -59,10 +59,8 @@ pub unsafe extern "C" fn deserialize_server_key(
 
         set_server_key(maybe_key_deserialized.clone());
 
-        let mut server_key = SERVER_KEY.lock().unwrap();
-        println!("before load, server key: {:?}", server_key.is_set());
-        server_key.set_key(maybe_key_deserialized);
-        println!("after load, server key: {:?}", server_key.is_set());
+        let mut server_key_guard = SERVER_KEY.lock().unwrap();
+        server_key_guard.set_key(maybe_key_deserialized);
 
         println!("TOMMM In deserialize_server_key() server key: {:?}", key);
 

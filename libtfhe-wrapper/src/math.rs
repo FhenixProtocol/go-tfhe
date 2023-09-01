@@ -91,13 +91,9 @@ fn common_op<
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    // todo (eshel) verify that the key is loaded into zama lib
-
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
-        println!("operation: the current thread Id is: {:?}", thread::current().id());
         let mut server_key_guard = SERVER_KEY.lock().unwrap();
         server_key_guard.ensure_init();
-        println!("trivial_encrypt: the server key guard is: {:?}", server_key_guard.is_set());
 
         let result = match operation {
             Op::Add => num1 + num2,

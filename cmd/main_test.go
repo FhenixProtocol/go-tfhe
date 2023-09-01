@@ -10,35 +10,6 @@ import (
 	"testing"
 )
 
-//func TestRunInManyThreads(t *testing.T) {
-//	fmt.Println("generating keys")
-//	err := GenerateKeys()
-//	if err != nil {
-//		t.Fail()
-//	}
-//	fmt.Println("encrypting 10 and adding it to itself")
-//
-//	// Launch multiple goroutines, each with its own thread.
-//	var wg sync.WaitGroup
-//	for i := 0; i < 10; i++ {
-//		wg.Add(1)
-//
-//		// Launch a goroutine to fetch the URL.
-//		go func() {
-//			// Decrement the counter when the goroutine completes.
-//			defer wg.Done()
-//
-//			err := Add("./keys/sks", "./keys/pks")
-//			if err != nil {
-//				t.Fail()
-//			}
-//		}()
-//
-//		// Wait for all goroutines to complete.
-//		wg.Wait()
-//	}
-//}
-
 func InitTFHELib(sksPath, pksPath string) error {
 	serverKeyFile, err := os.ReadFile(sksPath)
 	if err != nil {
