@@ -57,12 +57,12 @@ pub unsafe extern "C" fn deserialize_server_key(
         let maybe_key_deserialized =
             bincode::deserialize::<ServerKey>(key.read().unwrap()).unwrap();
 
-        set_server_key(maybe_key_deserialized);
+        set_server_key(maybe_key_deserialized.clone());
 
         let mut server_key = SERVER_KEY.lock().unwrap();
-        println!("before load, server key: {:?}", server_key);
-        *server_key = true;
-        println!("after load, server key: {:?}", server_key);
+        println!("before load, server key: {:?}", server_key.is_set());
+        server_key.set_key(maybe_key_deserialized);
+        println!("after load, server key: {:?}", server_key.is_set());
 
         println!("TOMMM In deserialize_server_key() server key: {:?}", key);
 

@@ -1,13 +1,44 @@
 use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
+use std::collections::HashSet;
+use std::{thread, thread::ThreadId};
 
-use tfhe::{
-    generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, ClientKey,
-    CompactPublicKey, ConfigBuilder,
-};
+use tfhe::{generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, ClientKey, CompactPublicKey, ConfigBuilder, ServerKey, set_server_key};
+
+pub struct InitGuard {
+    key: Option<ServerKey>,
+    init_threads: HashSet<ThreadId>,
+}
+
+impl InitGuard {
+    pub fn new() -> Self {
+        Self {
+            key: None,
+            init_threads: HashSet::new(),
+        }
+    }
+
+    pub fn set_key(&mut self, key: ServerKey) {
+        self.key = Some(key);
+    }
+
+    pub fn is_set(&self) -> bool {
+        self.key.is_some()
+    }
+
+    pub fn ensure_init(&mut self) {
+        match &self.key {
+            None => panic!("Public Key not set"),
+            Some(key) => match self.init_threads.insert(thread::current().id()) {
+                false => {}, // thread already set key in zama lib
+                true => set_server_key(key.clone()),
+            }
+        }
+    }
+}
 
 lazy_static! {
-    pub static ref SERVER_KEY: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
+    pub static ref SERVER_KEY: Arc<Mutex<InitGuard>> = Arc::new(Mutex::new(InitGuard::new()));
     pub static ref PUBLIC_KEY: Arc<Mutex<Option<CompactPublicKey>>> = Arc::new(Mutex::new(None));
     pub static ref CLIENT_KEY: Arc<Mutex<Option<ClientKey>>> = Arc::new(Mutex::new(None));
 }

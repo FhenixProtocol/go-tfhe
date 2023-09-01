@@ -117,18 +117,13 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    // todo (eshel) verify that the key is loaded into zama lib
-    let server_key_guard = SERVER_KEY.lock().unwrap();
-    println!("trivial_encrypt: the current thread Id is: {:?}", thread::current().id());
-    println!("trivial_encrypt: the server key guard is: {:?}", server_key_guard);
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
-        match *server_key_guard {
-            true => {
-
-            }
-            false => panic!("Server key not set"), // Return an error or handle this case appropriately.
-        };
+        // todo (eshel) verify that the key is loaded into zama lib
+        let mut server_key_guard = SERVER_KEY.lock().unwrap();
+        server_key_guard.ensure_init();
+        println!("trivial_encrypt: the current thread Id is: {:?}", thread::current().id());
+        println!("trivial_encrypt: the server key guard is: {:?}", server_key_guard.is_set());
 
         match int_type {
             FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
