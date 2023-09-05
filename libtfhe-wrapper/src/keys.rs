@@ -22,10 +22,6 @@ impl InitGuard {
         self.key = Some(key);
     }
 
-    pub fn is_set(&self) -> bool {
-        self.key.is_some()
-    }
-
     pub fn ensure_init(&mut self) {
         match &self.key {
             None => panic!("Public Key not set"),
