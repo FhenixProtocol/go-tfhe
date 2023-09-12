@@ -1,3 +1,4 @@
+use crate::imports::console_log;
 use crate::keys::GlobalKeys;
 use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
 
@@ -260,15 +261,81 @@ pub unsafe extern "C" fn encrypt(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn trivial_encrypt(
-    msg: u64,
-    int_type: FheUintType,
-    err_msg: Option<&mut UnmanagedVector>,
-) -> UnmanagedVector {
-    let encrypted = trivial_encrypt_safe(msg, int_type);
+pub unsafe extern "C" fn banana() {
+    console_log("gm");
 
-    let result = handle_c_error_binary(encrypted, err_msg);
-    UnmanagedVector::new(Some(result))
+    console_log("generting keys (~15 seconds)...");
+
+    let config = ConfigBuilder::all_disabled()
+        .enable_custom_integers(KEYGEN_PARAMS, None)
+        .build();
+    let (cks, sks) = generate_keys(config);
+    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+
+    console_log("set_client_key...");
+
+    match GlobalKeys::set_client_key(cks) {
+        Ok(_) => {}
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+            return;
+        }
+    }
+
+    console_log("set_server_key...");
+
+    tfhe::set_server_key(sks);
+
+    console_log("set_public_key...");
+
+    match GlobalKeys::set_public_key(pks) {
+        Ok(_) => {}
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+            return;
+        }
+    }
+
+    console_log("encrypt_safe(10)...");
+
+    let ten = match encrypt_safe(10, Uint8) {
+        Ok(ten) => ten,
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+            return;
+        }
+    };
+
+    console_log("encrypt_safe(20)...");
+
+    let twenty = match encrypt_safe(20, Uint8) {
+        Ok(ten) => ten,
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+            return;
+        }
+    };
+
+    console_log("res = op_uint8(10, 20, add)...");
+
+    let res = match op_uint8(ten.as_slice(), twenty.as_slice(), Op::Add) {
+        Ok(res) => res,
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+            return;
+        }
+    };
+
+    console_log("decrypt_safe(res)...");
+
+    match decrypt_safe(res.as_slice(), Uint8) {
+        Ok(decrypted) => {
+            console_log(format!("decrypted: {}", decrypted).as_str());
+        }
+        Err(err) => {
+            console_log(format!("error: {:?}", err).as_str());
+        }
+    }
 }
 
 #[no_mangle]

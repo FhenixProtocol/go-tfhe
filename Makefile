@@ -26,11 +26,11 @@ else
 	endif
 endif
 
+all: build test merge-wasm
+
 test-filenames:
 	echo $(SHARED_LIB_DST)
 	echo $(SHARED_LIB_SRC)
-
-all: build test
 
 build: build-rust build-go
 
@@ -155,11 +155,12 @@ wasm-go:
 
 .PHONY: wasm-rust
 wasm-rust:
-	cd libtfhe-wrapper && cargo build --release --examples --target wasm32-unknown-unknown
+	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown
+	mkdir -p build
+	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
 
 .PHONY: wasm-all
 wasm-all: wasm-go wasm-rust
-	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
 
 .PHONY: start-web-server
 start-web-server:
@@ -168,5 +169,11 @@ start-web-server:
 	cd build && goexec 'http.ListenAndServe(`localhost:8082`, http.FileServer(http.Dir(`.`)))'
 
 .PHONY: merge-wasm
-merge-wasm:
+merge-wasm: wasm-all
 	wasm-merge --enable-reference-types --enable-multi-memories --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
+
+.PHONY: lior
+lior:
+	$(MAKE) wasm-rust
+	wasm2wat ./build/rust.wasm | grep export
+	$(MAKE) start-web-server

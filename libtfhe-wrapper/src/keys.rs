@@ -30,7 +30,7 @@ impl GlobalKeys {
     }
 }
 
-pub static SERVER_KEY: OnceCell<bool> = OnceCell::with_value(false);
+pub static SERVER_KEY: OnceCell<bool> = OnceCell::with_value(true);
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
