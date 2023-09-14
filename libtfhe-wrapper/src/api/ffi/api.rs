@@ -1,4 +1,4 @@
-use crate::imports::console_log;
+use crate::imports::{console_log, wavm_halt_and_set_finished};
 use crate::keys::GlobalKeys;
 use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
 
@@ -336,6 +336,8 @@ pub unsafe extern "C" fn banana() {
             console_log(format!("error: {:?}", err).as_str());
         }
     }
+
+    wavm_halt_and_set_finished();
 }
 
 #[no_mangle]

@@ -174,6 +174,4 @@ merge-wasm: wasm-all
 
 .PHONY: lior
 lior:
-	$(MAKE) wasm-rust
-	wasm2wat ./build/rust.wasm | grep export
-	$(MAKE) start-web-server
+	./lior.sh
