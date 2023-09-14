@@ -108,19 +108,16 @@ func InitTfhe(config *Config) error {
 		fmt.Println("Already loaded keys! Reloading the rust library.. (TEMPORARY PLS FIX)")
 		_, err = LoadServerKey(api.SKS)
 		if err != nil {
-			println("TOMMM basa")
 			return err
 		}
 
 		_, err = LoadClientKey(api.CKS)
 		if err != nil {
-			println("TOMMM basa")
 			return err
 		}
 
 		_, err = LoadPublicKey(api.PKS)
 		if err != nil {
-			println("TOMMM basa")
 			return err
 		}
 
