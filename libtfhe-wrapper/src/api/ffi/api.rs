@@ -8,7 +8,7 @@ use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEY
 #[cfg(not(target_arch = "wasm32"))]
 use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
 
-use tfhe::{generate_keys, CompactPublicKey, ConfigBuilder};
+use tfhe::{generate_keys, ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
 
 use crate::keys::deserialize_client_key_safe;
 
@@ -22,6 +22,8 @@ use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, triv
 
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
 use crate::api::FheUintType::{Uint16, Uint32, Uint8};
+
+use serde::{Deserialize, Serialize};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -262,6 +264,14 @@ pub unsafe extern "C" fn encrypt(
 
 #[no_mangle]
 pub unsafe extern "C" fn banana() {
+    // let cks_bytes = include_bytes!("../../../keys/tfhe/cks");
+    // let sks_bytes = include_bytes!("../../../keys/tfhe/sks");
+    // let pks_bytes = include_bytes!("../../../keys/tfhe/pks");
+
+    // let cks = bincode::deserialize::<ClientKey>(cks_bytes).unwrap();
+    // let sks = bincode::deserialize::<ServerKey>(sks_bytes).unwrap();
+    // let pks = bincode::deserialize::<CompactPublicKey>(pks_bytes).unwrap();
+
     console_log("gm");
 
     console_log("generting keys (~15 seconds)...");
@@ -278,7 +288,7 @@ pub unsafe extern "C" fn banana() {
         Ok(_) => {}
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
-            return;
+            panic!("error: {:?}", err);
         }
     }
 
@@ -292,7 +302,7 @@ pub unsafe extern "C" fn banana() {
         Ok(_) => {}
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
-            return;
+            panic!("error: {:?}", err);
         }
     }
 
@@ -302,7 +312,7 @@ pub unsafe extern "C" fn banana() {
         Ok(ten) => ten,
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
-            return;
+            panic!("error: {:?}", err);
         }
     };
 
@@ -312,7 +322,7 @@ pub unsafe extern "C" fn banana() {
         Ok(ten) => ten,
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
-            return;
+            panic!("error: {:?}", err);
         }
     };
 
@@ -322,7 +332,7 @@ pub unsafe extern "C" fn banana() {
         Ok(res) => res,
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
-            return;
+            panic!("error: {:?}", err);
         }
     };
 
@@ -331,9 +341,17 @@ pub unsafe extern "C" fn banana() {
     match decrypt_safe(res.as_slice(), Uint8) {
         Ok(decrypted) => {
             console_log(format!("decrypted: {}", decrypted).as_str());
+
+            if decrypted != 30 {
+                panic!(
+                    "error: got wrong decrypted value. Expected: {}, got: {}",
+                    30, decrypted
+                );
+            }
         }
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
+            panic!("error: {:?}", err);
         }
     }
 
