@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # todo: does this need go installed?
       - name: go-tests
         run: make test
 
@@ -19,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # todo: does this need cargo and rust installed?
       - name: rust-tests
         run: |
         cd libtfhe-wrapper && cargo test
