@@ -23,4 +23,4 @@ jobs:
       # todo: does this need cargo and rust installed?
       - name: rust-tests
         run: |
-        cd libtfhe-wrapper && cargo test
+          cd libtfhe-wrapper && cargo test
