@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO: does this need go installed?
+      # TODO: is this necessary?
+      - name: Setup Go 1.17.x
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.17.x'
       - name: go-tests
         run: make test
 
