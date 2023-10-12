@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '1.17.x'
+      - name: build
+        run: make build
       - name: go-tests
         run: make test
 
