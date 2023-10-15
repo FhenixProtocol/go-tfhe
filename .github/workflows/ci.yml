@@ -11,7 +11,7 @@ jobs:
       - name: restore cargo registry
         uses: actions/cache@v3
         with:
-          path: ~/.cargo/registry
+          path: ~/.cargo/
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: build
         run: make build
@@ -25,7 +25,7 @@ jobs:
       - name: restore cargo registry
         uses: actions/cache@v3
         with:
-          path: ~/.cargo/registry
+          path: ~/.cargo/
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: rust-tests
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: restore cargo registry
         uses: actions/cache@v3
         with:
-          path: ~/.cargo/registry
+          path: ~/.cargo/
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: clippy
         run: make clippy
