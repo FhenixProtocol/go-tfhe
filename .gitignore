@@ -50,5 +50,4 @@ profile.cov
 
 target
 build
-internal/api/*.so
 libtfhe-wrapper/bindings.h
