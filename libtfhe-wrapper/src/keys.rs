@@ -5,7 +5,7 @@ use tfhe::{ClientKey, CompactPublicKey, ServerKey};
 // use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
 use std::{thread, thread::ThreadId};
-
+use std::sync::Mutex;
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
@@ -19,6 +19,10 @@ impl InitGuard {
         }
     }
 
+    pub fn is_key_set(&self) -> bool {
+        self.key.is_some()
+    }
+
     pub fn set_key(&mut self, key: ServerKey) {
         self.key = Some(key);
     }
@@ -28,7 +32,7 @@ impl InitGuard {
             None => panic!("Public Key not set"),
             Some(key) => match self.init_threads.insert(thread::current().id()) {
                 false => {}, // thread already set key in zama lib
-                true => set_server_key(key.clone()),
+                true => tfhe::set_server_key(key.clone()),
             }
         }
     }
@@ -44,9 +48,9 @@ impl GlobalKeys {
         CLIENT_KEY.get()
     }
 
-    pub fn is_server_key_set() -> &'static bool {
-        SERVER_KEY.get().unwrap_or(&false)
-    }
+    // pub fn is_server_key_set() -> bool {
+    //     SERVER_KEY.get().unwrap_or(&InitGuard::new()).is_key_set()
+    // }
 
     pub fn set_public_key(key: CompactPublicKey) -> Result<(), CompactPublicKey> {
         PUBLIC_KEY.set(key)
@@ -56,12 +60,34 @@ impl GlobalKeys {
         CLIENT_KEY.set(key)
     }
 
-    pub fn set_server_key(key: bool) -> Result<(), bool> {
-        SERVER_KEY.set(key)
+    pub fn is_server_key_set() -> bool {
+        if let Some(mutex) = SERVER_KEY.get() {
+            mutex.lock().unwrap().is_key_set()
+        } else {
+            false
+        }
     }
+
+    pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
+        let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
+        let mut guard = mutex.lock().unwrap();
+        if guard.is_key_set() {
+            return Err(false);
+        }
+        guard.set_key(key);
+        Ok(())
+    }
+
+    // pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
+    //     if SERVER_KEY.get().is_none() {
+    //         return Err(false);
+    //     }
+    //     SERVER_KEY.get_mut().unwrap().set_key(key);
+    //     Ok(())
+    // }
 }
 
-pub static SERVER_KEY: OnceCell<InitGuard> = OnceCell::with_value(InitGuard::new());
+pub static SERVER_KEY: OnceCell<Mutex<InitGuard>>  = OnceCell::new();
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
@@ -99,9 +125,9 @@ pub fn load_server_key_safe(key: &[u8]) -> Result<(), RustError> {
         RustError::generic_error("failed to set server key: bad input")
     })?;
 
-    tfhe::set_server_key(server_key);
+    tfhe::set_server_key(server_key.clone());
 
-    GlobalKeys::set_server_key(true).map_err(|_| {
+    GlobalKeys::set_server_key(server_key).map_err(|_| {
         log::debug!("Failed to set server key");
         RustError::generic_error("failed to set server key: set failed")
     })
