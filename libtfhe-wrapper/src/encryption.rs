@@ -1,3 +1,4 @@
+use std::thread;
 use crate::api::FheUintType;
 use crate::error::{handle_c_error_binary, handle_c_error_default, RustError};
 use crate::keys::{CLIENT_KEY, PUBLIC_KEY, SERVER_KEY};
@@ -25,7 +26,6 @@ pub unsafe extern "C" fn expand_compressed(
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
-
 }
 
 fn expand_compressed_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<Vec<u8>, RustError> {
@@ -114,13 +114,10 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    let server_key_guard = SERVER_KEY.lock().unwrap();
 
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
-        match *server_key_guard {
-            true => {}
-            false => panic!("Server key not set"), // Return an error or handle this case appropriately.
-        };
+        let mut server_key_guard = SERVER_KEY.lock().unwrap();
+        server_key_guard.ensure_init();
 
         match int_type {
             FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
