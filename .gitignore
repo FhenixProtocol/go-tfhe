@@ -48,10 +48,6 @@ profile.cov
 
 **/yarn-error.log
 
-
 target
 build
 libtfhe-wrapper/bindings.h
-internal/api/libtfhe_wrapper.x86_64.so
-internal/api/libtfhe_wrapper_muslc.a
-internal/api/libtfhe_wrapper_muslc.aarch64.a

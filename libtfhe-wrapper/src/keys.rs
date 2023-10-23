@@ -2,6 +2,37 @@ use once_cell::sync::OnceCell;
 
 use crate::error::RustError;
 use tfhe::{ClientKey, CompactPublicKey, ServerKey};
+// use std::sync::{Arc, Mutex};
+use std::collections::HashSet;
+use std::{thread, thread::ThreadId};
+
+pub struct InitGuard {
+    key: Option<ServerKey>,
+    init_threads: HashSet<ThreadId>,
+}
+
+impl InitGuard {
+    pub fn new() -> Self {
+        Self {
+            key: None,
+            init_threads: HashSet::new(),
+        }
+    }
+
+    pub fn set_key(&mut self, key: ServerKey) {
+        self.key = Some(key);
+    }
+
+    pub fn ensure_init(&mut self) {
+        match &self.key {
+            None => panic!("Public Key not set"),
+            Some(key) => match self.init_threads.insert(thread::current().id()) {
+                false => {}, // thread already set key in zama lib
+                true => set_server_key(key.clone()),
+            }
+        }
+    }
+}
 
 pub struct GlobalKeys {}
 
@@ -30,7 +61,7 @@ impl GlobalKeys {
     }
 }
 
-pub static SERVER_KEY: OnceCell<bool> = OnceCell::with_value(true);
+pub static SERVER_KEY: OnceCell<InitGuard> = OnceCell::with_value(InitGuard::new());
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
