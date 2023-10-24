@@ -78,6 +78,12 @@ impl GlobalKeys {
         }
     }
 
+    pub fn refresh_server_key_for_thread() {
+        let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
+        let mut guard = mutex.lock().unwrap();
+        guard.ensure_init();
+    }
+
     pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
         let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
         let mut guard = mutex.lock().unwrap();

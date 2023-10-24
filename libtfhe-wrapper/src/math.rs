@@ -63,9 +63,11 @@ fn common_op<
     num2: T,
     operation: Op,
 ) -> Result<Vec<u8>, RustError> {
+
     if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error("failed to set server key"));
+        return Err(RustError::generic_error("server key must be set for math operation"));
     }
+    GlobalKeys::refresh_server_key_for_thread();
 
     let result = match operation {
         Op::Add => num1 + num2,
