@@ -1,10 +1,10 @@
 [package]
 name = "tfhe-wrapper"
-version = "0.0.1"
+version = "0.0.2"
 publish = false
-authors = ["SCRT Labs <scrtlabs@users.noreply.github.com>"]
+authors = ["Fhenix <fhenixprotocol@users.noreply.github.com>"]
 edition = "2021"
-description = "Go bindings for cosmwasm contracts"
+description = "Go bindings for tfhe-rs"
 repository = ""
 license = "Apache-2.0"
 readme = "README.md"
@@ -41,7 +41,7 @@ errno = { version = "0.3.1"}
 [dependencies]
 # "custom-seeder",
 # tfhe = { version = "0.3.1", features = ["boolean", "integer", "shortint", "experimental-force_fft_algo_dif4"]  }
-tfhe = { path = "../../tfhe-rs/tfhe", features = ["boolean", "integer", "shortint", "custom-seeder", "experimental-force_fft_algo_dif4"] }
+tfhe = { git = "ssh://git@github.com/FhenixProtocol/tfhe-rs.git", branch = "wasm32-custom-seeder", features = ["boolean", "integer", "shortint", "custom-seeder", "experimental-force_fft_algo_dif4"] }
 serde = "1.0.163"
 bincode = "1.3.3"
 thiserror = "1.0.38"
