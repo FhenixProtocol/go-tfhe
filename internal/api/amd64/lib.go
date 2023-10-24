@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"go/types"
+	"log"
 	"math/big"
 	"runtime"
 	"syscall"
@@ -111,6 +112,8 @@ func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
 	publicKeyView := makeView(publicKeyBytes)
 	defer runtime.KeepAlive(publicKeyView)
 
+	log.Printf("Setting public key of length: %d", len(publicKeyBytes))
+
 	errmsg := uninitializedUnmanagedVector()
 
 	_, err := C.load_public_key(publicKeyView, &errmsg)
@@ -122,6 +125,8 @@ func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
 
 func GetPublicKey() ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
+
+	log.Printf("Getting public key")
 
 	res := C.UnmanagedVector{}
 	res, err := C.get_public_key(&errmsg)
@@ -137,6 +142,8 @@ func Encrypt(value big.Int, intType UintType) ([]byte, error) {
 
 	errmsg := uninitializedUnmanagedVector()
 
+	log.Printf("Encrypting value: %d to type %d", value.Int64(), intType)
+
 	res, err := C.encrypt(cu64(val), C.FheUintType(intType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
@@ -149,8 +156,9 @@ func EncryptTrivial(value big.Int, intType UintType) ([]byte, error) {
 	val := value.Uint64()
 
 	errmsg := uninitializedUnmanagedVector()
+	log.Printf("Encrypting value with server key: %d to type %d", value.Int64(), intType)
 
-	res, err := C.encrypt(cu64(val), C.FheUintType(intType), &errmsg)
+	res, err := C.trivial_encrypt(cu64(val), C.FheUintType(intType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}

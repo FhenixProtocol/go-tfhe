@@ -253,6 +253,19 @@ pub unsafe extern "C" fn expand_compressed(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn trivial_encrypt(
+    msg: u64,
+    int_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    let r = trivial_encrypt_safe(msg, int_type);
+
+    let result = handle_c_error_binary(r, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+
+#[no_mangle]
 pub unsafe extern "C" fn encrypt(
     msg: u64,
     int_type: FheUintType,

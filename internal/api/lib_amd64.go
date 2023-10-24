@@ -32,7 +32,7 @@ const (
 type UintType uint32
 
 func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, error) {
-	return amd64.MathOperation(lhs, rhs, uintType, op)
+	return amd64.MathOperation(lhs, rhs, uintType, amd64.OperationType(op))
 }
 
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {

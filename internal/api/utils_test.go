@@ -7,6 +7,12 @@ import (
 )
 
 func setupKeysForTests() error {
+
+	pk, err := amd64.GetPublicKey()
+	if pk != nil && err == nil {
+		return nil
+	}
+
 	tmpDir, err := os.MkdirTemp("", "myPrefix")
 	if err != nil {
 		return err

@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
-	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
 	"math/big"
 	"testing"
 )
@@ -11,11 +10,11 @@ func TestNewCipherText(t *testing.T) {
 	err := setupKeysForTests()
 
 	value := big.NewInt(12345)
-	ct, err := api.NewCipherText(*value, amd64.Uint32, false)
+	ct, err := api.NewCipherText(*value, api.Uint32, false)
 	if err != nil {
 		t.Fatalf("Error creating new ciphertext: %v", err)
 	}
-	if ct.UintType != amd64.Uint32 {
+	if ct.UintType != api.Uint32 {
 		t.Errorf("Expected UintType1, got %v", ct.UintType)
 	}
 
@@ -82,38 +81,38 @@ func TestCipherTextOperations(t *testing.T) {
 		name     string
 		value1   *big.Int
 		value2   *big.Int
-		uintType amd64.UintType
+		uintType api.UintType
 		op       operationFunc
 		resultFn func(a, b *big.Int) *big.Int
 		err      error
 	}{
 
-		{"AddUint8", big.NewInt(10), big.NewInt(20), amd64.Uint16, addOp,
+		{"AddUint8", big.NewInt(10), big.NewInt(20), api.Uint16, addOp,
 			addResultFunc, nil},
-		{"AddUint16", big.NewInt(10), big.NewInt(20), amd64.Uint16, addOp,
+		{"AddUint16", big.NewInt(10), big.NewInt(20), api.Uint16, addOp,
 			addResultFunc, nil},
-		{"AddUin32", big.NewInt(10), big.NewInt(20), amd64.Uint32, addOp,
+		{"AddUin32", big.NewInt(10), big.NewInt(20), api.Uint32, addOp,
 			addResultFunc, nil},
-		{"AddLarge", big.NewInt(123_000_000), big.NewInt(456_000_000), amd64.Uint32, addOp,
+		{"AddLarge", big.NewInt(123_000_000), big.NewInt(456_000_000), api.Uint32, addOp,
 			addResultFunc, nil},
-		{"AddOverflow", big.NewInt(255), big.NewInt(1), amd64.Uint8, addOp,
+		{"AddOverflow", big.NewInt(255), big.NewInt(1), api.Uint8, addOp,
 			addResultFuncOverflow, nil},
-		{"SubUint8", big.NewInt(20), big.NewInt(10), amd64.Uint8, subOp,
+		{"SubUint8", big.NewInt(20), big.NewInt(10), api.Uint8, subOp,
 			subResultFunc, nil},
-		{"SubUint16", big.NewInt(20), big.NewInt(10), amd64.Uint16, subOp, subResultFunc, nil},
-		{"SubUint32", big.NewInt(123_000_000), big.NewInt(456_000), amd64.Uint32, subOp, subResultFunc, nil},
+		{"SubUint16", big.NewInt(20), big.NewInt(10), api.Uint16, subOp, subResultFunc, nil},
+		{"SubUint32", big.NewInt(123_000_000), big.NewInt(456_000), api.Uint32, subOp, subResultFunc, nil},
 		// Multiplication tests
-		{"MulUint8", big.NewInt(10), big.NewInt(20), amd64.Uint8, mulOp, mulResultFunc, nil},
-		{"MulUint16", big.NewInt(10), big.NewInt(20), amd64.Uint16, mulOp, mulResultFunc, nil},
-		{"MulLarge", big.NewInt(1_000_000), big.NewInt(2_000), amd64.Uint32, mulOp, mulResultFunc, nil},
+		{"MulUint8", big.NewInt(10), big.NewInt(20), api.Uint8, mulOp, mulResultFunc, nil},
+		{"MulUint16", big.NewInt(10), big.NewInt(20), api.Uint16, mulOp, mulResultFunc, nil},
+		{"MulLarge", big.NewInt(1_000_000), big.NewInt(2_000), api.Uint32, mulOp, mulResultFunc, nil},
 		// Less Than tests
-		{"LtUint8", big.NewInt(10), big.NewInt(20), amd64.Uint8, ltOp, ltResultFunc, nil},
-		{"LtUint16", big.NewInt(1_000), big.NewInt(500), amd64.Uint16, ltOp, ltResultFunc, nil},
-		{"LtUint32", big.NewInt(1_000_000), big.NewInt(500_000), amd64.Uint32, ltOp, ltResultFunc, nil},
+		{"LtUint8", big.NewInt(10), big.NewInt(20), api.Uint8, ltOp, ltResultFunc, nil},
+		{"LtUint16", big.NewInt(1_000), big.NewInt(500), api.Uint16, ltOp, ltResultFunc, nil},
+		{"LtUint32", big.NewInt(1_000_000), big.NewInt(500_000), api.Uint32, ltOp, ltResultFunc, nil},
 		// Less Than or Equal tests
-		{"LteUint8", big.NewInt(10), big.NewInt(10), amd64.Uint8, lteOp, lteResultFunc, nil},
-		{"LteUint16", big.NewInt(500), big.NewInt(500), amd64.Uint16, lteOp, lteResultFunc, nil},
-		{"LteUint32", big.NewInt(500_000), big.NewInt(500_000), amd64.Uint32, lteOp, lteResultFunc, nil},
+		{"LteUint8", big.NewInt(10), big.NewInt(10), api.Uint8, lteOp, lteResultFunc, nil},
+		{"LteUint16", big.NewInt(500), big.NewInt(500), api.Uint16, lteOp, lteResultFunc, nil},
+		{"LteUint32", big.NewInt(500_000), big.NewInt(500_000), api.Uint32, lteOp, lteResultFunc, nil},
 
 		// Division tests (assuming Div function exists on Ciphertext)
 		//{"DivUint8", big.NewInt(100), big.NewInt(20), api.Uint8, divOp, divResultFunc, nil},

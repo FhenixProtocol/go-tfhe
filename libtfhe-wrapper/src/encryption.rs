@@ -56,13 +56,13 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
 
     match int_type {
         FheUintType::Uint8 => {
-            _encrypt_impl::<_, CompactFheUint8, FheUint8>(msg as u8, false, public_key)
+            _encrypt_impl::<_, CompactFheUint8, FheUint8>(msg as u8, true, public_key)
         }
         FheUintType::Uint16 => {
-            _encrypt_impl::<_, CompactFheUint16, FheUint16>(msg as u16, false, public_key)
+            _encrypt_impl::<_, CompactFheUint16, FheUint16>(msg as u16, true, public_key)
         }
         FheUintType::Uint32 => {
-            _encrypt_impl::<_, CompactFheUint32, FheUint32>(msg as u32, false, public_key)
+            _encrypt_impl::<_, CompactFheUint32, FheUint32>(msg as u32, true, public_key)
         }
     }
 }

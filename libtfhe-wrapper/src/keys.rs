@@ -29,7 +29,7 @@ impl InitGuard {
 
     pub fn ensure_init(&mut self) {
         match &self.key {
-            None => panic!("Public Key not set"),
+            None => panic!("Server Key not set"),
             Some(key) => match self.init_threads.insert(thread::current().id()) {
                 false => {}, // thread already set key in zama lib
                 true => tfhe::set_server_key(key.clone()),
@@ -52,12 +52,22 @@ impl GlobalKeys {
     //     SERVER_KEY.get().unwrap_or(&InitGuard::new()).is_key_set()
     // }
 
-    pub fn set_public_key(key: CompactPublicKey) -> Result<(), CompactPublicKey> {
-        PUBLIC_KEY.set(key)
+    pub fn set_public_key(key: CompactPublicKey) -> Result<(), RustError> {
+        if PUBLIC_KEY.get().is_some() {
+            return Err(RustError::generic_error("Cannot set public key multiple times"))
+        }
+        PUBLIC_KEY.set(key).map_err(
+            |_key| RustError::generic_error("failed to set public key")
+        )
     }
 
-    pub fn set_client_key(key: ClientKey) -> Result<(), ClientKey> {
-        CLIENT_KEY.set(key)
+    pub fn set_client_key(key: ClientKey) -> Result<(), RustError> {
+        if CLIENT_KEY.get().is_some() {
+            return Err(RustError::generic_error("Cannot set client key multiple times"))
+        }
+        CLIENT_KEY.set(key).map_err(
+            |_key| RustError::generic_error("failed to set client key")
+        )
     }
 
     pub fn is_server_key_set() -> bool {
@@ -71,10 +81,10 @@ impl GlobalKeys {
     pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
         let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
         let mut guard = mutex.lock().unwrap();
-        if guard.is_key_set() {
-            return Err(false);
+        if !guard.is_key_set() {
+            guard.set_key(key);
         }
-        guard.set_key(key);
+        guard.ensure_init();
         Ok(())
     }
 
@@ -97,10 +107,7 @@ pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
         RustError::generic_error("Failed to deserialize client key")
     })?;
 
-    GlobalKeys::set_client_key(maybe_key_deserialized).map_err(|err| {
-        log::debug!("Failed to set client key: {:?}", err);
-        RustError::generic_error("Failed to set client key")
-    })?;
+    GlobalKeys::set_client_key(maybe_key_deserialized)?;
 
     Ok(())
 }
@@ -111,10 +118,7 @@ pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
         RustError::generic_error("Failed to deserialize public key")
     })?;
 
-    GlobalKeys::set_public_key(maybe_key_deserialized).map_err(|err| {
-        log::debug!("Failed to set public key: {:?}", err);
-        RustError::generic_error("Failed to set public key")
-    })?;
+    GlobalKeys::set_public_key(maybe_key_deserialized)?;
 
     Ok(())
 }

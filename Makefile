@@ -59,7 +59,7 @@ build-go:
 
 test:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
-	RUST_BACKTRACE=1 go test -v -count=1 ./...
+	RUST_BACKTRACE=1 GOARCH=amd64 go test -v -count=1 ./...
 
 test-safety:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
@@ -152,7 +152,7 @@ clippy:
 
 .PHONY: wasm-go
 wasm-go:
-	GOOS=js GOARCH=wasm go build -o build/main.wasm ./cmd/
+	GOOS=js GOARCH=wasm go build -o build/main.wasm ./wasm-cmd/
 
 .PHONY: wasm-rust
 wasm-rust:
