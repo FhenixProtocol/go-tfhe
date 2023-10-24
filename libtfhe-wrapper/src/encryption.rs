@@ -1,4 +1,3 @@
-use std::thread;
 use crate::api::FheUintType;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;

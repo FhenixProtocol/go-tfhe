@@ -1,31 +1,20 @@
-#[cfg(target_arch = "wasm32")]
-use crate::imports::{console_log, wavm_halt_and_set_finished};
-
-use crate::keys::GlobalKeys;
-use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
-
+use tfhe::{CompactPublicKey, ConfigBuilder, generate_keys};
 #[cfg(target_arch = "wasm32")]
 use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
-
 #[cfg(not(target_arch = "wasm32"))]
 use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
 
-use tfhe::{generate_keys, ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
-
-use crate::keys::deserialize_client_key_safe;
-
-use crate::math::{op_uint16, op_uint32, op_uint8};
-
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
-
-use crate::error::RustError;
-
-use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
-
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
 use crate::api::FheUintType::{Uint16, Uint32, Uint8};
-
-use serde::{Deserialize, Serialize};
+use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
+use crate::error::RustError;
+#[cfg(target_arch = "wasm32")]
+use crate::imports::{console_log, wavm_halt_and_set_finished};
+use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
+use crate::keys::deserialize_client_key_safe;
+use crate::keys::GlobalKeys;
+use crate::math::{op_uint16, op_uint32, op_uint8};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -162,7 +151,7 @@ pub unsafe extern "C" fn math_operation(
 pub unsafe extern "C" fn load_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
-) -> () {
+) {
     if let Some(server_key_slice) = key.read() {
         let r = load_server_key_safe(server_key_slice);
 
@@ -180,7 +169,7 @@ pub unsafe extern "C" fn load_server_key(
 pub unsafe extern "C" fn load_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
-) -> () {
+) {
     if let Some(client_key_slice) = key.read() {
         let r = deserialize_client_key_safe(client_key_slice);
 
@@ -198,7 +187,7 @@ pub unsafe extern "C" fn load_client_key(
 pub unsafe extern "C" fn load_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
-) -> () {
+) {
     if let Some(public_key_slice) = key.read() {
         let r = deserialize_public_key_safe(public_key_slice);
 
