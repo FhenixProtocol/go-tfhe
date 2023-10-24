@@ -4,7 +4,10 @@
 pub mod api;
 pub(crate) mod encryption;
 pub(crate) mod error;
+
+#[cfg(target_arch = "wasm32")]
 pub(crate) mod imports;
+
 pub(crate) mod keys;
 pub(crate) mod math;
 pub(crate) mod serialization;

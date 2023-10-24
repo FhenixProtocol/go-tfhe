@@ -1,4 +1,6 @@
+#[cfg(target_arch = "wasm32")]
 use crate::imports::{console_log, wavm_halt_and_set_finished};
+
 use crate::keys::GlobalKeys;
 use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
 
@@ -262,6 +264,7 @@ pub unsafe extern "C" fn encrypt(
     UnmanagedVector::new(Some(result))
 }
 
+#[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub unsafe extern "C" fn banana() {
     // let cks_bytes = include_bytes!("../../../keys/tfhe/cks");
@@ -378,3 +381,4 @@ pub unsafe extern "C" fn decrypt(
 
     handle_c_error_default(r, err_msg)
 }
+

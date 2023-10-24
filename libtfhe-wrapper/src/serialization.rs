@@ -22,6 +22,7 @@ macro_rules! deserialize_fhe_uint {
                 Ok(x.expand())
             } else {
                 let x: $type = bincode::deserialize(slice).map_err(|err| {
+                    #[cfg(target_arch = "wasm32")]
                     crate::imports::console_log(
                         format!("failed to deserialize: {:?}", err).as_str(),
                     );

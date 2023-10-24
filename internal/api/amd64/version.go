@@ -6,7 +6,7 @@ package amd64
 import "C"
 
 func LibTfheVersion() (string, error) {
-	versionPtr, err := C.version_str()
+	versionPtr, err := C.version()
 	if err != nil {
 		return "", err
 	}

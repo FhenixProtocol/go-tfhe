@@ -10,7 +10,7 @@ USER_GROUP = $(shell id -g)
 GO_ROOT = $(shell go env GOROOT)
 
 SHARED_LIB_SRC = "" # File name of the shared library as created by the Rust build system
-SHARED_LIB_DST = "" # File name of the shared library that we store
+SHARED_LIB_DST = "amd64/" # File name of the shared library that we store
 ifeq ($(OS),Windows_NT)
 	SHARED_LIB_SRC = wasmvm.dll
 	SHARED_LIB_DST = wasmvm.dll
@@ -49,12 +49,12 @@ build-rust-debug:
 # enable stripping through cargo (if that is desired).
 build-rust-release:
 	(cd libtfhe-wrapper && cargo build --release)
-	cp libtfhe-wrapper/target/release/$(SHARED_LIB_SRC) internal/api/$(SHARED_LIB_DST)
+	cp libtfhe-wrapper/target/release/$(SHARED_LIB_SRC) internal/api/amd64/$(SHARED_LIB_DST)
 	make update-bindings
 	@ #this pulls out ELF symbols, 80% size reduction!
 
 build-go:
-	go build ./...
+	# go build ./...
 	go build -o build/main ./cmd/
 
 test:
@@ -96,20 +96,21 @@ release-build-macos-static:
 	rm -rf libtfhe_wrapper/target/x86_64-apple-darwin/release
 	rm -rf libtfhe_wrapper/target/aarch64-apple-darwin/release
 	docker run --rm -u $(USER_ID):$(USER_GROUP) -v $(shell pwd)/libtfhe-wrapper:/code $(BUILDERS_PREFIX)-cross build_macos_static.sh
-	cp libtfhe_wrapper/artifacts/libtfhe_wrapperstatic_darwin.a internal/api/libtfhe_wrapperstatic_darwin.a
+	cp libtfhe_wrapper/artifacts/libtfhe_wrapperstatic_darwin.a internal/api/amd64/libtfhe_wrapperstatic_darwin.a
 	make update-bindings
 
 # Creates a release build in a containerized build environment of the shared library for Windows (.dll)
 release-build-windows:
 	rm -rf libtfhe_wrapper/target/release
 	docker run --rm -u $(USER_ID):$(USER_GROUP) -v $(shell pwd)/libtfhe-wrapper:/code $(BUILDERS_PREFIX)-cross build_windows.sh
-	cp libtfhe_wrapper/target/x86_64-pc-windows-gnu/release/tfhe_wrapper.dll internal/api
+	cp libtfhe_wrapper/target/x86_64-pc-windows-gnu/release/tfhe_wrapper.dll internal/api/amd64
 	make update-bindings
 
 update-bindings:
 # After we build libtfhe_wrapper, we have to copy the generated bindings for Go code to use.
 # We cannot use symlinks as those are not reliably resolved by `go get` (https://github.com/CosmWasm/wasmvm/pull/235).
-	cp libtfhe-wrapper/bindings.h internal/api
+	cp libtfhe-wrapper/bindings.h internal/api/amd64
+	cp libtfhe-wrapper/bindings.h internal/api/
 
 release-build:
 	# Write like this because those must not run in parallel

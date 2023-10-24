@@ -33,6 +33,7 @@ crate-type = ["cdylib"]
 default = []
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
+wasm32 = []
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 errno = { version = "0.3.1"}

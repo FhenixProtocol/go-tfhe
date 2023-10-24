@@ -85,7 +85,7 @@ func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 
 	errmsg := uninitializedUnmanagedVector()
 
-	_, err := C.deserialize_server_key(sks, &errmsg)
+	_, err := C.load_server_key(sks, &errmsg)
 	if err != nil {
 		return false, errorWithMessage(err, errmsg)
 	}
@@ -99,7 +99,7 @@ func DeserializeClientKey(clientKeyBytes []byte) (bool, error) {
 
 	errmsg := uninitializedUnmanagedVector()
 
-	_, err := C.deserialize_client_key(clientKeyView, &errmsg)
+	_, err := C.load_client_key(clientKeyView, &errmsg)
 	if err != nil {
 		return false, errorWithMessage(err, errmsg)
 	}
@@ -113,7 +113,7 @@ func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
 
 	errmsg := uninitializedUnmanagedVector()
 
-	_, err := C.deserialize_public_key(publicKeyView, &errmsg)
+	_, err := C.load_public_key(publicKeyView, &errmsg)
 	if err != nil {
 		return false, errorWithMessage(err, errmsg)
 	}
@@ -150,7 +150,7 @@ func EncryptTrivial(value big.Int, intType UintType) ([]byte, error) {
 
 	errmsg := uninitializedUnmanagedVector()
 
-	res, err := C.trivial_encrypt(cu64(val), C.FheUintType(intType), &errmsg)
+	res, err := C.encrypt(cu64(val), C.FheUintType(intType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}
