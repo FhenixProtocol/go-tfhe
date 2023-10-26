@@ -147,70 +147,37 @@ func (ct *Ciphertext) Decrypt() (*big.Int, error) {
 	return big.NewInt(int64(res)), err
 }
 
-// Sub performs ciphertext subtraction.
+func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciphertext, error) {
+	if ct.UintType != rhs.UintType {
+		return nil, fmt.Errorf("cannot perform operation on uints of different types")
+	}
+
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), operation)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
+}
+
+// Now you can use the above function to implement the original methods:
+
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot subtract uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), sub)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, sub)
 }
 
-// Mul performs ciphertext multiplication.
 func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot multiply uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), mul)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, mul)
 }
 
-// Lt performs less-than comparison between two ciphertexts.
 func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot compare uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lt)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, lt)
 }
 
-// Lte performs less-than-or-equal-to comparison between two ciphertexts.
 func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot compare uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lte)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, lte)
 }
