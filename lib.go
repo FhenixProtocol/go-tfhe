@@ -145,45 +145,33 @@ func InitTfhe(config *Config) error {
 		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
 	}
 
-	fmt.Printf("TOMMM InitTfhe 1 server key path %s\n", serverKeyPath)
 	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
-		println("TOMMM InitTfhe 2")
 		return err
 	}
 
-	println("TOMMM InitTfhe 3")
 	api.CKS, err = os.ReadFile(clientKeyPath)
 	if err != nil {
-		println("TOMMM InitTfhe 4")
 		return err
 	}
 
-	println("TOMMM InitTfhe 5")
 	api.PKS, err = os.ReadFile(publicKeyPath)
 	if err != nil {
-		println("TOMMM InitTfhe 6")
 		return err
 	}
 
-	println("TOMMM InitTfhe 7")
 	_, err = LoadServerKey(api.SKS)
 	if err != nil {
-		println("TOMMM InitTfhe 8")
 		return err
 	}
 
-	println("TOMMM InitTfhe 9")
 	_, err = LoadClientKey(api.CKS)
 	if err != nil {
-		println("TOMMM InitTfhe 10")
 		return err
 	}
 
-	println("TOMMM InitTfhe 11")
 	_, err = LoadPublicKey(api.PKS)
 	if err != nil {
-		println("TOMMM InitTfhe 12")
 		return err
 	}
 
