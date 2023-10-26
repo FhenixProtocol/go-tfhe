@@ -165,8 +165,6 @@ func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
 		return nil, err
 	}
 
-	fmt.Println("LIORRRRRRRR go-tfhe new")
-
 	return &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
