@@ -32,7 +32,6 @@ func (ct *Ciphertext) Hash() Hash {
 }
 
 func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error) {
-
 	res, err := Encrypt(value, t)
 	if err != nil {
 		return nil, err

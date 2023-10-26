@@ -48,7 +48,6 @@ profile.cov
 
 **/yarn-error.log
 
-
 target
 build
-bindings.h
+libtfhe-wrapper/bindings.h

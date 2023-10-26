@@ -5,6 +5,7 @@ use crate::memory::{ByteSliceView, UnmanagedVector};
 use serde::Serialize;
 use std::ops::{Add, Mul, Sub};
 use std::panic::{catch_unwind, UnwindSafe};
+use std::thread;
 use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
@@ -90,13 +91,9 @@ fn common_op<
     operation: Op,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    let server_key_guard = SERVER_KEY.lock().unwrap();
-
     let r: Result<Vec<u8>, RustError> = catch_unwind(|| {
-        match *server_key_guard {
-            true => {}
-            false => panic!("Server key not set"), // Return an error or handle this case appropriately.
-        };
+        let mut server_key_guard = SERVER_KEY.lock().unwrap();
+        server_key_guard.ensure_init();
 
         let result = match operation {
             Op::Add => num1 + num2,
