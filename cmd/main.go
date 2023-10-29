@@ -161,7 +161,7 @@ func Add(skPath string, pksPath string) error {
 		return fmt.Errorf("error while adding: %s", err)
 	}
 
-	fmt.Printf("Success! Got result %s", hex.EncodeToString(res.Serialization))
+	fmt.Printf("Success! Got result %s...\n", hex.EncodeToString(res.Serialization)[:80])
 	return nil
 }
 
