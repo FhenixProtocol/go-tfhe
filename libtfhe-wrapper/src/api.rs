@@ -1,10 +1,8 @@
 use crate::keys::{CLIENT_KEY, PUBLIC_KEY, SERVER_KEY};
-use std::panic::{catch_unwind};
-use tfhe::{
-    set_server_key, ClientKey, CompactPublicKey, ServerKey,
-};
+use std::panic::catch_unwind;
+use tfhe::{set_server_key, ClientKey, CompactPublicKey, ServerKey};
 
-use crate::math::{op_uint8, op_uint16, op_uint32};
+use crate::math::{op_uint16, op_uint32, op_uint8};
 
 use crate::error::{handle_c_error_binary, handle_c_error_default, RustError};
 
@@ -79,7 +77,6 @@ pub unsafe extern "C" fn deserialize_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
-
     let client_key_slice = key.read().unwrap();
 
     let r = deserialize_client_key_safe(client_key_slice);
@@ -89,18 +86,17 @@ pub unsafe extern "C" fn deserialize_client_key(
 
 pub fn deserialize_client_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
-        let maybe_key_deserialized =
-            bincode::deserialize::<ClientKey>(key).unwrap();
+        let maybe_key_deserialized = bincode::deserialize::<ClientKey>(key).unwrap();
 
         let mut client_key = CLIENT_KEY.lock().unwrap();
         *client_key = Some(maybe_key_deserialized);
 
         true
     })
-        .map_err(|err| {
-            eprintln!("Panic in deserialize_client_key: {:?}", err);
-            RustError::generic_error("lol")
-        });
+    .map_err(|err| {
+        eprintln!("Panic in deserialize_client_key: {:?}", err);
+        RustError::generic_error("lol")
+    });
     r
 }
 
@@ -109,7 +105,6 @@ pub unsafe extern "C" fn deserialize_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> bool {
-
     let public_key_slice = key.read().unwrap();
 
     let r = deserialize_public_key_safe(public_key_slice);
@@ -119,18 +114,17 @@ pub unsafe extern "C" fn deserialize_public_key(
 
 pub fn deserialize_public_key_safe(key: &[u8]) -> Result<bool, RustError> {
     let r: Result<bool, RustError> = catch_unwind(|| {
-        let maybe_key_deserialized =
-            bincode::deserialize::<CompactPublicKey>(key).unwrap();
+        let maybe_key_deserialized = bincode::deserialize::<CompactPublicKey>(key).unwrap();
 
-        let mut client_key = PUBLIC_KEY.lock().unwrap();
-        *client_key = Some(maybe_key_deserialized);
+        let mut public_key = PUBLIC_KEY.lock().unwrap();
+        *public_key = Some(maybe_key_deserialized);
 
         true
     })
-        .map_err(|err| {
-            eprintln!("Panic in deserialize_public_key: {:?}", err);
-            RustError::generic_error(":(")
-        });
+    .map_err(|err| {
+        eprintln!("Panic in deserialize_public_key: {:?}", err);
+        RustError::generic_error(":(")
+    });
     r
 }
 

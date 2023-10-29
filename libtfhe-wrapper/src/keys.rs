@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use std::sync::{Arc, Mutex};
 
 use tfhe::{
-    generate_keys, shortint::parameters::PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, ClientKey,
+    generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS, ClientKey,
     CompactPublicKey, ConfigBuilder,
 };
 
@@ -19,7 +19,7 @@ pub unsafe extern "C" fn generate_full_keys(
     path_to_pks: *const std::ffi::c_char,
 ) -> bool {
     let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(PARAM_SMALL_MESSAGE_2_CARRY_2_COMPACT_PK, None)
+        .enable_custom_integers(PARAM_MESSAGE_2_CARRY_2_KS_PBS, None)
         .build();
     let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
         (
