@@ -1,9 +1,3 @@
-use tfhe::{CompactPublicKey, ConfigBuilder, generate_keys};
-#[cfg(target_arch = "wasm32")]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
-#[cfg(not(target_arch = "wasm32"))]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
-
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
 use crate::api::FheUintType::{Uint16, Uint32, Uint8};
@@ -11,8 +5,7 @@ use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, triv
 use crate::error::RustError;
 #[cfg(target_arch = "wasm32")]
 use crate::imports::{console_log, wavm_halt_and_set_finished};
-use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
-use crate::keys::deserialize_client_key_safe;
+use crate::keys::{deserialize_public_key_safe, load_server_key_safe, deserialize_client_key_safe, generate_keys_safe};
 use crate::keys::GlobalKeys;
 use crate::math::{op_uint16, op_uint32, op_uint8};
 
@@ -50,15 +43,47 @@ impl From<u32> for FheUintType {
 #[allow(non_camel_case_types)]
 pub struct c_void {}
 
+pub fn write_keys_to_file(
+    cks: Vec<u8>,
+    cks_path: &str,
+    pks: Vec<u8>,
+    pks_path: &str,
+    sks: Vec<u8>,
+    sks_path: &str) -> bool {
+    if let Err(e) = std::fs::write(cks_path, cks) {
+        println!(
+            "Failed to write cks to path: {:?}. Error: {:?}",
+            cks_path, e
+        );
+        return false;
+    };
+
+    if let Err(e) = std::fs::write(sks_path, sks) {
+        println!(
+            "Failed to write sks to path: {:?}. Error: {:?}",
+            sks_path, e
+        );
+        return false;
+    };
+
+    if let Err(e) = std::fs::write(pks_path, pks) {
+        println!(
+            "Failed to write pks to path: {:?}. Error: {:?}",
+            pks_path, e
+        );
+        return false;
+    };
+
+    true
+
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn generate_full_keys(
     path_to_cks: *const std::ffi::c_char,
     path_to_sks: *const std::ffi::c_char,
     path_to_pks: *const std::ffi::c_char,
 ) -> bool {
-    let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(KEYGEN_PARAMS, None)
-        .build();
     let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
         (
             std::ffi::CStr::from_ptr(path_to_cks),
@@ -82,39 +107,9 @@ pub unsafe extern "C" fn generate_full_keys(
         Ok(s) => s,
     };
 
-    // Client-side
-    let (cks, sks) = generate_keys(config);
-    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+    let (cks, sks, pks) = generate_keys_safe();
 
-    let serialized_secret_key = bincode::serialize(&cks).unwrap();
-    let serialized_server_key = bincode::serialize(&sks).unwrap();
-    let serialized_public_key = bincode::serialize(&pks).unwrap();
-
-    if let Err(e) = std::fs::write(cks_path_str, serialized_secret_key) {
-        println!(
-            "Failed to write cks to path: {:?}. Error: {:?}",
-            cks_path_str, e
-        );
-        return false;
-    };
-
-    if let Err(e) = std::fs::write(sks_path_str, serialized_server_key) {
-        println!(
-            "Failed to write sks to path: {:?}. Error: {:?}",
-            sks_path_str, e
-        );
-        return false;
-    };
-
-    if let Err(e) = std::fs::write(pks_path_str, serialized_public_key) {
-        println!(
-            "Failed to write pks to path: {:?}. Error: {:?}",
-            pks_path_str, e
-        );
-        return false;
-    };
-
-    true
+    write_keys_to_file(cks, cks_path_str, pks, pks_path_str, sks, sks_path_str)
 }
 
 #[no_mangle]
