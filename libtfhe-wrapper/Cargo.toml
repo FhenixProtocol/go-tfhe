@@ -31,7 +31,7 @@ default = []
 backtraces = []
 
 [dependencies]
-tfhe = { "version" = "0.3.0-beta.0", features = [
+tfhe = { git = "https://github.com/FhenixProtocol/tfhe-rs", branch = "0.3.0-wasm32-custom-seeder", features = [
     "experimental-force_fft_algo_dif4",
     "shortint",
     "integer",
