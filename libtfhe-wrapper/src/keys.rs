@@ -6,9 +6,9 @@ use std::sync::Mutex;
 use once_cell::sync::OnceCell;
 use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
 #[cfg(target_arch = "wasm32")]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
 #[cfg(not(target_arch = "wasm32"))]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
 
 use crate::error::RustError;
 
