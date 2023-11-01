@@ -22,6 +22,7 @@ pub enum Op {
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum FheUintType {
     Uint8 = 0,
     Uint16 = 1,
