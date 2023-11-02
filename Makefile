@@ -156,7 +156,7 @@ wasm-go:
 
 .PHONY: wasm-rust
 wasm-rust:
-	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown
+	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown --no-default-features --features=wasm32
 	mkdir -p build
 	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
 

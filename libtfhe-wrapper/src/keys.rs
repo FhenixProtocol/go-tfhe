@@ -1,13 +1,9 @@
 use std::{thread, thread::ThreadId};
-// use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
 use std::sync::Mutex;
 
 use once_cell::sync::OnceCell;
 use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
-#[cfg(target_arch = "wasm32")]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
-#[cfg(not(target_arch = "wasm32"))]
 use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
 
 use crate::error::RustError;
@@ -15,6 +11,12 @@ use crate::error::RustError;
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
+}
+
+impl Default for InitGuard {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InitGuard {

@@ -9,12 +9,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if !defined(DEFINE_WASM32)
 enum ErrnoValue {
   ErrnoValue_Success = 0,
   ErrnoValue_Other = 1,
   ErrnoValue_OutOfGas = 2,
 };
 typedef int32_t ErrnoValue;
+#endif
 
 enum FheUintType {
   FheUintType_Uint8 = 0,
@@ -123,13 +125,13 @@ struct UnmanagedVector trivial_encrypt(uint64_t msg,
 
 struct UnmanagedVector encrypt(uint64_t msg, FheUintType int_type, struct UnmanagedVector *err_msg);
 
-#if defined(DEFINE_WASM32)
-void banana(void);
-#endif
-
 uint64_t decrypt(struct ByteSliceView ciphertext,
                  FheUintType int_type,
                  struct UnmanagedVector *err_msg);
+
+#if defined(DEFINE_WASM32)
+void banana(void);
+#endif
 
 struct UnmanagedVector new_unmanaged_vector(bool nil, const uint8_t *ptr, uintptr_t length);
 

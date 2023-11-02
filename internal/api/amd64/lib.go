@@ -237,27 +237,6 @@ func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath s
 	return nil
 }
 
-//func Add()
-
-//func (ct *TfheCiphertext) encrypt(value big.Int, t FheUintType) {
-
-//func DecryptFheUint8(clientKeyBytes []byte, CipherText []byte) (uint8, error) {
-//
-//	cks := makeView(clientKeyBytes)
-//	defer runtime.KeepAlive(cks)
-//
-//	ct := makeView(CipherText)
-//	defer runtime.KeepAlive(ct)
-//
-//	errmsg := uninitializedUnmanagedVector()
-//
-//	res, err := C.decrypt_fhe_uint8(cks, ct)
-//	if err != nil {
-//		return 0, errorWithMessage(err, errmsg)
-//	}
-//	return uint8(res), nil
-//}
-
 /**** To error module ***/
 
 func errorWithMessage(err error, b C.UnmanagedVector) error {

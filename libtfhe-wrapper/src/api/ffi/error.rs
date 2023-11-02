@@ -1,11 +1,11 @@
 use crate::api::ffi::memory::UnmanagedVector;
 use crate::error::RustError;
-
 #[cfg(not(target_arch = "wasm32"))]
 use errno::{set_errno, Errno};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
+#[cfg(not(target_arch = "wasm32"))]
 enum ErrnoValue {
     Success = 0,
     Other = 1,
@@ -15,9 +15,7 @@ enum ErrnoValue {
 
 pub fn clear_error() {
     #[cfg(not(target_arch = "wasm32"))]
-    {
-        set_errno(Errno(ErrnoValue::Success as i32));
-    }
+    set_errno(Errno(ErrnoValue::Success as i32));
 }
 
 pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
@@ -29,14 +27,12 @@ pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
         // That's not nice but we can live with it.
     }
 
-    // let errno = match err {
-    //     _ => ErrnoValue::Other,
-    // } as i32;
     #[cfg(not(target_arch = "wasm32"))]
     {
         let errno = ErrnoValue::Other as i32;
         set_errno(Errno(errno));
     }
+
 }
 
 /// If `result` is Ok, this returns the Ok value and clears [errno].

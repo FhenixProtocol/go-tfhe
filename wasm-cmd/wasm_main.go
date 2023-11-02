@@ -12,8 +12,11 @@ func Version() error {
 	return nil
 }
 
-func LoadFheKeys() {
-
+func GenerateFheKeys() {
+	err := tfhelib.GenerateFheKeys("./", "sks", "cks", "pks")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Add() error {
@@ -33,11 +36,21 @@ func Add() error {
 		return err
 	}
 
-	// todo: decrypt
+	resp, err := ct.Decrypt()
 
+	if resp != bigInt.Add(bigInt, bigInt) {
+		return fmt.Errorf("no beuno: %v vs %v * 2", resp, bigInt)
+	}
+
+	println("Success")
 	return nil
 }
 
 func main() {
-	Add()
+	GenerateFheKeys()
+	println("done generating keys")
+	err := Add()
+	if err != nil {
+		panic(err)
+	}
 }
