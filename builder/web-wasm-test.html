@@ -1,27 +1,13 @@
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <!-- <script src="wasm_exec.js"></script> -->
-    <script>
-      let instance;
-
-      WebAssembly.instantiateStreaming(fetch("rust.wasm"), {
-        env: {
-          consoleLog: function (ptr, len) {
-            const message = new TextDecoder("utf-8").decode(
-              new Uint8Array(instance.exports.memory.buffer, ptr, len)
-            );
-
-            const timestamp = "[" + new Date().toJSON() + "]";
-            console.log(timestamp, message);
-          },
-        },
-      }).then((wasmModule) => {
-        instance = wasmModule.instance;
-        const { banana } = wasmModule.instance.exports;
-        banana();
-      });
-    </script>
-  </head>
-  <body></body>
-</html>
+<head>
+  <meta charset="utf-8"/>
+  <script src="wasm_exec.js"></script>
+  <script>
+    const go = new Go();
+    WebAssembly.instantiateStreaming(fetch("merged.wasm"), go.importObject).then((result) => {
+      go.run(result.instance);
+    });
+  </script>
+</head>
+<body></body>
+</html> 

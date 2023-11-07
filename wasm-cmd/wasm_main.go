@@ -1,9 +1,10 @@
-package wasm_cmd
+package main
 
 import (
 	"fmt"
 	tfhelib "github.com/fhenixprotocol/go-tfhe"
 	"math/big"
+	"syscall/js"
 )
 
 func Version() error {
@@ -46,11 +47,18 @@ func Add() error {
 	return nil
 }
 
+func ConsoleLog(ptr int32, size int) {
+	println("Printing!")
+}
+
 func main() {
+	ConsoleLog(0, 0)
+	js.Global().Set("wavm_console_log", js.FuncOf(Wrap(ConsoleLog)))
+
 	GenerateFheKeys()
-	println("done generating keys")
 	err := Add()
 	if err != nil {
 		panic(err)
 	}
+	println("hello")
 }

@@ -171,7 +171,7 @@ start-web-server:
 
 .PHONY: merge-wasm
 merge-wasm: wasm-all
-	wasm-merge --enable-reference-types --enable-multi-memories --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
+	wasm-merge --enable-reference-types --enable-multimemory --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
 
 .PHONY: lior
 lior:
