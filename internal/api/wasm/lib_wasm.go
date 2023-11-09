@@ -29,10 +29,12 @@ func NewWasmError(code int, message string) *WasmError {
 }
 
 //go:wasmimport env encrypt_wasm
-func hostEncrypt(uint64, UintType, unsafe.Pointer, uint32) uint32
+func hostEncrypt(uint64, UintType, unsafe.Pointer, uint32) uint32 { return 0 }
 
 //go:wasmimport env math_operation_wasm
-func hostMathOperation(unsafe.Pointer, uint64, unsafe.Pointer, uint64, uint32, int32, unsafe.Pointer, uint32) uint32
+func hostMathOperation(unsafe.Pointer, uint64, unsafe.Pointer, uint64, uint32, int32, unsafe.Pointer, uint32) uint32 {
+	return 0
+}
 
 type UintType uint32
 type OperationType int32
