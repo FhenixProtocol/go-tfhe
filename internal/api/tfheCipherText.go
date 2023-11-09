@@ -149,6 +149,7 @@ func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
 
 	return &Ciphertext{
 		Serialization: res,
+		hash:          Keccak256(res),
 		UintType:      ct.UintType,
 	}, nil
 }
@@ -165,6 +166,7 @@ func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
 
 	return &Ciphertext{
 		Serialization: res,
+		hash:          Keccak256(res),
 		UintType:      ct.UintType,
 	}, nil
 }
@@ -181,6 +183,7 @@ func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
 
 	return &Ciphertext{
 		Serialization: res,
+		hash:          Keccak256(res),
 		UintType:      ct.UintType,
 	}, nil
 }
@@ -197,6 +200,7 @@ func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
 
 	return &Ciphertext{
 		Serialization: res,
+		hash:          Keccak256(res),
 		UintType:      ct.UintType,
 	}, nil
 }
