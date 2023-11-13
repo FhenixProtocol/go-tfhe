@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
@@ -31,17 +32,31 @@ func LoadServerKey(serverKeyBytes []byte) (bool, error) {
 // Decrypt decrypts the given Ciphertext.
 // It checks if the keys are initialized before performing decryption
 func Decrypt(ciphertext Ciphertext) (uint64, error) {
-
-	if api.LoadKeysDone {
-		return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
+	if len(ciphertext.Serialization) == 0 {
+		return 0, fmt.Errorf("cannot check require without encrypted bytes")
 	}
 
-	result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
+	result, err := oracleStorage.Decrypt(&ciphertext)
 	if err != nil {
 		return 0, err
 	}
 
-	return result, nil
+	resultAsNumber, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, nil
+	}
+
+	return uint64(resultAsNumber), nil
+	//if api.LoadKeysDone {
+	//	return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
+	//}
+	//
+	//result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//return result, nil
 }
 
 // PublicKey retrieves the current public key
@@ -51,6 +66,13 @@ func PublicKey() ([]byte, error) {
 
 // CheckRequire consults the oracle to check a certain requirement based on the ciphertext
 func CheckRequire(ciphertext *Ciphertext) (bool, error) {
+	if ciphertext == nil {
+		return false, fmt.Errorf("cannot check require on nil")
+	}
+	if len(ciphertext.Serialization) == 0 {
+		return false, fmt.Errorf("cannot check require without encrypted bytes")
+	}
+
 	result, err := oracleStorage.GetRequire(ciphertext)
 	if err != nil {
 		return false, err
@@ -163,9 +185,10 @@ func InitTfhe(config *Config) error {
 		}
 
 		oracleStorage = oracle.HttpOracle{}
-
+	} else if config.OracleType == "network" {
+		oracleStorage = oracle.DecryptionOracle{}
 	} else {
-		db, err := oracle.NewLevelDBOracle(oracleDbPath)
+		db, err := oracle.NewLocalDbStorage(oracleDbPath)
 		if err != nil {
 			return err
 		}

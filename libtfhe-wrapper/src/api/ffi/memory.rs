@@ -18,7 +18,7 @@ pub struct ByteSliceView {
 impl ByteSliceView {
     /// ByteSliceViews are only constructed in Go. This constructor is a way to mimic the behaviour
     /// when testing FFI calls from Rust. It must not be used in production code.
-    #[cfg(test)]
+    #[cfg(any(target_arch = "wasm32", test))]
     pub fn new(source: &[u8]) -> Self {
         Self {
             is_nil: false,

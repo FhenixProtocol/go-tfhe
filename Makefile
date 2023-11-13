@@ -156,7 +156,7 @@ wasm-go:
 
 .PHONY: wasm-rust
 wasm-rust:
-	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown
+	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown --no-default-features --features=wasm32
 	mkdir -p build
 	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
 
@@ -171,7 +171,7 @@ start-web-server:
 
 .PHONY: merge-wasm
 merge-wasm: wasm-all
-	wasm-merge --enable-reference-types --enable-multi-memories --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
+	wasm-merge --enable-reference-types --enable-multimemory --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
 
 .PHONY: lior
 lior:

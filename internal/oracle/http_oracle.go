@@ -25,11 +25,6 @@ func requireURL(key *string) string {
 	return api.GetConfig().OracleAddress + "/require/" + *key
 }
 
-func requireKey(ciphertext []byte) string {
-	// Take the Keccak256 and remove the leading 0x.
-	return hex.EncodeToString(api.Keccak256(ciphertext))[2:]
-}
-
 func doHTTPRequest(method, url string, body []byte, key string) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
@@ -62,7 +57,7 @@ func (HttpOracle) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
 			continue
 		}
 		defer resp.Body.Close()
-		io.ReadAll(resp.Body)
+		_, _ = io.ReadAll(resp.Body)
 		if resp.StatusCode != 200 {
 			return err
 		}
@@ -106,4 +101,9 @@ func (HttpOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
 		return msg.Value, nil
 	}
 	return false, fmt.Errorf("getRequire reached maximum retries")
+}
+
+func (HttpOracle) Decrypt(ciphertext *api.Ciphertext) (string, error) {
+	panic("Not implemented yet :(")
+	// return "", nil
 }

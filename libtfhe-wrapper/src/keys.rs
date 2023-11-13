@@ -1,14 +1,21 @@
-use once_cell::sync::OnceCell;
-
-use crate::error::RustError;
-use tfhe::{ClientKey, CompactPublicKey, ServerKey};
-// use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
 use std::sync::Mutex;
 use std::{thread, thread::ThreadId};
+
+use once_cell::sync::OnceCell;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
+use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
+
+use crate::error::RustError;
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
+}
+
+impl Default for InitGuard {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InitGuard {
@@ -149,4 +156,24 @@ pub fn load_server_key_safe(key: &[u8]) -> Result<(), RustError> {
         log::debug!("Failed to set server key");
         RustError::generic_error("failed to set server key: set failed")
     })
+}
+
+pub fn generate_keys_safe() -> (Vec<u8>, Vec<u8>, Vec<u8>) {
+    let config = ConfigBuilder::all_disabled()
+        .enable_custom_integers(KEYGEN_PARAMS, None)
+        .build();
+
+    // Client-side
+    let (cks, sks) = tfhe::generate_keys(config);
+    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+
+    let serialized_secret_key = bincode::serialize(&cks).unwrap();
+    let serialized_server_key = bincode::serialize(&sks).unwrap();
+    let serialized_public_key = bincode::serialize(&pks).unwrap();
+
+    (
+        serialized_secret_key,
+        serialized_server_key,
+        serialized_public_key,
+    )
 }

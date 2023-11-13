@@ -10,6 +10,9 @@ import (
 	// Include any other packages as necessary.
 )
 
+var KeyRequirePublic []byte
+var KeyRequirePrivate []byte
+
 type WasmError struct {
 	ErrorCode int
 	Message   string
@@ -39,36 +42,40 @@ func hostMathOperation(unsafe.Pointer, uint64, unsafe.Pointer, uint64, uint32, i
 type UintType uint32
 type OperationType int32
 
-func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
-	// TODO: Implement the logic here
-	return false, nil
-}
-
-func DeserializeClientKey(clientKeyBytes []byte) (bool, error) {
-	// TODO: Implement the logic here
-	return false, nil
-}
-
-func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
-	// TODO: Implement the logic here
-	return false, nil
-}
-
-func GetPublicKey() ([]byte, error) {
-	// TODO: Implement the logic here
-	return nil, nil
-}
-
 func Encrypt(value big.Int, intType UintType) ([]byte, error) {
 	// TODO: Implement the logic here
 	returnValue := NewUnmanagedVector(nil)
 
-	result := hostEncrypt(value.Uint64(), intType, returnValue.Ptr, returnValue.Len)
+	result := hostEncrypt(value.Uint64(), intType, *(*int64)(returnValue.Ptr), returnValue.Len)
 	if result != 0 {
 		return nil, NewWasmError(int(result), "failed to encrypt in wasm")
 	}
 
 	return CopyAndDestroyUnmanagedVector(returnValue), nil
+}
+
+func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
+	num1 := MakeView(lhs)
+	defer runtime.KeepAlive(num1)
+
+	num2 := MakeView(rhs)
+	defer runtime.KeepAlive(num2)
+
+	result := hostMathOperation(*(*int64)(num1.Ptr), num1.Len, *(*int64)(num2.Ptr), num2.Len, uint32(uintType), int32(op))
+	if result == 0 {
+		panic("failed to perform wasm math operation")
+	}
+
+	out := Uint64ToByteSlice(result, 100)
+
+	return out, nil
+}
+
+// ******************** HERE BE PLACEHOLDERS ********** //
+
+func Uint64ToByteSlice(ptr uint64, length int) []byte {
+	unsafePtr := unsafe.Pointer(uintptr(ptr))
+	return (*[1 << 30]byte)(unsafePtr)[:length:length]
 }
 
 func EncryptTrivial(value big.Int, intType UintType) ([]byte, error) {
@@ -101,19 +108,22 @@ func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath s
 	return nil
 }
 
-func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
-	num1 := MakeView(lhs)
-	defer runtime.KeepAlive(num1)
+func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
+	// TODO: Implement the logic here
+	return false, nil
+}
 
-	num2 := MakeView(rhs)
-	defer runtime.KeepAlive(num2)
+func DeserializeClientKey(clientKeyBytes []byte) (bool, error) {
+	// TODO: Implement the logic here
+	return false, nil
+}
 
-	returnValue := NewUnmanagedVector(nil)
+func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
+	// TODO: Implement the logic here
+	return false, nil
+}
 
-	result := hostMathOperation(num1.Ptr, num1.Len, num2.Ptr, num2.Len, uint32(uintType), int32(op), returnValue.Ptr, returnValue.Len)
-	if result != 0 {
-		return nil, NewWasmError(int(result), "failed to perform math operation in wasm")
-	}
-
-	return CopyAndDestroyUnmanagedVector(returnValue), nil
+func GetPublicKey() ([]byte, error) {
+	// TODO: Implement the logic here
+	return nil, nil
 }

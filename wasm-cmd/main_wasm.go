@@ -1,9 +1,10 @@
-package wasm_cmd
+package main
 
 import (
 	"fmt"
 	tfhelib "github.com/fhenixprotocol/go-tfhe"
 	"math/big"
+	"syscall/js"
 )
 
 func Version() error {
@@ -12,8 +13,11 @@ func Version() error {
 	return nil
 }
 
-func LoadFheKeys() {
-
+func GenerateFheKeys() {
+	err := tfhelib.GenerateFheKeys("./", "sks", "cks", "pks")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Add() error {
@@ -33,11 +37,28 @@ func Add() error {
 		return err
 	}
 
-	// todo: decrypt
+	resp, err := ct.Decrypt()
 
+	if resp != bigInt.Add(bigInt, bigInt) {
+		return fmt.Errorf("no beuno: %v vs %v * 2", resp, bigInt)
+	}
+
+	println("Success")
 	return nil
 }
 
+func ConsoleLog(ptr int32, size int) {
+	println("Printing!")
+}
+
 func main() {
-	Add()
+	ConsoleLog(0, 0)
+	js.Global().Set("wavm_console_log", js.FuncOf(Wrap(ConsoleLog)))
+
+	GenerateFheKeys()
+	err := Add()
+	if err != nil {
+		panic(err)
+	}
+	println("hello")
 }

@@ -1,20 +1,17 @@
-use tfhe::{CompactPublicKey, ConfigBuilder, generate_keys};
-#[cfg(target_arch = "wasm32")]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
-#[cfg(not(target_arch = "wasm32"))]
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_PBS_KS as KEYGEN_PARAMS;
-
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
-use crate::api::FheUintType::{Uint16, Uint32, Uint8};
+// use crate::api::FheUintType::{Uint16, Uint32, Uint8};
 use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
 use crate::error::RustError;
-#[cfg(target_arch = "wasm32")]
-use crate::imports::{console_log, wavm_halt_and_set_finished};
-use crate::keys::{deserialize_public_key_safe, load_server_key_safe};
-use crate::keys::deserialize_client_key_safe;
+use crate::keys::{deserialize_public_key_safe, load_server_key_safe, deserialize_client_key_safe, generate_keys_safe};
 use crate::keys::GlobalKeys;
 use crate::math::{op_uint16, op_uint32, op_uint8};
+
+#[cfg(target_arch = "wasm32")]
+use tfhe::{ConfigBuilder, CompactPublicKey, generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS};
+
+#[cfg(target_arch = "wasm32")]
+use crate::imports::{wavm_halt_and_set_finished, console_log};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -27,8 +24,22 @@ pub enum Op {
     Lte = 4,
 }
 
+impl From<u32> for Op {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => Op::Add,
+            1 => Op::Sub,
+            2 => Op::Mul,
+            3 => Op::Lt,
+            4 => Op::Lte,
+            _ => Op::Add,
+        }
+    }
+}
+
 /// cbindgen:prefix-with-name
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum FheUintType {
     Uint8 = 0,
     Uint16 = 1,
@@ -38,10 +49,10 @@ pub enum FheUintType {
 impl From<u32> for FheUintType {
     fn from(value: u32) -> Self {
         match value {
-            0 => Uint8,
-            1 => Uint16,
-            2 => Uint32,
-            _ => Uint32,
+            0 => FheUintType::Uint8,
+            1 => FheUintType::Uint16,
+            2 => FheUintType::Uint32,
+            _ => FheUintType::Uint32,
         }
     }
 }
@@ -50,15 +61,47 @@ impl From<u32> for FheUintType {
 #[allow(non_camel_case_types)]
 pub struct c_void {}
 
+pub fn write_keys_to_file(
+    cks: Vec<u8>,
+    cks_path: &str,
+    pks: Vec<u8>,
+    pks_path: &str,
+    sks: Vec<u8>,
+    sks_path: &str) -> bool {
+    if let Err(e) = std::fs::write(cks_path, cks) {
+        println!(
+            "Failed to write cks to path: {:?}. Error: {:?}",
+            cks_path, e
+        );
+        return false;
+    };
+
+    if let Err(e) = std::fs::write(sks_path, sks) {
+        println!(
+            "Failed to write sks to path: {:?}. Error: {:?}",
+            sks_path, e
+        );
+        return false;
+    };
+
+    if let Err(e) = std::fs::write(pks_path, pks) {
+        println!(
+            "Failed to write pks to path: {:?}. Error: {:?}",
+            pks_path, e
+        );
+        return false;
+    };
+
+    true
+
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn generate_full_keys(
     path_to_cks: *const std::ffi::c_char,
     path_to_sks: *const std::ffi::c_char,
     path_to_pks: *const std::ffi::c_char,
 ) -> bool {
-    let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(KEYGEN_PARAMS, None)
-        .build();
     let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
         (
             std::ffi::CStr::from_ptr(path_to_cks),
@@ -82,39 +125,47 @@ pub unsafe extern "C" fn generate_full_keys(
         Ok(s) => s,
     };
 
-    // Client-side
-    let (cks, sks) = generate_keys(config);
-    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+    let (cks, sks, pks) = generate_keys_safe();
 
-    let serialized_secret_key = bincode::serialize(&cks).unwrap();
-    let serialized_server_key = bincode::serialize(&sks).unwrap();
-    let serialized_public_key = bincode::serialize(&pks).unwrap();
+    write_keys_to_file(cks, cks_path_str, pks, pks_path_str, sks, sks_path_str)
+}
 
-    if let Err(e) = std::fs::write(cks_path_str, serialized_secret_key) {
-        println!(
-            "Failed to write cks to path: {:?}. Error: {:?}",
-            cks_path_str, e
-        );
-        return false;
+#[cfg(target_arch = "wasm32")]
+#[no_mangle]
+#[allow(improper_ctypes_definitions)]
+// todo: When we actually integrate this it's going to be a challenge to make sure
+// wasm and non-wasm return the exact same results - as such, maybe we should transition
+// away from cgo structs in the ffi for the amd64 target as well? :(
+pub unsafe extern "C" fn math_operation_wasm(
+    lhs: *mut u8,
+    lhs_len: u64,
+    rhs: *const u8,
+    rhs_len: u64,
+    operation: u32,
+    uint_type: u32,
+) -> (*const u8, u64) {
+    let lhs_slice: &[u8] = unsafe {
+        std::slice::from_raw_parts(lhs, lhs_len as usize)
     };
-
-    if let Err(e) = std::fs::write(sks_path_str, serialized_server_key) {
-        println!(
-            "Failed to write sks to path: {:?}. Error: {:?}",
-            sks_path_str, e
-        );
-        return false;
+    let rhs_slice: &[u8] = unsafe {
+        std::slice::from_raw_parts(rhs, rhs_len as usize)
     };
+    let op_type = Op::from(operation);
+    let fhe_type = FheUintType::from(uint_type);
 
-    if let Err(e) = std::fs::write(pks_path_str, serialized_public_key) {
-        println!(
-            "Failed to write pks to path: {:?}. Error: {:?}",
-            pks_path_str, e
-        );
-        return false;
-    };
+    let err: Option<&mut UnmanagedVector> = None;
 
-    true
+    let x = math_operation(
+        ByteSliceView::new(lhs_slice),
+        ByteSliceView::new(rhs_slice),
+            op_type,
+        fhe_type,
+        err
+    );
+    // if err.is_none() {
+    //     return (null(), 0)
+    // }
+    return (x.ptr, x.len as u64)
 }
 
 #[no_mangle]
@@ -266,6 +317,27 @@ pub unsafe extern "C" fn encrypt(
     UnmanagedVector::new(Some(result))
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn decrypt(
+    ciphertext: ByteSliceView,
+    int_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> u64 {
+    let ciphertext_slice = ciphertext.read();
+
+    if ciphertext_slice.is_none() {
+        set_error(
+            RustError::generic_error("ciphertext cannot be empty"),
+            err_msg,
+        );
+        return 0;
+    }
+
+    let r = decrypt_safe(ciphertext_slice.unwrap(), int_type);
+
+    handle_c_error_default(r, err_msg)
+}
+
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub unsafe extern "C" fn banana() {
@@ -313,7 +385,7 @@ pub unsafe extern "C" fn banana() {
 
     console_log("encrypt_safe(10)...");
 
-    let ten = match encrypt_safe(10, Uint8) {
+    let ten = match encrypt_safe(10, FheUintType::Uint8) {
         Ok(ten) => ten,
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
@@ -323,7 +395,7 @@ pub unsafe extern "C" fn banana() {
 
     console_log("encrypt_safe(20)...");
 
-    let twenty = match encrypt_safe(20, Uint8) {
+    let twenty = match encrypt_safe(20, FheUintType::Uint8) {
         Ok(ten) => ten,
         Err(err) => {
             console_log(format!("error: {:?}", err).as_str());
@@ -343,7 +415,7 @@ pub unsafe extern "C" fn banana() {
 
     console_log("decrypt_safe(res)...");
 
-    match decrypt_safe(res.as_slice(), Uint8) {
+    match decrypt_safe(res.as_slice(), FheUintType::Uint8) {
         Ok(decrypted) => {
             console_log(format!("decrypted: {}", decrypted).as_str());
 
@@ -361,26 +433,5 @@ pub unsafe extern "C" fn banana() {
     }
 
     wavm_halt_and_set_finished();
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn decrypt(
-    ciphertext: ByteSliceView,
-    int_type: FheUintType,
-    err_msg: Option<&mut UnmanagedVector>,
-) -> u64 {
-    let ciphertext_slice = ciphertext.read();
-
-    if ciphertext_slice.is_none() {
-        set_error(
-            RustError::generic_error("ciphertext cannot be empty"),
-            err_msg,
-        );
-        return 0;
-    }
-
-    let r = decrypt_safe(ciphertext_slice.unwrap(), int_type);
-
-    handle_c_error_default(r, err_msg)
 }
 
