@@ -27,4 +27,5 @@ var (
 	BytesToHash            = api.BytesToHash
 	NewCipherTextFromBytes = api.NewCipherTextFromBytes
 	oracleStorage          = oracle.OracleInterface
+	ConfigDefault          = api.ConfigDefault
 )
