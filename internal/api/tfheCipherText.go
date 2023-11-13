@@ -122,6 +122,23 @@ func (ct *Ciphertext) IsRandom() bool {
 	return ct.random
 }
 
+func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
+	if ct.UintType == toType {
+		return ct, nil
+	}
+
+	res, err := castOperation(ct.Serialization, uint8(ct.UintType), uint8(toType))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
+}
+
 // Add performs ciphertext addition.
 func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
 

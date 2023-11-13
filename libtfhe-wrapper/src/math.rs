@@ -1,3 +1,4 @@
+#[macro_use]
 use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
@@ -63,9 +64,10 @@ fn common_op<
     num2: T,
     operation: Op,
 ) -> Result<Vec<u8>, RustError> {
-
     if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error("server key must be set for math operation"));
+        return Err(RustError::generic_error(
+            "server key must be set for math operation",
+        ));
     }
     GlobalKeys::refresh_server_key_for_thread();
 
