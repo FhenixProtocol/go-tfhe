@@ -36,14 +36,15 @@ backtraces = []
 wasm32 = ["tfhe/custom-seeder"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-errno = { version = "0.3.1"}
+errno = { version = "0.3.1" }
 
 [dependencies]
-tfhe = { git = "https://github.com/fhenixprotocol/tfhe-rs", branch = "0.3.0-beta.0-wasm32-custom-seeder", features = [
-    "experimental-force_fft_algo_dif4",
-    "shortint",
+tfhe = { git = "https://github.com/FhenixProtocol/tfhe-rs", branch = "0.3.0-wasm32-custom-seeder", features = [
+    "boolean",
     "integer",
-    "boolean"
+    "shortint",
+    "custom-seeder",
+    "experimental-force_fft_algo_dif4",
 ] }
 serde = "1.0.163"
 bincode = "1.3.3"

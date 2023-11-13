@@ -1,6 +1,6 @@
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
-// use crate::api::FheUintType::{Uint16, Uint32, Uint8};
+use crate::cast::*;
 use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
@@ -207,10 +207,10 @@ pub unsafe extern "C" fn cast_operation(
     to_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    let (lhs_slice, rhs_slice) = match (lhs.read(), rhs.read()) {
-        (Some(k1), Some(k2)) => (k1, k2),
+    let val_slice = match val.read() {
+        Some(v1) => v1,
         _ => {
-            log::debug!("Failed to decode one or more inputs");
+            log::debug!("Failed to decode an inputs");
             set_error(
                 RustError::generic_error("failed to read input server key"),
                 err_msg,
@@ -218,6 +218,27 @@ pub unsafe extern "C" fn cast_operation(
             return UnmanagedVector::none();
         }
     };
+
+    let result = match from_type {
+        FheUintType::Uint8 => match to_type {
+            FheUintType::Uint8 => Ok(val_slice.to_vec()),
+            FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint8_to_uint32(val_slice),
+        },
+        FheUintType::Uint16 => match to_type {
+            FheUintType::Uint8 => cast_from_uint16_to_uint8(val_slice),
+            FheUintType::Uint16 => Ok(val_slice.to_vec()),
+            FheUintType::Uint32 => cast_from_uint16_to_uint32(val_slice),
+        },
+        FheUintType::Uint32 => match to_type {
+            FheUintType::Uint8 => cast_from_uint32_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint32_to_uint16(val_slice),
+            FheUintType::Uint32 => Ok(val_slice.to_vec()),
+        },
+    };
+
+    let result = handle_c_error_binary(result, err_msg);
+    UnmanagedVector::new(Some(result))
 }
 
 #[no_mangle]

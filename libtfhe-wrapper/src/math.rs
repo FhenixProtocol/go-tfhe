@@ -1,10 +1,8 @@
-#[macro_use]
 use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
 use std::ops::{Add, Mul, Sub};
-use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
