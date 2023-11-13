@@ -653,7 +653,7 @@ checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 [[package]]
 name = "tfhe"
 version = "0.3.0"
-source = "git+https://github.com/FhenixProtocol/tfhe-rs?branch=0.3.0-wasm32-custom-seeder#5d7c538fa97d95e4c7bd80e60e74ce01ebfaa656"
+source = "git+https://github.com/fhenixprotocol/tfhe-rs?branch=0.3.0-wasm32-custom-seeder#5d7c538fa97d95e4c7bd80e60e74ce01ebfaa656"
 dependencies = [
  "aligned-vec",
  "bytemuck",

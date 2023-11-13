@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use std::{thread, thread::ThreadId};
 
 use once_cell::sync::OnceCell;
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS as KEYGEN_PARAMS;
 use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
 
 use crate::error::RustError;
