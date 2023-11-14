@@ -1,13 +1,12 @@
-use std::{thread, thread::ThreadId};
 use std::collections::HashSet;
 use std::sync::Mutex;
+use std::{thread, thread::ThreadId};
 
 use once_cell::sync::OnceCell;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS as KEYGEN_PARAMS;
 use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS;
 
 use crate::error::RustError;
-
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
@@ -39,9 +38,9 @@ impl InitGuard {
         match &self.key {
             None => panic!("Server Key not set"),
             Some(key) => match self.init_threads.insert(thread::current().id()) {
-                false => {}, // thread already set key in zama lib
+                false => {} // thread already set key in zama lib
                 true => tfhe::set_server_key(key.clone()),
-            }
+            },
         }
     }
 }
@@ -62,20 +61,28 @@ impl GlobalKeys {
 
     pub fn set_public_key(key: CompactPublicKey) -> Result<(), RustError> {
         if PUBLIC_KEY.get().is_some() {
-            return Err(RustError::generic_error("Cannot set public key multiple times"))
+            println!("already loaded public key");
+            return Ok(());
+            // return Err(RustError::generic_error(
+            //     "Cannot set public key multiple times",
+            // ));
         }
-        PUBLIC_KEY.set(key).map_err(
-            |_key| RustError::generic_error("failed to set public key")
-        )
+        PUBLIC_KEY
+            .set(key)
+            .map_err(|_key| RustError::generic_error("failed to set public key"))
     }
 
     pub fn set_client_key(key: ClientKey) -> Result<(), RustError> {
         if CLIENT_KEY.get().is_some() {
-            return Err(RustError::generic_error("Cannot set client key multiple times"))
+            println!("already loaded client key");
+            return Ok(());
+            // return Err(RustError::generic_error(
+            //     "Cannot set client key multiple times",
+            // ));
         }
-        CLIENT_KEY.set(key).map_err(
-            |_key| RustError::generic_error("failed to set client key")
-        )
+        CLIENT_KEY
+            .set(key)
+            .map_err(|_key| RustError::generic_error("failed to set client key"))
     }
 
     pub fn is_server_key_set() -> bool {
@@ -111,7 +118,7 @@ impl GlobalKeys {
     // }
 }
 
-pub static SERVER_KEY: OnceCell<Mutex<InitGuard>>  = OnceCell::new();
+pub static SERVER_KEY: OnceCell<Mutex<InitGuard>> = OnceCell::new();
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
@@ -164,5 +171,9 @@ pub fn generate_keys_safe() -> (Vec<u8>, Vec<u8>, Vec<u8>) {
     let serialized_server_key = bincode::serialize(&sks).unwrap();
     let serialized_public_key = bincode::serialize(&pks).unwrap();
 
-    (serialized_secret_key, serialized_server_key, serialized_public_key)
+    (
+        serialized_secret_key,
+        serialized_server_key,
+        serialized_public_key,
+    )
 }
