@@ -35,7 +35,7 @@ func NewDecryptionOracleClient() *DecryptionOracle {
 		if address == "" {
 			address = DefaultDecryptionOracle
 		}
-		newClient := decryptionoracle.New(config.OracleAddress)
+		newClient := decryptionoracle.New(address)
 
 		oracle.client = &newClient
 	}

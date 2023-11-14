@@ -6,6 +6,31 @@ import (
 	"hash"
 )
 
+const (
+	Uint8  UintType = 0
+	Uint16 UintType = 1
+	Uint32 UintType = 2
+)
+
+// For now track this in a global, but this is kind of messy
+var LoadKeysDone bool
+var KeyRequirePublic []byte
+var KeyRequirePrivate []byte
+
+var CKS []byte
+var PKS []byte
+var SKS []byte
+
+const (
+	add uint32 = 0
+	sub        = 1
+	mul        = 2
+	lt         = 3
+	lte        = 4
+)
+
+type UintType uint32
+
 const HashLength = 32
 
 type Hash [HashLength]byte

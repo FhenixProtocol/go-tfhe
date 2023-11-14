@@ -24,6 +24,8 @@ jobs:
       - name: build
         run: make build
       - name: go-tests
+        env:
+          GOPRIVATE: "github.com/fhenixprotocol/decryption-oracle"
         run: make test
 
   rust-unit-tests:

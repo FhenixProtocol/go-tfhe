@@ -110,7 +110,6 @@ update-bindings:
 # After we build libtfhe_wrapper, we have to copy the generated bindings for Go code to use.
 # We cannot use symlinks as those are not reliably resolved by `go get` (https://github.com/CosmWasm/wasmvm/pull/235).
 	cp libtfhe-wrapper/bindings.h internal/api/amd64
-	cp libtfhe-wrapper/bindings.h internal/api/
 
 release-build:
 	# Write like this because those must not run in parallel

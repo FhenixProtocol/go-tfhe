@@ -24,6 +24,7 @@ crate-type = ["staticlib"]
 name = "wasm"
 path = "examples/bind-to-wasm.rs"
 crate-type = ["cdylib"]
+required-features = ["wasm32"]
 #[[example]]
 #name = "tfhestatic"
 #path = "src/examples/tfhestatic.rs"

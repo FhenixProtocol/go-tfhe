@@ -118,6 +118,9 @@ impl GlobalKeys {
     // }
 }
 
+/// InitGuard is only defined on the server key, as this is the only key that tfhe-rs assumes
+/// will be loaded per-thread. The other keys are passed into their respective function calls
+/// not sure why this is the case - I guess optimizations?
 pub static SERVER_KEY: OnceCell<Mutex<InitGuard>> = OnceCell::new();
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();

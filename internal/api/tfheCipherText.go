@@ -122,25 +122,6 @@ func (ct *Ciphertext) IsRandom() bool {
 	return ct.random
 }
 
-// Add performs ciphertext addition.
-func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
-
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot add uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), add) //op_add
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		hash:          Keccak256(res),
-		UintType:      ct.UintType,
-	}, nil
-}
-
 // Decrypt decrypts the ciphertext and returns the plaintext value.
 func (ct *Ciphertext) Decrypt() (*big.Int, error) {
 	res, err := Decrypt(ct.Serialization, ct.UintType)
@@ -165,6 +146,11 @@ func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciph
 }
 
 // Now you can use the above function to implement the original methods:
+
+// Add performs ciphertext addition.
+func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
+    return ct.performOperation(rhs, add)
+}
 
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, sub)
