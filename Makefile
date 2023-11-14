@@ -7,9 +7,10 @@ ALPINE_TESTER := ghcr.io/scrtlabs/tfhe-builder-alpine:0.0.1
 
 USER_ID := $(shell id -u)
 USER_GROUP = $(shell id -g)
+GO_ROOT = $(shell go env GOROOT)
 
 SHARED_LIB_SRC = "" # File name of the shared library as created by the Rust build system
-SHARED_LIB_DST = "" # File name of the shared library that we store
+SHARED_LIB_DST = "amd64/" # File name of the shared library that we store
 ifeq ($(OS),Windows_NT)
 	SHARED_LIB_SRC = wasmvm.dll
 	SHARED_LIB_DST = wasmvm.dll
@@ -25,11 +26,11 @@ else
 	endif
 endif
 
+all: build test merge-wasm
+
 test-filenames:
 	echo $(SHARED_LIB_DST)
 	echo $(SHARED_LIB_SRC)
-
-all: build test
 
 build: build-rust build-go
 
@@ -48,17 +49,17 @@ build-rust-debug:
 # enable stripping through cargo (if that is desired).
 build-rust-release:
 	(cd libtfhe-wrapper && cargo build --release)
-	cp libtfhe-wrapper/target/release/$(SHARED_LIB_SRC) internal/api/$(SHARED_LIB_DST)
+	cp libtfhe-wrapper/target/release/$(SHARED_LIB_SRC) internal/api/amd64/$(SHARED_LIB_DST)
 	make update-bindings
 	@ #this pulls out ELF symbols, 80% size reduction!
 
 build-go:
-	go build ./...
+	# go build ./...
 	go build -o build/main ./cmd/
 
 test:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
-	RUST_BACKTRACE=1 go test -v -count=1 ./...
+	RUST_BACKTRACE=1 GOARCH=amd64 go test -v -count=1 ./...
 
 test-safety:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
@@ -95,20 +96,20 @@ release-build-macos-static:
 	rm -rf libtfhe_wrapper/target/x86_64-apple-darwin/release
 	rm -rf libtfhe_wrapper/target/aarch64-apple-darwin/release
 	docker run --rm -u $(USER_ID):$(USER_GROUP) -v $(shell pwd)/libtfhe-wrapper:/code $(BUILDERS_PREFIX)-cross build_macos_static.sh
-	cp libtfhe_wrapper/artifacts/libtfhe_wrapperstatic_darwin.a internal/api/libtfhe_wrapperstatic_darwin.a
+	cp libtfhe_wrapper/artifacts/libtfhe_wrapperstatic_darwin.a internal/api/amd64/libtfhe_wrapperstatic_darwin.a
 	make update-bindings
 
 # Creates a release build in a containerized build environment of the shared library for Windows (.dll)
 release-build-windows:
 	rm -rf libtfhe_wrapper/target/release
 	docker run --rm -u $(USER_ID):$(USER_GROUP) -v $(shell pwd)/libtfhe-wrapper:/code $(BUILDERS_PREFIX)-cross build_windows.sh
-	cp libtfhe_wrapper/target/x86_64-pc-windows-gnu/release/tfhe_wrapper.dll internal/api
+	cp libtfhe_wrapper/target/x86_64-pc-windows-gnu/release/tfhe_wrapper.dll internal/api/amd64
 	make update-bindings
 
 update-bindings:
 # After we build libtfhe_wrapper, we have to copy the generated bindings for Go code to use.
 # We cannot use symlinks as those are not reliably resolved by `go get` (https://github.com/CosmWasm/wasmvm/pull/235).
-	cp libtfhe-wrapper/bindings.h internal/api
+	cp libtfhe-wrapper/bindings.h internal/api/amd64
 
 release-build:
 	# Write like this because those must not run in parallel
@@ -147,3 +148,30 @@ format:
 .PHONY: clippy
 clippy:
 	cd libtfhe-wrapper && cargo clippy
+
+.PHONY: wasm-go
+wasm-go:
+	GOOS=js GOARCH=wasm go build -o build/main.wasm ./wasm-cmd/
+
+.PHONY: wasm-rust
+wasm-rust:
+	cd libtfhe-wrapper && rustup target add wasm32-unknown-unknown && cargo build --release --examples --target wasm32-unknown-unknown --no-default-features --features=wasm32
+	mkdir -p build
+	cp libtfhe-wrapper/target/wasm32-unknown-unknown/release/examples/wasm.wasm build/rust.wasm
+
+.PHONY: wasm-all
+wasm-all: wasm-go wasm-rust
+
+.PHONY: start-web-server
+start-web-server:
+	cp builder/web-wasm-test.html build/test.html
+	cp "${GO_ROOT}/misc/wasm/wasm_exec.js" build/
+	cd build && goexec 'http.ListenAndServe(`localhost:8082`, http.FileServer(http.Dir(`.`)))'
+
+.PHONY: merge-wasm
+merge-wasm: wasm-all
+	wasm-merge --enable-reference-types --enable-multimemory --enable-bulk-memory build/main.wasm main build/rust.wasm env -o build/merged.wasm
+
+.PHONY: lior
+lior:
+	./lior.sh

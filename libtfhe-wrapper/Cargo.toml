@@ -1,10 +1,10 @@
 [package]
 name = "tfhe-wrapper"
-version = "0.0.1"
+version = "0.0.2"
 publish = false
-authors = ["SCRT Labs <scrtlabs@users.noreply.github.com>"]
+authors = ["Fhenix <fhenixprotocol@users.noreply.github.com>"]
 edition = "2021"
-description = "Go bindings for cosmwasm contracts"
+description = "Go bindings for tfhe-rs"
 repository = ""
 license = "Apache-2.0"
 readme = "README.md"
@@ -20,31 +20,38 @@ name = "muslc"
 path = "src/lib.rs"
 crate-type = ["staticlib"]
 
+[[example]]
+name = "wasm"
+path = "examples/bind-to-wasm.rs"
+crate-type = ["cdylib"]
+required-features = ["wasm32"]
 #[[example]]
 #name = "tfhestatic"
 #path = "src/examples/tfhestatic.rs"
 #crate-type = ["staticlib"]
 
 [features]
-default = []
+default = ["tfhe/seeder_x86_64_rdseed"]
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
+wasm32 = ["tfhe/custom-seeder"]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+errno = { version = "0.3.1" }
 
 [dependencies]
-tfhe = { "version" = "0.3.0-beta.0", features = [
+tfhe = { git = "https://github.com/fhenixprotocol/tfhe-rs", branch = "0.3.0-wasm32-custom-seeder", features = [
     "experimental-force_fft_algo_dif4",
     "shortint",
     "integer",
     "boolean",
-    "seeder_unix",
 ] }
 serde = "1.0.163"
 bincode = "1.3.3"
-errno = "0.3.1"
 thiserror = "1.0.38"
-lazy_static = "1.4.0"
-
+once_cell = "1.18.0"
 log = "0.4.19"
+hex = "0.4.3"
 
 [dev-dependencies]
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }

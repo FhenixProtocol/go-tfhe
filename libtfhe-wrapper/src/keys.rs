@@ -1,16 +1,21 @@
-use lazy_static::lazy_static;
 use std::collections::HashSet;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::{thread, thread::ThreadId};
 
-use tfhe::{
-    generate_keys, set_server_key, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS, ClientKey,
-    CompactPublicKey, ConfigBuilder, ServerKey,
-};
+use once_cell::sync::OnceCell;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS as KEYGEN_PARAMS;
+use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
 
+use crate::error::RustError;
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
+}
+
+impl Default for InitGuard {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InitGuard {
@@ -21,90 +26,157 @@ impl InitGuard {
         }
     }
 
+    pub fn is_key_set(&self) -> bool {
+        self.key.is_some()
+    }
+
     pub fn set_key(&mut self, key: ServerKey) {
         self.key = Some(key);
     }
 
     pub fn ensure_init(&mut self) {
         match &self.key {
-            None => panic!("Public Key not set"),
+            None => panic!("Server Key not set"),
             Some(key) => match self.init_threads.insert(thread::current().id()) {
                 false => {} // thread already set key in zama lib
-                true => set_server_key(key.clone()),
+                true => tfhe::set_server_key(key.clone()),
             },
         }
     }
 }
 
-lazy_static! {
-    pub static ref SERVER_KEY: Arc<Mutex<InitGuard>> = Arc::new(Mutex::new(InitGuard::new()));
-    pub static ref PUBLIC_KEY: Arc<Mutex<Option<CompactPublicKey>>> = Arc::new(Mutex::new(None));
-    pub static ref CLIENT_KEY: Arc<Mutex<Option<ClientKey>>> = Arc::new(Mutex::new(None));
+pub struct GlobalKeys {}
+
+impl GlobalKeys {
+    pub fn get_public_key() -> Option<&'static CompactPublicKey> {
+        PUBLIC_KEY.get()
+    }
+    pub fn get_client_key() -> Option<&'static ClientKey> {
+        CLIENT_KEY.get()
+    }
+
+    // pub fn is_server_key_set() -> bool {
+    //     SERVER_KEY.get().unwrap_or(&InitGuard::new()).is_key_set()
+    // }
+
+    pub fn set_public_key(key: CompactPublicKey) -> Result<(), RustError> {
+        if PUBLIC_KEY.get().is_some() {
+            println!("already loaded public key");
+            return Ok(());
+            // return Err(RustError::generic_error(
+            //     "Cannot set public key multiple times",
+            // ));
+        }
+        PUBLIC_KEY
+            .set(key)
+            .map_err(|_key| RustError::generic_error("failed to set public key"))
+    }
+
+    pub fn set_client_key(key: ClientKey) -> Result<(), RustError> {
+        if CLIENT_KEY.get().is_some() {
+            println!("already loaded client key");
+            return Ok(());
+            // return Err(RustError::generic_error(
+            //     "Cannot set client key multiple times",
+            // ));
+        }
+        CLIENT_KEY
+            .set(key)
+            .map_err(|_key| RustError::generic_error("failed to set client key"))
+    }
+
+    pub fn is_server_key_set() -> bool {
+        if let Some(mutex) = SERVER_KEY.get() {
+            mutex.lock().unwrap().is_key_set()
+        } else {
+            false
+        }
+    }
+
+    pub fn refresh_server_key_for_thread() {
+        let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
+        let mut guard = mutex.lock().unwrap();
+        guard.ensure_init();
+    }
+
+    pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
+        let mutex = SERVER_KEY.get_or_init(|| Mutex::new(InitGuard::new()));
+        let mut guard = mutex.lock().unwrap();
+        if !guard.is_key_set() {
+            guard.set_key(key);
+        }
+        guard.ensure_init();
+        Ok(())
+    }
+
+    // pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
+    //     if SERVER_KEY.get().is_none() {
+    //         return Err(false);
+    //     }
+    //     SERVER_KEY.get_mut().unwrap().set_key(key);
+    //     Ok(())
+    // }
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn generate_full_keys(
-    path_to_cks: *const std::ffi::c_char,
-    path_to_sks: *const std::ffi::c_char,
-    path_to_pks: *const std::ffi::c_char,
-) -> bool {
+/// InitGuard is only defined on the server key, as this is the only key that tfhe-rs assumes
+/// will be loaded per-thread. The other keys are passed into their respective function calls
+/// not sure why this is the case - I guess optimizations?
+pub static SERVER_KEY: OnceCell<Mutex<InitGuard>> = OnceCell::new();
+pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
+pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
+
+pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let maybe_key_deserialized = bincode::deserialize::<ClientKey>(key).map_err(|err| {
+        log::debug!("failed to deserialize client key: {:?}", err);
+        RustError::generic_error("Failed to deserialize client key")
+    })?;
+
+    GlobalKeys::set_client_key(maybe_key_deserialized)?;
+
+    Ok(())
+}
+
+pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let maybe_key_deserialized = bincode::deserialize::<CompactPublicKey>(key).map_err(|err| {
+        log::debug!("failed to deserialize public key: {:?}", err);
+        RustError::generic_error("Failed to deserialize public key")
+    })?;
+
+    GlobalKeys::set_public_key(maybe_key_deserialized)?;
+
+    Ok(())
+}
+
+pub fn load_server_key_safe(key: &[u8]) -> Result<(), RustError> {
+    let server_key = bincode::deserialize::<ServerKey>(key).map_err(|err| {
+        log::debug!("Failed to set server key: {:?}", err);
+        RustError::generic_error("failed to set server key: bad input")
+    })?;
+
+    tfhe::set_server_key(server_key.clone());
+
+    GlobalKeys::set_server_key(server_key).map_err(|_| {
+        log::debug!("Failed to set server key");
+        RustError::generic_error("failed to set server key: set failed")
+    })
+}
+
+pub fn generate_keys_safe() -> (Vec<u8>, Vec<u8>, Vec<u8>) {
     let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(PARAM_MESSAGE_2_CARRY_2_KS_PBS, None)
+        .enable_custom_integers(KEYGEN_PARAMS, None)
         .build();
-    let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
-        (
-            std::ffi::CStr::from_ptr(path_to_cks),
-            std::ffi::CStr::from_ptr(path_to_sks),
-            std::ffi::CStr::from_ptr(path_to_pks),
-        )
-    };
-
-    let cks_path_str = match c_str_cks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
-
-    let sks_path_str = match c_str_sks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
-
-    let pks_path_str = match c_str_pks.to_str() {
-        Err(_) => return false,
-        Ok(s) => s,
-    };
 
     // Client-side
-    let (cks, sks) = generate_keys(config);
+    let (cks, sks) = tfhe::generate_keys(config);
     let pks: CompactPublicKey = CompactPublicKey::new(&cks);
 
     let serialized_secret_key = bincode::serialize(&cks).unwrap();
     let serialized_server_key = bincode::serialize(&sks).unwrap();
     let serialized_public_key = bincode::serialize(&pks).unwrap();
 
-    if let Err(e) = std::fs::write(cks_path_str, serialized_secret_key) {
-        println!(
-            "Failed to write cks to path: {:?}. Error: {:?}",
-            cks_path_str, e
-        );
-        return false;
-    };
-
-    if let Err(e) = std::fs::write(sks_path_str, serialized_server_key) {
-        println!(
-            "Failed to write sks to path: {:?}. Error: {:?}",
-            sks_path_str, e
-        );
-        return false;
-    };
-
-    if let Err(e) = std::fs::write(pks_path_str, serialized_public_key) {
-        println!(
-            "Failed to write pks to path: {:?}. Error: {:?}",
-            pks_path_str, e
-        );
-        return false;
-    };
-
-    true
+    (
+        serialized_secret_key,
+        serialized_server_key,
+        serialized_public_key,
+    )
 }

@@ -43,6 +43,7 @@ style = "both"
 
 
 [defines]
+"target_arch=wasm32" = "DEFINE_WASM32"
 # "target_os = freebsd" = "DEFINE_FREEBSD"
 # "feature = serde" = "DEFINE_SERDE"
 
@@ -55,7 +56,7 @@ include = [
     "Op",
     "FheUintType"
 ]
-exclude = []
+exclude = ["wavm_console_log", "wavm_halt_and_set_finished"]
 # prefix = "CAPI_"
 item_types = []
 renaming_overrides_prefixing = false

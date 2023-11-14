@@ -1,28 +1,19 @@
 package oracle
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle/memorydb"
+	"strconv"
 )
 
 type MemoryDb struct {
 	db *memorydb.Database
 }
 
-type dbRequireMessage struct {
-	Value bool `json:"value"`
-}
-
-func (o MemoryDb) requireKey(ciphertext []byte) string {
-	// Take the Keccak256 and remove the leading 0x.
-	return hex.EncodeToString(api.Keccak256(ciphertext))[2:]
-}
-
-func NewLevelDBOracle(_ string) (*MemoryDb, error) {
+func NewLocalDbStorage(_ string) (*MemoryDb, error) {
 	db := memorydb.New()
 	return &MemoryDb{db: db}, nil
 }
@@ -31,8 +22,23 @@ func (o MemoryDb) Close() {
 	_ = o.db.Close()
 }
 
+func (o MemoryDb) Decrypt(ct *api.Ciphertext) (string, error) {
+	result, err := ct.Decrypt()
+	if err != nil {
+		return "", err
+	}
+	resultAsString := strconv.Itoa(int(result.Int64()))
+
+	err = o.CacheDecryptResult(ct, resultAsString)
+	if err != nil {
+		return "", err
+	}
+
+	return resultAsString, nil
+}
+
 func (o MemoryDb) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
-	key := o.requireKey(ct.Serialization)
+	key := requireKey(ct.Serialization)
 	j, err := json.Marshal(dbRequireMessage{decryptedNotZero})
 	if err != nil {
 		return err
@@ -42,7 +48,7 @@ func (o MemoryDb) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
 
 func (o MemoryDb) GetRequire(ct *api.Ciphertext) (bool, error) {
 	ciphertext := ct.Serialization
-	key := o.requireKey(ciphertext)
+	key := requireKey(ciphertext)
 
 	data, err := o.db.Get([]byte(key))
 	if err != nil {
@@ -60,4 +66,13 @@ func (o MemoryDb) GetRequire(ct *api.Ciphertext) (bool, error) {
 		return false, fmt.Errorf("failed to unmarshal require signature")
 	}
 	return msg.Value, nil
+}
+
+func (o *MemoryDb) CacheDecryptResult(ct *api.Ciphertext, decResult string) error {
+	key := decryptKey(ct.Serialization)
+	j, err := json.Marshal(dbDecryptMessage{decResult})
+	if err != nil {
+		return err
+	}
+	return o.db.Put([]byte(key), j)
 }

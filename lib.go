@@ -1,5 +1,3 @@
-//go:build cgo
-
 package tfhe
 
 import (
@@ -7,55 +5,78 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle"
 )
 
-// Represents a TFHE ciphertext.
-//
-// Once a ciphertext has a value (either from deserialization, encryption or makeRandom()),
-// it must not be set another value. If that is needed, a new ciphertext must be created.
-// todo (Itzik): Testing whether or not passing the serialized data and not the raw pointer.
-// Obviously it will come at a performance cost, but possibly the security/clarity of the code during the
-// early days could be worth it? For the part seems serialization of FHEu8 is about 20us
-
-// Represents a TFHE ciphertext.
-//
-// Once a ciphertext has a value (either from deserialization, encryption or makeRandom()),
-// it must not be set another value. If that is needed, a new ciphertext must be created.
-
+// LoadClientKey loads the client key - client key is essentially the "super master key" and is used to decrypt data
+// and perform require checks and such
 func LoadClientKey(clientKeyBytes []byte) (bool, error) {
 	return api.DeserializeClientKey(clientKeyBytes)
 }
 
+// LoadPublicKey loads the public key - public key is used by the client (or the library if exposed to the user)
+// to encrypt a plaintext
 func LoadPublicKey(publicKeyBytes []byte) (bool, error) {
 	return api.DeserializePublicKey(publicKeyBytes)
 }
 
+// LoadServerKey loads the server key - server key is the key used to perform mathematical operations on ciphertexts.
+// It is replicated for all nodes in the network
 func LoadServerKey(serverKeyBytes []byte) (bool, error) {
 	return api.DeserializeServerKey(serverKeyBytes)
 }
 
+// Decrypt decrypts the given Ciphertext.
+// It checks if the keys are initialized before performing decryption
 func Decrypt(ciphertext Ciphertext) (uint64, error) {
-
-	if api.LoadKeysDone {
-		return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
+	if len(ciphertext.Serialization) == 0 {
+		return 0, fmt.Errorf("cannot check require without encrypted bytes")
 	}
 
-	result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
+	result, err := oracleStorage.Decrypt(&ciphertext)
 	if err != nil {
 		return 0, err
 	}
 
-	return result, nil
+	resultAsNumber, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, nil
+	}
+
+	return uint64(resultAsNumber), nil
+	//if api.LoadKeysDone {
+	//	return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
+	//}
+	//
+	//result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//return result, nil
 }
 
+// PublicKey retrieves the current public key
 func PublicKey() ([]byte, error) {
 	return api.GetPublicKey()
 }
 
+// CheckRequire consults the oracle to check a certain requirement based on the ciphertext
 func CheckRequire(ciphertext *Ciphertext) (bool, error) {
+	if ciphertext == nil {
+		return false, fmt.Errorf("cannot check require on nil")
+	}
+	if len(ciphertext.Serialization) == 0 {
+		return false, fmt.Errorf("cannot check require without encrypted bytes")
+	}
+
+	if oracleStorage == nil {
+	    return false, fmt.Errorf("Cannot check require if database is not initialized")
+	}
+
 	result, err := oracleStorage.GetRequire(ciphertext)
 	if err != nil {
 		return false, err
@@ -64,6 +85,7 @@ func CheckRequire(ciphertext *Ciphertext) (bool, error) {
 	return result, nil
 }
 
+// StoreRequire stores a requirement into the oracle - this is used by the EVM to manage ciphertexts
 func StoreRequire(ciphertext *Ciphertext, plaintext uint64) (bool, error) {
 	notZero := plaintext != 0
 	err := oracleStorage.PutRequire(ciphertext, notZero)
@@ -71,33 +93,12 @@ func StoreRequire(ciphertext *Ciphertext, plaintext uint64) (bool, error) {
 	return notZero, err
 }
 
+// NewRandomCipherText generates a new random ciphertext based on the UintType provided.
 func NewRandomCipherText(t UintType) (*Ciphertext, error) {
-
-	//config := api.GetConfig()
-	//if config == nil {
-	//	return nil, fmt.Errorf("cannot generate ciphertext without config")
-	//}
-	//
-	//publicKeyPath := config.PublicKeyPath
-	//if config.HomeDir != nil {
-	//	publicKeyPath = filepath.Join(*config.HomeDir, config.PublicKeyPath)
-	//}
-	//
-	//publicKey, err := os.ReadFile(publicKeyPath)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//_, err = LoadPublicKey(publicKey)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//println("Done setting public key as ", publicKeyPath)
-
 	return api.NewRandomCipherText(t)
 }
 
+// InitTfhe initializes TFHE with the given configuration.
 func InitTfhe(config *Config) error {
 	var err error
 
@@ -105,7 +106,6 @@ func InitTfhe(config *Config) error {
 		return fmt.Errorf("config cannot be empty")
 	}
 	if api.LoadKeysDone {
-		fmt.Println("Already loaded keys! Reloading the rust library.. (TEMPORARY PLS FIX)")
 		_, err = LoadServerKey(api.SKS)
 		if err != nil {
 			return err
@@ -188,9 +188,10 @@ func InitTfhe(config *Config) error {
 		}
 
 		oracleStorage = oracle.HttpOracle{}
-
+	} else if config.OracleType == "network" {
+		oracleStorage = oracle.DecryptionOracle{}
 	} else {
-		db, err := oracle.NewLevelDBOracle(oracleDbPath)
+		db, err := oracle.NewLocalDbStorage(oracleDbPath)
 		if err != nil {
 			return err
 		}
@@ -277,20 +278,7 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 	return nil
 }
 
-//func SignRequire(ciphertext []byte, value bool) string {
-//	return api.SignRequire(ciphertext, value)
-//}
-//
-//func RequireBytesToSign(ciphertext []byte, value bool) []byte {
-//	return api.RequireBytesToSign(ciphertext, value)
-//}
-//
-//func VerifyRequireSignature(message []byte, signature []byte) bool {
-//	return api.VerifyRequireSignature(message, signature)
-//}
-
-func Version() (string, error) {
-	version, err := api.LibTfheVersion()
-
-	return version, err
+func Version() uint32 {
+	return api.LibTfheVersion()
 }
+
