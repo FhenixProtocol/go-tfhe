@@ -141,7 +141,6 @@ func InitTfhe(config *Config) error {
 		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
 	}
 
-	fmt.Printf("TOMMM InitTfhe 1 server key path %s\n", serverKeyPath)
 	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
 		return err
