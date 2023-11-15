@@ -2,7 +2,7 @@ module github.com/fhenixprotocol/go-tfhe
 
 go 1.21
 
-//replace github.com/fhenixprotocol/decryption-oracle => ../decryption-oracle
+replace github.com/fhenixprotocol/decryption-oracle => ./decryption-oracle
 
 require (
 	github.com/fhenixprotocol/decryption-oracle v0.0.0-20231026124808-5b99acac9a8d
