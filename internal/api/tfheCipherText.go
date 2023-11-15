@@ -149,7 +149,7 @@ func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciph
 
 // Add performs ciphertext addition.
 func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
-    return ct.performOperation(rhs, add)
+	return ct.performOperation(rhs, add)
 }
 
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
@@ -167,3 +167,9 @@ func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
 func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, lte)
 }
+
+func (ct *Ciphertext) Div(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, div)
+}
+
+// todo add more ops

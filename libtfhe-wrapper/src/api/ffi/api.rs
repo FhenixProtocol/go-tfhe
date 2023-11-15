@@ -22,6 +22,8 @@ pub enum Op {
     Mul = 2,
     Lt = 3,
     Lte = 4,
+    Div = 5,
+    // todo remaining ops
 }
 
 impl From<u32> for Op {
@@ -32,6 +34,8 @@ impl From<u32> for Op {
             2 => Op::Mul,
             3 => Op::Lt,
             4 => Op::Lte,
+            5 => Op::Div,
+            // todo add remaining ops
             _ => Op::Add,
         }
     }

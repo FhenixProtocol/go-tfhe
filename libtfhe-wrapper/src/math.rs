@@ -2,7 +2,7 @@ use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, Div};
 use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
@@ -57,13 +57,13 @@ define_op_fn!(op_uint32, deserialize_fhe_uint32, FheUint32);
 ///
 /// An `UnmanagedVector` containing the serialized result.
 fn common_op<
-    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + FheOrd<Output = T> + FheEq + Serialize,
+    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T> + FheOrd<Output = T> + FheEq + Serialize,
+    //todo verify added `Div`
 >(
     num1: T,
     num2: T,
     operation: Op,
 ) -> Result<Vec<u8>, RustError> {
-
     if !GlobalKeys::is_server_key_set() {
         return Err(RustError::generic_error("server key must be set for math operation"));
     }
@@ -75,6 +75,8 @@ fn common_op<
         Op::Mul => num1 * num2,
         Op::Lt => num1.lt(num2),
         Op::Lte => num1.le(num2),
+        Op::Div => num1 / num2,
+        // todo add remaining ops
     };
 
     bincode::serialize(&result).map_err(|err| {

@@ -27,6 +27,8 @@ const (
 	mul        = 2
 	lt         = 3
 	lte        = 4
+	div        = 5
+	// todo add more ops
 )
 
 type UintType uint32
@@ -34,7 +36,6 @@ type UintType uint32
 const HashLength = 32
 
 type Hash [HashLength]byte
-
 
 func BytesToHash(b []byte) Hash {
 	var h Hash

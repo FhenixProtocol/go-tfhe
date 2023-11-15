@@ -71,11 +71,12 @@ func TestCipherTextOperations(t *testing.T) {
 		return big.NewInt(0)
 	}
 
-	//// Assuming div function returns a Ciphertext of the quotient.
-	//divOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
-	//	return a.Div(b) // Assuming there's a Div method on Ciphertext.
-	//}
-	//divResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Div(a, b) }
+	divOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Div(b)
+	}
+	divResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Div(a, b) }
+
+	// todo add more ops
 
 	testCases := []struct {
 		name     string
@@ -86,7 +87,6 @@ func TestCipherTextOperations(t *testing.T) {
 		resultFn func(a, b *big.Int) *big.Int
 		err      error
 	}{
-
 		{"AddUint8", big.NewInt(10), big.NewInt(20), api.Uint16, addOp,
 			addResultFunc, nil},
 		{"AddUint16", big.NewInt(10), big.NewInt(20), api.Uint16, addOp,
@@ -114,9 +114,11 @@ func TestCipherTextOperations(t *testing.T) {
 		{"LteUint16", big.NewInt(500), big.NewInt(500), api.Uint16, lteOp, lteResultFunc, nil},
 		{"LteUint32", big.NewInt(500_000), big.NewInt(500_000), api.Uint32, lteOp, lteResultFunc, nil},
 
-		// Division tests (assuming Div function exists on Ciphertext)
-		//{"DivUint8", big.NewInt(100), big.NewInt(20), api.Uint8, divOp, divResultFunc, nil},
-		//{"DivUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, divOp, divResultFunc, nil},
+		// Division tests
+		{"DivUint8", big.NewInt(100), big.NewInt(20), api.Uint8, divOp, divResultFunc, nil},
+		{"DivUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, divOp, divResultFunc, nil},
+
+		// todo add more tests
 	}
 
 	for _, tt := range testCases {
@@ -147,7 +149,6 @@ func TestCipherTextOperations(t *testing.T) {
 			if resDec.Cmp(expected) != 0 {
 				t.Fatalf("Result is not what we expected: %s vs %s", resDec, expected)
 			}
-
 		})
 	}
 }
