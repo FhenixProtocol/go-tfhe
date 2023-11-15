@@ -76,7 +76,6 @@ func TestCipherTextOperations(t *testing.T) {
 	}
 	divResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Div(a, b) }
 
-	// todo add more ops
 	gtOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
 		return a.Gt(b)
 	}
@@ -96,6 +95,13 @@ func TestCipherTextOperations(t *testing.T) {
 		}
 		return big.NewInt(0)
 	}
+
+	remOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Rem(b)
+	}
+	remResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Rem(a, b) }
+
+	// todo add more ops
 
 	testCases := []struct {
 		name     string
@@ -135,6 +141,7 @@ func TestCipherTextOperations(t *testing.T) {
 		// Division tests
 		{"DivUint8", big.NewInt(100), big.NewInt(20), api.Uint8, divOp, divResultFunc, nil},
 		{"DivUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, divOp, divResultFunc, nil},
+		{"DivUint32", big.NewInt(1_000_024), big.NewInt(500_012), api.Uint32, divOp, divResultFunc, nil},
 		// Greater Than tests
 		{"GtUint8-true", big.NewInt(10), big.NewInt(20), api.Uint8, gtOp, gtResultFunc, nil},
 		{"GtUint8-false", big.NewInt(10), big.NewInt(10), api.Uint8, gtOp, gtResultFunc, nil},
@@ -149,6 +156,10 @@ func TestCipherTextOperations(t *testing.T) {
 		{"GteUint16-false", big.NewInt(1_000), big.NewInt(999), api.Uint16, gteOp, gteResultFunc, nil},
 		{"GteUint32-true", big.NewInt(1_000_000), big.NewInt(1_000_000), api.Uint32, gteOp, gteResultFunc, nil},
 		{"GteUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, gteOp, gteResultFunc, nil},
+		// Remainder tests
+		{"RemUint8", big.NewInt(102), big.NewInt(20), api.Uint8, remOp, remResultFunc, nil},
+		{"RemUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, remOp, remResultFunc, nil},
+		{"RemUint32", big.NewInt(1_000_024), big.NewInt(500_013), api.Uint32, remOp, remResultFunc, nil},
 	}
 
 	for _, tt := range testCases {

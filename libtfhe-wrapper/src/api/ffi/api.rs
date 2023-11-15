@@ -25,6 +25,7 @@ pub enum Op {
     Div = 5,
     Gt = 6,
     Gte = 7,
+    Rem = 8,
     // todo remaining ops
 }
 
@@ -39,6 +40,7 @@ impl From<u32> for Op {
             5 => Op::Div,
             6 => Op::Gt,
             7 => Op::Gte,
+            8 => Op::Rem,
             // todo add remaining ops
             _ => Op::Add,
         }

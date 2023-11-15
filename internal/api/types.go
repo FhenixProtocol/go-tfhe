@@ -30,6 +30,7 @@ const (
 	div        = 5
 	gt         = 6
 	gte        = 7
+	rem        = 8
 	// todo add more ops
 )
 

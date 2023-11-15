@@ -180,4 +180,8 @@ func (ct *Ciphertext) Gte(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, gte)
 }
 
+func (ct *Ciphertext) Rem(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, rem)
+}
+
 // todo add more ops

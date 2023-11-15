@@ -2,7 +2,7 @@ use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
-use std::ops::{Add, Mul, Sub, Div};
+use std::ops::{Add, Mul, Sub, Div, Rem};
 use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
@@ -57,8 +57,14 @@ define_op_fn!(op_uint32, deserialize_fhe_uint32, FheUint32);
 ///
 /// An `UnmanagedVector` containing the serialized result.
 fn common_op<
-    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T> + FheOrd<Output = T> + FheEq + Serialize,
-    //todo verify added `Div`
+    T: Add<Output = T> +
+    Sub<Output = T> +
+    Mul<Output = T> +
+    Div<Output = T> +
+    Rem<Output = T> +
+    FheOrd<Output = T> +
+    FheEq + Serialize,
+    // todo add more (maybe)
 >(
     num1: T,
     num2: T,
@@ -78,6 +84,7 @@ fn common_op<
         Op::Div => num1 / num2,
         Op::Gt => num1.gt(num2),
         Op::Gte => num1.ge(num2),
+        Op::Rem => num1 % num2,
         // todo add remaining ops
     };
 
