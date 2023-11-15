@@ -32,6 +32,8 @@ enum Op {
   Op_Lt = 3,
   Op_Lte = 4,
   Op_Div = 5,
+  Op_Gt = 6,
+  Op_Gte = 7,
 };
 typedef int32_t Op;
 

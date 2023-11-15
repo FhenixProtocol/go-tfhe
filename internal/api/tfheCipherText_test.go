@@ -77,6 +77,25 @@ func TestCipherTextOperations(t *testing.T) {
 	divResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Div(a, b) }
 
 	// todo add more ops
+	gtOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Gt(b)
+	}
+	gtResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) > 0 {
+			return big.NewInt(1)
+		}
+		return big.NewInt(0)
+	}
+
+	gteOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Gte(b)
+	}
+	gteResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) >= 0 {
+			return big.NewInt(1)
+		}
+		return big.NewInt(0)
+	}
 
 	testCases := []struct {
 		name     string
@@ -113,12 +132,23 @@ func TestCipherTextOperations(t *testing.T) {
 		{"LteUint8", big.NewInt(10), big.NewInt(10), api.Uint8, lteOp, lteResultFunc, nil},
 		{"LteUint16", big.NewInt(500), big.NewInt(500), api.Uint16, lteOp, lteResultFunc, nil},
 		{"LteUint32", big.NewInt(500_000), big.NewInt(500_000), api.Uint32, lteOp, lteResultFunc, nil},
-
 		// Division tests
 		{"DivUint8", big.NewInt(100), big.NewInt(20), api.Uint8, divOp, divResultFunc, nil},
 		{"DivUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, divOp, divResultFunc, nil},
-
-		// todo add more tests
+		// Greater Than tests
+		{"GtUint8-true", big.NewInt(10), big.NewInt(20), api.Uint8, gtOp, gtResultFunc, nil},
+		{"GtUint8-false", big.NewInt(10), big.NewInt(10), api.Uint8, gtOp, gtResultFunc, nil},
+		{"GtUint16-true", big.NewInt(1_000), big.NewInt(500), api.Uint16, gtOp, gtResultFunc, nil},
+		{"GtUint16-false", big.NewInt(1_000), big.NewInt(1000), api.Uint16, gtOp, gtResultFunc, nil},
+		{"GtUint32-true", big.NewInt(1_000_000), big.NewInt(999_999), api.Uint32, gtOp, gtResultFunc, nil},
+		{"GtUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, gtOp, gtResultFunc, nil},
+		// Greater Than or Equal tests
+		{"GteUint8-true", big.NewInt(10), big.NewInt(10), api.Uint8, gteOp, gteResultFunc, nil},
+		{"GteUint8-false", big.NewInt(10), big.NewInt(9), api.Uint8, gteOp, gteResultFunc, nil},
+		{"GteUint16-true", big.NewInt(1_000), big.NewInt(100), api.Uint16, gteOp, gteResultFunc, nil},
+		{"GteUint16-false", big.NewInt(1_000), big.NewInt(999), api.Uint16, gteOp, gteResultFunc, nil},
+		{"GteUint32-true", big.NewInt(1_000_000), big.NewInt(1_000_000), api.Uint32, gteOp, gteResultFunc, nil},
+		{"GteUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, gteOp, gteResultFunc, nil},
 	}
 
 	for _, tt := range testCases {

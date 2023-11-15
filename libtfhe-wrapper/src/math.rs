@@ -76,6 +76,8 @@ fn common_op<
         Op::Lt => num1.lt(num2),
         Op::Lte => num1.le(num2),
         Op::Div => num1 / num2,
+        Op::Gt => num1.gt(num2),
+        Op::Gte => num1.ge(num2),
         // todo add remaining ops
     };
 

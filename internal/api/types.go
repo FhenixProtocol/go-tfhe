@@ -28,6 +28,8 @@ const (
 	lt         = 3
 	lte        = 4
 	div        = 5
+	gt         = 6
+	gte        = 7
 	// todo add more ops
 )
 

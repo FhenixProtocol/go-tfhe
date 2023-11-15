@@ -172,4 +172,12 @@ func (ct *Ciphertext) Div(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, div)
 }
 
+func (ct *Ciphertext) Gt(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, gt)
+}
+
+func (ct *Ciphertext) Gte(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, gte)
+}
+
 // todo add more ops
