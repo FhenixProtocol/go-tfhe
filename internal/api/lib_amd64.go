@@ -7,31 +7,6 @@ import (
 	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
 )
 
-const (
-	Uint8  UintType = 0
-	Uint16 UintType = 1
-	Uint32 UintType = 2
-)
-
-// For now track this in a global, but this is kind of messy
-var LoadKeysDone bool
-var KeyRequirePublic []byte
-var KeyRequirePrivate []byte
-
-var CKS []byte
-var PKS []byte
-var SKS []byte
-
-const (
-	add uint32 = 0
-	sub        = 1
-	mul        = 2
-	lt         = 3
-	lte        = 4
-)
-
-type UintType uint32
-
 func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, error) {
 	return amd64.MathOperation(lhs, rhs, uintType, amd64.OperationType(op))
 }
@@ -73,18 +48,6 @@ func ExpandCompressedValue(cipherText []byte, intType UintType) ([]byte, error) 
 
 func Decrypt(cipherText []byte, intType UintType) (uint64, error) {
 	return amd64.Decrypt(cipherText, amd64.UintType(intType))
-}
-
-func SignRequire(ciphertext []byte, value bool) string {
-	return amd64.SignRequire(ciphertext, value)
-}
-
-func RequireBytesToSign(ciphertext []byte, value bool) []byte {
-	return amd64.RequireBytesToSign(ciphertext, value)
-}
-
-func VerifyRequireSignature(message []byte, signature []byte) bool {
-	return amd64.VerifyRequireSignature(message, signature)
 }
 
 func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath string) error {

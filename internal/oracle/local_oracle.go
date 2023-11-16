@@ -13,13 +13,6 @@ type MemoryDb struct {
 	db *memorydb.Database
 }
 
-type dbRequireMessage struct {
-	Value bool `json:"value"`
-}
-type dbDecryptMessage struct {
-	Value string `json:"value"`
-}
-
 func NewLocalDbStorage(_ string) (*MemoryDb, error) {
 	db := memorydb.New()
 	return &MemoryDb{db: db}, nil

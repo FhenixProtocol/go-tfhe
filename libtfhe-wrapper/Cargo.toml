@@ -24,6 +24,7 @@ crate-type = ["staticlib"]
 name = "wasm"
 path = "examples/bind-to-wasm.rs"
 crate-type = ["cdylib"]
+required-features = ["wasm32"]
 #[[example]]
 #name = "tfhestatic"
 #path = "src/examples/tfhestatic.rs"
@@ -39,12 +40,11 @@ wasm32 = ["tfhe/custom-seeder"]
 errno = { version = "0.3.1" }
 
 [dependencies]
-tfhe = { git = "https://github.com/FhenixProtocol/tfhe-rs", branch = "0.3.0-wasm32-custom-seeder", features = [
-    "boolean",
-    "integer",
-    "shortint",
-    "custom-seeder",
+tfhe = { git = "https://github.com/fhenixprotocol/tfhe-rs", branch = "0.3.0-wasm32-custom-seeder", features = [
     "experimental-force_fft_algo_dif4",
+    "shortint",
+    "integer",
+    "boolean",
 ] }
 serde = "1.0.163"
 bincode = "1.3.3"

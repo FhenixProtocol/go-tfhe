@@ -27,28 +27,28 @@ func setupKeysForTests() error {
 		return err
 	}
 
-	amd64.SKS, err = os.ReadFile(sksPath)
+	SKS, err := os.ReadFile(sksPath)
 	if err != nil {
 		return err
 	}
-	amd64.CKS, err = os.ReadFile(cksPath)
+	CKS, err := os.ReadFile(cksPath)
 	if err != nil {
 		return err
 	}
-	amd64.PKS, err = os.ReadFile(pksPath)
+	PKS, err := os.ReadFile(pksPath)
 	if err != nil {
 		return err
 	}
 
-	_, err = amd64.DeserializePublicKey(amd64.PKS)
+	_, err = amd64.DeserializePublicKey(PKS)
 	if err != nil {
 		return err
 	}
-	_, err = amd64.DeserializeServerKey(amd64.SKS)
+	_, err = amd64.DeserializeServerKey(SKS)
 	if err != nil {
 		return err
 	}
-	_, err = amd64.DeserializeClientKey(amd64.CKS)
+	_, err = amd64.DeserializeClientKey(CKS)
 	if err != nil {
 		return err
 	}

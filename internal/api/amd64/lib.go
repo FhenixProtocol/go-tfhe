@@ -6,8 +6,6 @@ package amd64
 // #include "bindings.h"
 import "C"
 import (
-	"crypto/ed25519"
-	"encoding/hex"
 	"fmt"
 	"go/types"
 	"log"
@@ -52,15 +50,6 @@ const (
 type (
 	cu8_ptr = *C.uint8_t
 )
-
-// For now track this in a global, but this is kind of messy
-var LoadKeysDone bool
-var KeyRequirePublic []byte
-var KeyRequirePrivate []byte
-
-var CKS []byte
-var PKS []byte
-var SKS []byte
 
 func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]byte, error) {
 	errmsg := uninitializedUnmanagedVector()
@@ -207,29 +196,6 @@ func Decrypt(cipherText []byte, intType UintType) (uint64, error) {
 	}
 
 	return uint64(res), nil
-}
-
-func SignRequire(ciphertext []byte, value bool) string {
-
-	b := RequireBytesToSign(ciphertext, value)
-	signature := ed25519.Sign(KeyRequirePrivate, b)
-	return hex.EncodeToString(signature)
-}
-
-func RequireBytesToSign(ciphertext []byte, value bool) []byte {
-	// TODO: avoid copy
-	b := make([]byte, 0, len(ciphertext)+1)
-	b = append(b, ciphertext...)
-	if value {
-		b = append(b, 1)
-	} else {
-		b = append(b, 0)
-	}
-	return b
-}
-
-func VerifyRequireSignature(message []byte, signature []byte) bool {
-	return ed25519.Verify(KeyRequirePublic, message, signature)
 }
 
 func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath string) error {

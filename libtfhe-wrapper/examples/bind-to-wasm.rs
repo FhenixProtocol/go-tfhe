@@ -1,3 +1,4 @@
+#![feature()]
 use std::ffi::c_char;
 use tfhe_wrapper::api::{banana, version};
 // use tfhe_wrapper::api::wasm::memory::{ByteSliceView, UnmanagedVector};
@@ -49,6 +50,6 @@ pub unsafe extern "C" fn get_version() -> *const c_char {
 // }
 
 fn main() {
-    unsafe {banana()}
+    unsafe { banana() }
     // unsafe { generate_fhe_keys() }
 }

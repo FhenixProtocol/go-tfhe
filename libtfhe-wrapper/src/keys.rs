@@ -1,12 +1,12 @@
-use once_cell::sync::OnceCell;
-
-use crate::error::RustError;
-use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK_KS_PBS as KEYGEN_PARAMS;
-use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
-// use std::sync::{Arc, Mutex};
 use std::collections::HashSet;
 use std::sync::Mutex;
 use std::{thread, thread::ThreadId};
+
+use once_cell::sync::OnceCell;
+use tfhe::shortint::parameters::PARAM_MESSAGE_2_CARRY_2_KS_PBS as KEYGEN_PARAMS;
+use tfhe::{ClientKey, CompactPublicKey, ConfigBuilder, ServerKey};
+
+use crate::error::RustError;
 pub struct InitGuard {
     key: Option<ServerKey>,
     init_threads: HashSet<ThreadId>,
@@ -118,6 +118,9 @@ impl GlobalKeys {
     // }
 }
 
+/// InitGuard is only defined on the server key, as this is the only key that tfhe-rs assumes
+/// will be loaded per-thread. The other keys are passed into their respective function calls
+/// not sure why this is the case - I guess optimizations?
 pub static SERVER_KEY: OnceCell<Mutex<InitGuard>> = OnceCell::new();
 pub static PUBLIC_KEY: OnceCell<CompactPublicKey> = OnceCell::new();
 pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();

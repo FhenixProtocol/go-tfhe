@@ -1,16 +1,14 @@
 name: Tests
 on: [push]
+env:
+  GOPRIVATE: "github.com/fhenixprotocol/decryption-oracle"
 jobs:
   go-unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Configure Git for HTTPS
         run: |
-          git config --global credential.helper store
-          cat > ~/.git-credentials <<- EOM
-          https://${{ secrets.CI_TOKEN }}@github.com
-          EOM
-          git config --global url."https://${{ secrets.CI_TOKEN }}@github.com".insteadOf ssh://git@github.com
+          git config --global url."https://cashmaney:${{ secrets.CI_TOKEN }}@github.com".insteadOf https://github.com
 
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
