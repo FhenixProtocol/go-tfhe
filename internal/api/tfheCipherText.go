@@ -184,4 +184,16 @@ func (ct *Ciphertext) Rem(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, rem)
 }
 
+func (ct *Ciphertext) And(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, and)
+}
+
+func (ct *Ciphertext) Or(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, or)
+}
+
+func (ct *Ciphertext) Xor(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, xor)
+}
+
 // todo add more ops

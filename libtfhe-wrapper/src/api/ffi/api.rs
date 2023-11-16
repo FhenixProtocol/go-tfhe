@@ -26,6 +26,9 @@ pub enum Op {
     Gt = 6,
     Gte = 7,
     Rem = 8,
+    BitAnd = 9,
+    BitOr = 10,
+    BitXor = 11,
     // todo remaining ops
 }
 
@@ -41,6 +44,9 @@ impl From<u32> for Op {
             6 => Op::Gt,
             7 => Op::Gte,
             8 => Op::Rem,
+            9 => Op::BitAnd,
+            10 => Op::BitOr,
+            11 => Op::BitXor,
             // todo add remaining ops
             _ => Op::Add,
         }

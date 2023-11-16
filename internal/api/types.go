@@ -31,6 +31,9 @@ const (
 	gt         = 6
 	gte        = 7
 	rem        = 8
+	and        = 9
+	or         = 10
+	xor        = 11
 	// todo add more ops
 )
 

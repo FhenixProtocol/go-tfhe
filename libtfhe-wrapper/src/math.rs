@@ -2,7 +2,7 @@ use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
-use std::ops::{Add, Mul, Sub, Div, Rem};
+use std::ops::{Add, Mul, Sub, Div, Rem, BitOr, BitAnd, BitXor};
 use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
@@ -61,6 +61,9 @@ fn common_op<
     Sub<Output = T> +
     Mul<Output = T> +
     Div<Output = T> +
+    BitAnd<Output = T> +
+    BitOr<Output = T> +
+    BitXor<Output = T> +
     Rem<Output = T> +
     FheOrd<Output = T> +
     FheEq + Serialize,
@@ -85,6 +88,10 @@ fn common_op<
         Op::Gt => num1.gt(num2),
         Op::Gte => num1.ge(num2),
         Op::Rem => num1 % num2,
+        Op::BitAnd => num1 & num2,
+        Op::BitOr => num1 | num2,
+        Op::BitXor => num1 ^ num2,
+        _ => return Err(RustError::generic_error("operation code not recognized")),
         // todo add remaining ops
     };
 

@@ -101,6 +101,20 @@ func TestCipherTextOperations(t *testing.T) {
 	}
 	remResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Rem(a, b) }
 
+	andOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.And(b)
+	}
+	andResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).And(a, b) }
+
+	orOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Or(b)
+	}
+	orResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Or(a, b) }
+
+	xorOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Xor(b)
+	}
+	xorResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Xor(a, b) }
 	// todo add more ops
 
 	testCases := []struct {
@@ -159,7 +173,19 @@ func TestCipherTextOperations(t *testing.T) {
 		// Remainder tests
 		{"RemUint8", big.NewInt(102), big.NewInt(20), api.Uint8, remOp, remResultFunc, nil},
 		{"RemUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, remOp, remResultFunc, nil},
-		{"RemUint32", big.NewInt(1_000_024), big.NewInt(500_013), api.Uint32, remOp, remResultFunc, nil},
+		{"RemUint32", big.NewInt(1_000_024), big.NewInt(500_025), api.Uint32, remOp, remResultFunc, nil},
+		// Bitwise And tests
+		{"AndUint8", big.NewInt(102), big.NewInt(20), api.Uint8, andOp, andResultFunc, nil},
+		{"AndUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, andOp, andResultFunc, nil},
+		{"AndUint32", big.NewInt(1_000_024), big.NewInt(500_025), api.Uint32, andOp, andResultFunc, nil},
+		// Bitwise Or tests
+		{"OrUint8", big.NewInt(102), big.NewInt(20), api.Uint8, orOp, orResultFunc, nil},
+		{"OrUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, orOp, orResultFunc, nil},
+		{"OrUint32", big.NewInt(1_000_024), big.NewInt(500_025), api.Uint32, orOp, orResultFunc, nil},
+		// Bitwise Xor tests
+		{"XorUint8", big.NewInt(102), big.NewInt(20), api.Uint8, xorOp, xorResultFunc, nil},
+		{"XorUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, xorOp, xorResultFunc, nil},
+		{"XorUint32", big.NewInt(1_000_024), big.NewInt(500_025), api.Uint32, xorOp, xorResultFunc, nil},
 	}
 
 	for _, tt := range testCases {
