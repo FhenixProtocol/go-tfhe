@@ -11,6 +11,9 @@ jobs:
           git config --global url."https://cashmaney:${{ secrets.CI_TOKEN }}@github.com".insteadOf https://github.com
 
       - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+          token: ${{ secrets.CI_TOKEN }}
       - uses: actions/setup-go@v4
         with:
           go-version: 1.21
@@ -63,4 +66,3 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
       - name: clippy
         run: make clippy
-

@@ -74,7 +74,7 @@ func CheckRequire(ciphertext *Ciphertext) (bool, error) {
 	}
 
 	if oracleStorage == nil {
-	    return false, fmt.Errorf("Cannot check require if database is not initialized")
+		return false, fmt.Errorf("Cannot check require if database is not initialized")
 	}
 
 	result, err := oracleStorage.GetRequire(ciphertext)
@@ -281,4 +281,3 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 func Version() uint32 {
 	return api.LibTfheVersion()
 }
-

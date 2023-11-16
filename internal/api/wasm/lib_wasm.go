@@ -35,7 +35,7 @@ func NewWasmError(code int, message string) *WasmError {
 func hostEncrypt(uint64, UintType, unsafe.Pointer, uint32) uint32 { return 0 }
 
 //go:wasmimport env math_operation_wasm
-func hostMathOperation(unsafe.Pointer, uint64, unsafe.Pointer, uint64, uint32, int32, unsafe.Pointer, uint32) uint32 {
+func hostMathOperation(unsafe.Pointer, uint64, unsafe.Pointer, uint64, uint32, int32 /*, unsafe.Pointer, uint32 */) uint32 {
 	return 0
 }
 
@@ -46,7 +46,7 @@ func Encrypt(value big.Int, intType UintType) ([]byte, error) {
 	// TODO: Implement the logic here
 	returnValue := NewUnmanagedVector(nil)
 
-	result := hostEncrypt(value.Uint64(), intType, *(*int64)(returnValue.Ptr), returnValue.Len)
+	result := hostEncrypt(value.Uint64(), intType, (unsafe.Pointer)(returnValue.Ptr), returnValue.Len)
 	if result != 0 {
 		return nil, NewWasmError(int(result), "failed to encrypt in wasm")
 	}
@@ -61,12 +61,12 @@ func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]
 	num2 := MakeView(rhs)
 	defer runtime.KeepAlive(num2)
 
-	result := hostMathOperation(*(*int64)(num1.Ptr), num1.Len, *(*int64)(num2.Ptr), num2.Len, uint32(uintType), int32(op))
+	result := hostMathOperation((unsafe.Pointer)(num1.Ptr), num1.Len, (unsafe.Pointer)(num2.Ptr), num2.Len, uint32(uintType), int32(op))
 	if result == 0 {
 		panic("failed to perform wasm math operation")
 	}
 
-	out := Uint64ToByteSlice(result, 100)
+	out := Uint64ToByteSlice((uint64)(result), 100)
 
 	return out, nil
 }
