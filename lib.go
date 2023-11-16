@@ -101,6 +101,7 @@ func InitTfhe(config *Config) error {
 	if config == nil {
 		return fmt.Errorf("config cannot be empty")
 	}
+	fmt.Println("Loading FHE keys.")
 	if api.LoadKeysDone {
 		_, err = LoadServerKey(api.SKS)
 		if err != nil {
@@ -141,7 +142,6 @@ func InitTfhe(config *Config) error {
 		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
 	}
 
-	fmt.Printf("TOMMM InitTfhe 1 server key path %s\n", serverKeyPath)
 	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
 		return err

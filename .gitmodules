@@ -1,0 +1,3 @@
+[submodule "decryption-oracle"]
+	path = decryption-oracle
+	url = https://github.com/fhenixprotocol/decryption-oracle

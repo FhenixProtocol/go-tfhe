@@ -210,7 +210,7 @@ pub unsafe extern "C" fn cast_operation(
     let val_slice = match val.read() {
         Some(v1) => v1,
         _ => {
-            log::debug!("Failed to decode an inputs");
+            log::debug!("Failed to decode an input");
             set_error(
                 RustError::generic_error("failed to read input server key"),
                 err_msg,

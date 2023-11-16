@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 )
@@ -26,6 +27,60 @@ func TestNewCipherText(t *testing.T) {
 	if res.Uint64() != value.Uint64() {
 		t.Fatalf("Expected: %d != %d", res.Uint64(), value.Uint64())
 	}
+}
+
+func TestCiphertextCastOperations(t *testing.T) {
+	err := setupKeysForTests()
+	if err != nil {
+		t.Fatalf("Failed to load keys: %s", err)
+	}
+
+	val := big.NewInt(10)
+
+	testCases := []struct {
+		name     string
+		fromType api.UintType
+		toType   api.UintType
+	}{
+
+		{"CastUint8ToUint8", api.Uint8, api.Uint8},
+		{"CastUint8ToUint16", api.Uint8, api.Uint16},
+		{"CastUint8ToUint32", api.Uint8, api.Uint32},
+		{"CastUint16ToUint8", api.Uint16, api.Uint8},
+		{"CastUint16ToUint16", api.Uint16, api.Uint16},
+		{"CastUint16ToUint32", api.Uint16, api.Uint32},
+		{"CastUint32ToUint8", api.Uint32, api.Uint8},
+		{"CastUint32ToUint16", api.Uint32, api.Uint16},
+		{"CastUint32ToUint32", api.Uint32, api.Uint32},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			ct, _ := api.NewCipherText(*val, tt.fromType, false)
+			res, err := ct.Cast(tt.toType)
+			if err != nil {
+				t.Fatalf("Got error %v", err)
+			}
+			if res == nil {
+				t.Fatalf("Expected a result, got nil")
+			}
+
+			gotHash := res.Hash()
+			expectedHash := api.Keccak256(res.Serialization)
+			if gotHash != api.Hash(expectedHash) {
+				t.Fatalf("Mismatch in ciphertext hash")
+			}
+
+			resDec, err := res.Decrypt()
+			if err != nil {
+				t.Fatalf("Error while decrypting %+v", err)
+			}
+
+			assert.Equal(t, resDec, val)
+
+		})
+	}
+
 }
 
 func TestCipherTextOperations(t *testing.T) {
