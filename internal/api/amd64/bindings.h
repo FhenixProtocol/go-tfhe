@@ -38,6 +38,8 @@ enum Op {
   Op_BitAnd = 9,
   Op_BitOr = 10,
   Op_BitXor = 11,
+  Op_Eq = 12,
+  Op_Ne = 13,
 };
 typedef int32_t Op;
 

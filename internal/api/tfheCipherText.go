@@ -196,4 +196,12 @@ func (ct *Ciphertext) Xor(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, xor)
 }
 
+func (ct *Ciphertext) Eq(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, eq)
+}
+
+func (ct *Ciphertext) Ne(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, ne)
+}
+
 // todo add more ops

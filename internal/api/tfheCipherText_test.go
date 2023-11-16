@@ -115,6 +115,26 @@ func TestCipherTextOperations(t *testing.T) {
 		return a.Xor(b)
 	}
 	xorResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Xor(a, b) }
+
+	eqOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Eq(b)
+	}
+	eqResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) == 0 {
+			return big.NewInt(1)
+		}
+		return big.NewInt(0)
+	}
+
+	neOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Ne(b)
+	}
+	neResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) != 0 {
+			return big.NewInt(1)
+		}
+		return big.NewInt(0)
+	}
 	// todo add more ops
 
 	testCases := []struct {
@@ -186,6 +206,20 @@ func TestCipherTextOperations(t *testing.T) {
 		{"XorUint8", big.NewInt(102), big.NewInt(20), api.Uint8, xorOp, xorResultFunc, nil},
 		{"XorUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, xorOp, xorResultFunc, nil},
 		{"XorUint32", big.NewInt(1_000_024), big.NewInt(500_025), api.Uint32, xorOp, xorResultFunc, nil},
+		// Equality tests
+		{"EqUint8-true", big.NewInt(10), big.NewInt(10), api.Uint8, eqOp, eqResultFunc, nil},
+		{"EqUint8-false", big.NewInt(10), big.NewInt(11), api.Uint8, eqOp, eqResultFunc, nil},
+		{"EqUint16-true", big.NewInt(1_000), big.NewInt(1_000), api.Uint16, eqOp, eqResultFunc, nil},
+		{"EqUint16-false", big.NewInt(1_000), big.NewInt(999), api.Uint16, eqOp, eqResultFunc, nil},
+		{"EqUint32-true", big.NewInt(1_000_000), big.NewInt(1_000_000), api.Uint32, eqOp, eqResultFunc, nil},
+		{"EqUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, eqOp, eqResultFunc, nil},
+		// Inequality tests
+		{"NeUint8-true", big.NewInt(10), big.NewInt(10), api.Uint8, neOp, neResultFunc, nil},
+		{"NeUint8-false", big.NewInt(10), big.NewInt(11), api.Uint8, neOp, neResultFunc, nil},
+		{"NeUint16-true", big.NewInt(1_000), big.NewInt(1_000), api.Uint16, neOp, neResultFunc, nil},
+		{"NeUint16-false", big.NewInt(1_000), big.NewInt(999), api.Uint16, neOp, neResultFunc, nil},
+		{"NeUint32-true", big.NewInt(1_000_000), big.NewInt(1_000_000), api.Uint32, neOp, neResultFunc, nil},
+		{"NeUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, neOp, neResultFunc, nil},
 	}
 
 	for _, tt := range testCases {

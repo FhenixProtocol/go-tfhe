@@ -29,6 +29,8 @@ pub enum Op {
     BitAnd = 9,
     BitOr = 10,
     BitXor = 11,
+    Eq = 12,
+    Ne = 13,
     // todo remaining ops
 }
 
@@ -47,6 +49,8 @@ impl From<u32> for Op {
             9 => Op::BitAnd,
             10 => Op::BitOr,
             11 => Op::BitXor,
+            12 => Op::Eq,
+            13 => Op::Ne,
             // todo add remaining ops
             _ => Op::Add,
         }

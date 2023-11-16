@@ -66,7 +66,8 @@ fn common_op<
     BitXor<Output = T> +
     Rem<Output = T> +
     FheOrd<Output = T> +
-    FheEq + Serialize,
+    FheEq<Output = T> +
+    Serialize,
     // todo add more (maybe)
 >(
     num1: T,
@@ -91,7 +92,8 @@ fn common_op<
         Op::BitAnd => num1 & num2,
         Op::BitOr => num1 | num2,
         Op::BitXor => num1 ^ num2,
-        _ => return Err(RustError::generic_error("operation code not recognized")),
+        Op::Eq => num1.eq(num2),
+        Op::Ne => num1.ne(num2),
         // todo add remaining ops
     };
 

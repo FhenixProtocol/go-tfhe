@@ -34,6 +34,8 @@ const (
 	and        = 9
 	or         = 10
 	xor        = 11
+	eq         = 12
+	ne         = 13
 	// todo add more ops
 )
 
