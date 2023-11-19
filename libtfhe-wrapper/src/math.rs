@@ -3,7 +3,6 @@ use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
 use std::ops::{Add, Mul, Sub, Div, Rem, BitOr, BitAnd, BitXor};
-use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
@@ -67,6 +66,8 @@ fn common_op<
     Rem<Output = T> +
     FheOrd<Output = T> +
     FheEq<Output = T> +
+    for <'a> FheMin<&'a T, Output = T> +
+    for <'a> FheMax<&'a T, Output = T> +
     Serialize,
     // todo add more (maybe)
 >(
@@ -94,6 +95,8 @@ fn common_op<
         Op::BitXor => num1 ^ num2,
         Op::Eq => num1.eq(num2),
         Op::Ne => num1.ne(num2),
+        Op::Min => num1.min(&num2),
+        Op::Max => num1.max(&num2),
         // todo add remaining ops
     };
 

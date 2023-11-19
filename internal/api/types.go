@@ -36,6 +36,8 @@ const (
 	xor        = 11
 	eq         = 12
 	ne         = 13
+	min        = 14
+	max        = 15
 	// todo add more ops
 )
 

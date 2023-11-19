@@ -31,6 +31,8 @@ pub enum Op {
     BitXor = 11,
     Eq = 12,
     Ne = 13,
+    Min = 14,
+    Max = 15,
     // todo remaining ops
 }
 
@@ -51,6 +53,8 @@ impl From<u32> for Op {
             11 => Op::BitXor,
             12 => Op::Eq,
             13 => Op::Ne,
+            14 => Op::Min,
+            15 => Op::Max,
             // todo add remaining ops
             _ => Op::Add,
         }

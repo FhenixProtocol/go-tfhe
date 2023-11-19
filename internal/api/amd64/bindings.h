@@ -40,6 +40,8 @@ enum Op {
   Op_BitXor = 11,
   Op_Eq = 12,
   Op_Ne = 13,
+  Op_Min = 14,
+  Op_Max = 15,
 };
 typedef int32_t Op;
 

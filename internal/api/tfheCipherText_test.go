@@ -135,6 +135,27 @@ func TestCipherTextOperations(t *testing.T) {
 		}
 		return big.NewInt(0)
 	}
+
+	minOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Min(b)
+	}
+	minResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) <= 0 {
+			return a
+		}
+		return b
+	}
+
+	maxOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Max(b)
+	}
+	maxResultFunc := func(a, b *big.Int) *big.Int {
+		if a.Cmp(b) >= 0 {
+			return a
+		}
+		return b
+	}
+
 	// todo add more ops
 
 	testCases := []struct {
@@ -220,6 +241,20 @@ func TestCipherTextOperations(t *testing.T) {
 		{"NeUint16-false", big.NewInt(1_000), big.NewInt(999), api.Uint16, neOp, neResultFunc, nil},
 		{"NeUint32-true", big.NewInt(1_000_000), big.NewInt(1_000_000), api.Uint32, neOp, neResultFunc, nil},
 		{"NeUint32-false", big.NewInt(1_000_000), big.NewInt(1_000_001), api.Uint32, neOp, neResultFunc, nil},
+		// Minimum tests
+		{"MinUint8-lhs", big.NewInt(10), big.NewInt(11), api.Uint8, minOp, minResultFunc, nil},
+		{"MinUint8-rhs", big.NewInt(10), big.NewInt(9), api.Uint8, minOp, minResultFunc, nil},
+		{"MinUint16-lhs", big.NewInt(1_000), big.NewInt(2_000), api.Uint16, minOp, minResultFunc, nil},
+		{"MinUint16-rhs", big.NewInt(1_000), big.NewInt(999), api.Uint16, minOp, minResultFunc, nil},
+		{"MinUint32-lhs", big.NewInt(1_000_000), big.NewInt(2_000_000), api.Uint32, minOp, minResultFunc, nil},
+		{"MinUint32-rhs", big.NewInt(1_000_000), big.NewInt(900_999), api.Uint32, minOp, minResultFunc, nil},
+		// Maximum tests
+		{"MaxUint8-lhs", big.NewInt(11), big.NewInt(10), api.Uint8, maxOp, maxResultFunc, nil},
+		{"MaxUint8-rhs", big.NewInt(10), big.NewInt(11), api.Uint8, maxOp, maxResultFunc, nil},
+		{"MaxUint16-lhs", big.NewInt(2_000), big.NewInt(1_000), api.Uint16, maxOp, maxResultFunc, nil},
+		{"MaxUint16-rhs", big.NewInt(1_000), big.NewInt(999), api.Uint16, maxOp, maxResultFunc, nil},
+		{"MaxUint32-lhs", big.NewInt(2_000_000), big.NewInt(1_000_000), api.Uint32, maxOp, maxResultFunc, nil},
+		{"MaxUint32-rhs", big.NewInt(1_000_000), big.NewInt(900_001), api.Uint32, maxOp, maxResultFunc, nil},
 	}
 
 	for _, tt := range testCases {

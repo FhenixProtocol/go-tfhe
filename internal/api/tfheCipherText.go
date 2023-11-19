@@ -204,4 +204,12 @@ func (ct *Ciphertext) Ne(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, ne)
 }
 
+func (ct *Ciphertext) Min(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, min)
+}
+
+func (ct *Ciphertext) Max(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, max)
+}
+
 // todo add more ops
