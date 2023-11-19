@@ -42,6 +42,8 @@ enum Op {
   Op_Ne = 13,
   Op_Min = 14,
   Op_Max = 15,
+  Op_Shl = 16,
+  Op_Shr = 17,
 };
 typedef int32_t Op;
 

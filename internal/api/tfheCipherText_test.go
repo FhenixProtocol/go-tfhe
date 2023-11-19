@@ -156,6 +156,16 @@ func TestCipherTextOperations(t *testing.T) {
 		return b
 	}
 
+	shlOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Shl(b)
+	}
+	shlResultFunc := func(a, b *big.Int) *big.Int { return a.Lsh(a, uint(b.Uint64())) }
+
+	shrOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Shr(b)
+	}
+	shrResultFunc := func(a, b *big.Int) *big.Int { return a.Rsh(a, uint(b.Uint64())) }
+
 	// todo add more ops
 
 	testCases := []struct {
@@ -255,6 +265,14 @@ func TestCipherTextOperations(t *testing.T) {
 		{"MaxUint16-rhs", big.NewInt(1_000), big.NewInt(999), api.Uint16, maxOp, maxResultFunc, nil},
 		{"MaxUint32-lhs", big.NewInt(2_000_000), big.NewInt(1_000_000), api.Uint32, maxOp, maxResultFunc, nil},
 		{"MaxUint32-rhs", big.NewInt(1_000_000), big.NewInt(900_001), api.Uint32, maxOp, maxResultFunc, nil},
+		// Shift left tests
+		{"ShlUint8", big.NewInt(102), big.NewInt(1), api.Uint8, shlOp, shlResultFunc, nil},
+		{"ShlUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, shlOp, shlResultFunc, nil},
+		{"ShlUint32", big.NewInt(1_000_024), big.NewInt(5), api.Uint32, shlOp, shlResultFunc, nil},
+		// Shift right tests
+		{"ShrUint8", big.NewInt(102), big.NewInt(1), api.Uint8, shrOp, shrResultFunc, nil},
+		{"ShrUint16", big.NewInt(1_000), big.NewInt(2), api.Uint16, shrOp, shrResultFunc, nil},
+		{"ShrUint32", big.NewInt(1_000_024), big.NewInt(5), api.Uint32, shrOp, shrResultFunc, nil},
 	}
 
 	for _, tt := range testCases {

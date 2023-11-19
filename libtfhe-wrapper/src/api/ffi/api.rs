@@ -33,6 +33,8 @@ pub enum Op {
     Ne = 13,
     Min = 14,
     Max = 15,
+    Shl = 16,
+    Shr = 17,
     // todo remaining ops
 }
 
@@ -55,6 +57,8 @@ impl From<u32> for Op {
             13 => Op::Ne,
             14 => Op::Min,
             15 => Op::Max,
+            16 => Op::Shl,
+            17 => Op::Shr,
             // todo add remaining ops
             _ => Op::Add,
         }

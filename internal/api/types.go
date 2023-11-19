@@ -38,6 +38,8 @@ const (
 	ne         = 13
 	min        = 14
 	max        = 15
+	shl        = 16
+	shr        = 17
 	// todo add more ops
 )
 
