@@ -27,6 +27,20 @@ const (
 	mul        = 2
 	lt         = 3
 	lte        = 4
+	div        = 5
+	gt         = 6
+	gte        = 7
+	rem        = 8
+	and        = 9
+	or         = 10
+	xor        = 11
+	eq         = 12
+	ne         = 13
+	min        = 14
+	max        = 15
+	shl        = 16
+	shr        = 17
+	// todo add more ops
 )
 
 type UintType uint32
@@ -34,7 +48,6 @@ type UintType uint32
 const HashLength = 32
 
 type Hash [HashLength]byte
-
 
 func BytesToHash(b []byte) Hash {
 	var h Hash

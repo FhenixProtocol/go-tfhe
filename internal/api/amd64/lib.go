@@ -44,6 +44,7 @@ const (
 	mul               = C.Op_Mul
 	lt                = C.Op_Lt
 	lte               = C.Op_Lte
+	// todo why is this here?
 )
 
 // Pointers

@@ -31,6 +31,19 @@ enum Op {
   Op_Mul = 2,
   Op_Lt = 3,
   Op_Lte = 4,
+  Op_Div = 5,
+  Op_Gt = 6,
+  Op_Gte = 7,
+  Op_Rem = 8,
+  Op_BitAnd = 9,
+  Op_BitOr = 10,
+  Op_BitXor = 11,
+  Op_Eq = 12,
+  Op_Ne = 13,
+  Op_Min = 14,
+  Op_Max = 15,
+  Op_Shl = 16,
+  Op_Shr = 17,
 };
 typedef int32_t Op;
 
