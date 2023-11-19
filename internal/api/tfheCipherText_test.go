@@ -159,12 +159,12 @@ func TestCipherTextOperations(t *testing.T) {
 	shlOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
 		return a.Shl(b)
 	}
-	shlResultFunc := func(a, b *big.Int) *big.Int { return a.Lsh(a, uint(b.Uint64())) }
+	shlResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Lsh(a, uint(b.Uint64())) }
 
 	shrOp := func(a, b *api.Ciphertext) (*api.Ciphertext, error) {
 		return a.Shr(b)
 	}
-	shrResultFunc := func(a, b *big.Int) *big.Int { return a.Rsh(a, uint(b.Uint64())) }
+	shrResultFunc := func(a, b *big.Int) *big.Int { return new(big.Int).Rsh(a, uint(b.Uint64())) }
 
 	// todo add more ops
 
