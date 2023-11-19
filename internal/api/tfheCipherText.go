@@ -145,6 +145,19 @@ func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciph
 	}, nil
 }
 
+func (ct *Ciphertext) performUnaryOperation(operation uint32) (*Ciphertext, error) {
+	res, err := unaryMathOperation(ct.Serialization, uint8(ct.UintType), operation)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
+}
+
 // Now you can use the above function to implement the original methods:
 
 // Add performs ciphertext addition.
@@ -218,6 +231,10 @@ func (ct *Ciphertext) Shl(rhs *Ciphertext) (*Ciphertext, error) {
 
 func (ct *Ciphertext) Shr(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, shr)
+}
+
+func (ct *Ciphertext) Not() (*Ciphertext, error) {
+	return ct.performUnaryOperation(not)
 }
 
 // todo add more ops

@@ -69,6 +69,20 @@ func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]
 	return copyAndDestroyUnmanagedVector(res), nil
 }
 
+func UnaryMathOperation(lhs []byte, uintType uint8, op OperationType) ([]byte, error) {
+	errmsg := uninitializedUnmanagedVector()
+
+	num1 := makeView(lhs)
+	defer runtime.KeepAlive(num1)
+
+	res, err := C.unary_math_operation(num1, ci32(op), C.FheUintType(uintType), &errmsg)
+	if err != nil {
+		return nil, errorWithMessage(err, errmsg)
+	}
+
+	return copyAndDestroyUnmanagedVector(res), nil
+}
+
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 
 	sks := makeView(serverKeyBytes)

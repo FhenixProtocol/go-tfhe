@@ -43,6 +43,11 @@ const (
 	// todo add more ops
 )
 
+const (
+	not uint32 = 0
+	// todo add more ops
+)
+
 type UintType uint32
 
 const HashLength = 32

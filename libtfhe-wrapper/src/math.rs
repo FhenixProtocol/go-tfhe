@@ -1,8 +1,8 @@
-use crate::api::Op;
+use crate::api::{Op, UnaryOp};
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
-use std::ops::{Add, Mul, Sub, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr};
+use std::ops::{Add, Mul, Sub, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr, Not};
 use tfhe::prelude::*;
 
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
@@ -102,6 +102,78 @@ fn common_op<
         Op::Shl => num1 << num2,
         Op::Shr => num1 >> num2,
         // todo add remaining ops
+    };
+
+    bincode::serialize(&result).map_err(|err| {
+        log::debug!("failed to serialize result: {:?}", err);
+        RustError::generic_error(format!(
+            "failed to serialize result after operation: {:?}",
+            operation
+        ))
+    })
+}
+
+/// Performs the specified operation on an encrypted x-bit unsigned integer.
+///
+/// This function deserializes the input, performs the specified operation, and
+/// returns the serialized result.
+///
+///
+/// # Arguments
+///
+/// * `lhs` - The operand.
+/// * `operation` - The operation to perform.
+///
+/// # Returns
+///
+/// A `Vec<u8>` containing the serialized result, or `RustError`
+macro_rules! define_unary_op_fn {
+    ($func_name:ident, $deserialize_func:ident, $type:ty) => {
+        #[export_name = stringify!($func_name)]
+        pub fn $func_name(lhs: &[u8], operation: UnaryOp) -> Result<Vec<u8>, RustError> {
+            unary_op(
+                $deserialize_func(lhs, false).unwrap(),
+                operation,
+            )
+        }
+    };
+}
+
+// Use the macro to define the functions
+define_unary_op_fn!(unary_op_uint8, deserialize_fhe_uint8, FheUint8);
+define_unary_op_fn!(unary_op_uint16, deserialize_fhe_uint16, FheUint16);
+define_unary_op_fn!(unary_op_uint32, deserialize_fhe_uint32, FheUint32);
+
+/// A generic function that performs the given operation on a single encrypted number.
+///
+/// This function is used internally by the other `op_` functions to
+/// perform the actual arithmetic. It's generic over the type of the operand.
+///
+/// # Arguments
+///
+/// * `num1` - The operand.
+/// * `operation` - The operation to perform.
+/// * `err_msg` - A mutable reference to an `UnmanagedVector` that can contain error messages.
+///
+/// # Returns
+///
+/// An `UnmanagedVector` containing the serialized result.
+fn unary_op<
+    T: Not<Output = T> +
+    Serialize,
+    // todo add more (maybe)
+>(
+    num1: T,
+    operation: UnaryOp,
+) -> Result<Vec<u8>, RustError> {
+    if !GlobalKeys::is_server_key_set() {
+        return Err(RustError::generic_error("server key must be set for math operation"));
+    }
+    GlobalKeys::refresh_server_key_for_thread();
+
+    let result = match operation {
+        UnaryOp::Not => !num1,
+        // todo add remaining unary ops
     };
 
     bincode::serialize(&result).map_err(|err| {
