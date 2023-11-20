@@ -27,12 +27,22 @@ macro_rules! define_cast_fn {
     ($func_name:ident, $deserialize_func:ident, $from_type:ty, $to_type:ty) => {
         #[export_name = stringify!($func_name)]
         pub(crate) fn $func_name(val: &[u8]) -> Result<Vec<u8>, RustError> {
-            let i: $from_type = $deserialize_func(val, false).unwrap();
-            let out = <$to_type>::cast_from(i);
-            bincode::serialize(&out).map_err(|err| {
-                log::debug!("failed to serialize result: {:?}", err);
-                RustError::generic_error(format!("failed to serialize result for cast"))
-            })
+            match $deserialize_func(val, false) {
+                Ok(v) => {
+                    let out = <$to_type>::cast_from(v);
+                    bincode::serialize(&out).map_err(|err| {
+                        log::error!("failed to serialize result: {:?}", err);
+                        RustError::generic_error(format!("failed to serialize result for cast"))
+                    })
+                }
+                Err(e) => {
+                    log::error!("failed to deserialize value: {:?}", e);
+                    Err(RustError::generic_error(format!(
+                        "failed to deserialize value: {:?}",
+                        e
+                    )))
+                }
+            }
         }
     };
 }
