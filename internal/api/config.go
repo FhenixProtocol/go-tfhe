@@ -3,7 +3,9 @@ package api
 var loadedConfig *Config
 
 type Config struct {
-	IsOracle             bool   `koanf:"is-oracle"`
+	IsOracle bool `koanf:"is-oracle"`
+	// OracleType is "local" or "network".
+	// "http" is deprecated.
 	OracleType           string `koanf:"oracle-type"`
 	OracleDbPath         string `koanf:"oracle-db-path"`
 	OracleAddress        string `koanf:"oracle-address"`
@@ -16,8 +18,7 @@ type Config struct {
 }
 
 var ConfigDefault = Config{
-	IsOracle: true,
-	// OracleType is "local" or "http" or "network"
+	IsOracle:             true,
 	OracleType:           "local",
 	OracleDbPath:         "data/oracle.db",
 	OracleAddress:        "http://127.0.0.1:9001",

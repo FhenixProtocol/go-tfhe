@@ -85,6 +85,44 @@ func CheckRequire(ciphertext *Ciphertext) (bool, error) {
 	return result, nil
 }
 
+func Require(ct *Ciphertext) bool {
+	config := api.GetConfig()
+	if config.OracleType == "local" {
+		return putRequire(ct)
+	} else if config.OracleType == "network" {
+		return getRequire(ct)
+	} else {
+		panic("Unknown oracle type: " + config.OracleType)
+	}
+}
+
+// Puts the given ciphertext as a require to the oracle DB or exits the process on errors.
+// Returns the require value.
+func putRequire(ct *Ciphertext) bool {
+	plaintext, err := Decrypt(*ct)
+	if err != nil {
+		panic(err)
+	}
+
+	result, err := StoreRequire(ct, plaintext)
+	if err != nil {
+		panic("Failed to decrypt value")
+	}
+
+	return result
+}
+
+// Gets the given require from the oracle DB and returns its value.
+// Exits the process on errors or signature verification failure.
+func getRequire(ct *Ciphertext) bool {
+	result, err := CheckRequire(ct)
+	if err != nil {
+		return false
+	}
+
+	return result
+}
+
 // StoreRequire stores a requirement into the oracle - this is used by the EVM to manage ciphertexts
 func StoreRequire(ciphertext *Ciphertext, plaintext uint64) (bool, error) {
 	notZero := plaintext != 0

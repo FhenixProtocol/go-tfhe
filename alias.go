@@ -38,5 +38,6 @@ var (
 	// GlobalConfig is set after calling ParseNode() in cmd/nitro-val/nitro_val.go and cmd/nitro/nitro.go.
 	// The reason for doing this is that a TFHE config is needed in the init() function of gethhook/geth-hook.go,
 	// which cannot receive any parameters and also cannot call ParseNode() because of a circular dependency.
-	GlobalConfig = api.ConfigDefault
+	GetConfig = api.GetConfig
+	SetConfig = api.SetConfig
 )
