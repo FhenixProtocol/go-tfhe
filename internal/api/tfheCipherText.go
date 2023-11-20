@@ -1,27 +1,28 @@
 package api
 
-import "C"
 import (
 	"bytes"
 	"fmt"
 	"math/big"
 )
 
+// Ciphertext represents the encrypted data structure.
 type Ciphertext struct {
-	//ptr           unsafe.Pointer
-	Serialization []byte
-	hash          []byte
-	value         *big.Int
-	random        bool
-	UintType      UintType
+	Serialization []byte   // Serialized representation of the ciphertext
+	hash          []byte   // Keccak256 hash of the serialized data
+	value         *big.Int // Big int representation of the encrypted value (for internal use)
+	random        bool     // Flag to indicate if the ciphertext is generated randomly
+	UintType      UintType // Type of the unsigned integer (for example, uint8, uint16, etc.)
 }
 
+// isZero checks if a byte slice contains all zero bytes.
 func isZero(data []byte) bool {
 	return bytes.Count(data, []byte{0}) == len(data)
 }
 
+// Hash calculates and returns the hash of the serialized ciphertext.
 func (ct *Ciphertext) Hash() Hash {
-
+	// If hash is not already calculated, calculate it
 	if ct.hash == nil || isZero(ct.hash) {
 		ct.hash = Keccak256(ct.Serialization)
 	}
@@ -31,7 +32,9 @@ func (ct *Ciphertext) Hash() Hash {
 	return h
 }
 
+// NewCipherText creates a new Ciphertext instance with encryption of the provided value.
 func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error) {
+	// Perform encryption, potentially expanding the result if compact is false
 	res, err := Encrypt(value, t)
 	if err != nil {
 		return nil, err
@@ -57,6 +60,8 @@ func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error)
 	}, nil
 }
 
+// NewCipherTextTrivial creates a new Ciphertext using trivial encryption - trivial encryption is used to encrypt "public" constants to
+// inject into FHE operations
 func NewCipherTextTrivial(value big.Int, t UintType) (*Ciphertext, error) {
 
 	res, err := EncryptTrivial(value, t)
@@ -71,10 +76,10 @@ func NewCipherTextTrivial(value big.Int, t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
+// NewCipherTextFromBytes creates a new Ciphertext from its byte representation.
 func NewCipherTextFromBytes(ctBytes []byte, t UintType, compact bool) (*Ciphertext, error) {
 
-	//if len(ctBytes) != expected len
-	// cry
+	// Validate and potentially expand the ciphertext bytes
 	if compact {
 		res, err := ExpandCompressedValue(ctBytes, t)
 		if err != nil {
@@ -95,8 +100,10 @@ func NewCipherTextFromBytes(ctBytes []byte, t UintType, compact bool) (*Cipherte
 	}, nil
 }
 
+// NewRandomCipherText creates a random Ciphertext - only not really. It's just used for simulations and testing, so we inject some
+// constant value here instead of an actual random
 func NewRandomCipherText(t UintType) (*Ciphertext, error) {
-
+	// Not really though!
 	res, err := Encrypt(*big.NewInt(int64(5)), t)
 	if err != nil {
 		return nil, err
@@ -110,39 +117,23 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
+// IsRandom checks if the ciphertext was randomly generated - this is used for gas simulation
 func (ct *Ciphertext) IsRandom() bool {
 	return ct.random
 }
 
-func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
-
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot add uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), add)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		hash:          Keccak256(res),
-		UintType:      ct.UintType,
-	}, nil
-}
-
+// Decrypt decrypts the ciphertext and returns the plaintext value.
 func (ct *Ciphertext) Decrypt() (*big.Int, error) {
 	res, err := Decrypt(ct.Serialization, ct.UintType)
 	return big.NewInt(int64(res)), err
 }
 
-func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
+func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciphertext, error) {
 	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot subtract uints of different types")
+		return nil, fmt.Errorf("cannot perform operation on uints of different types")
 	}
 
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), sub)
+	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), operation)
 	if err != nil {
 		return nil, err
 	}
@@ -152,55 +143,27 @@ func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
 		hash:          Keccak256(res),
 		UintType:      ct.UintType,
 	}, nil
+}
+
+// Now you can use the above function to implement the original methods:
+
+// Add performs ciphertext addition.
+func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
+    return ct.performOperation(rhs, add)
+}
+
+func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, sub)
 }
 
 func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot multiply uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), mul)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		hash:          Keccak256(res),
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, mul)
 }
 
 func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot compare uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lt)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		hash:          Keccak256(res),
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, lt)
 }
 
 func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
-	if ct.UintType != rhs.UintType {
-		return nil, fmt.Errorf("cannot compare uints of different types")
-	}
-
-	res, err := mathOperation(ct.Serialization, rhs.Serialization, uint8(ct.UintType), lte)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Ciphertext{
-		Serialization: res,
-		hash:          Keccak256(res),
-		UintType:      ct.UintType,
-	}, nil
+	return ct.performOperation(rhs, lte)
 }

@@ -132,6 +132,12 @@ func TestCipherTextOperations(t *testing.T) {
 				t.Fatalf("Expected a result, got nil")
 			}
 
+			gotHash := result.Hash()
+			expectedHash := api.Keccak256(result.Serialization)
+			if gotHash != api.Hash(expectedHash) {
+				t.Fatalf("Mismatch in ciphertext hash")
+			}
+
 			resDec, err := result.Decrypt()
 			if err != nil {
 				t.Fatalf("Expected an error when adding decrypting")
@@ -141,6 +147,7 @@ func TestCipherTextOperations(t *testing.T) {
 			if resDec.Cmp(expected) != 0 {
 				t.Fatalf("Result is not what we expected: %s vs %s", resDec, expected)
 			}
+
 		})
 	}
 }

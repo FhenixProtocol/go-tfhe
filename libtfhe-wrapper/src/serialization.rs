@@ -1,4 +1,4 @@
-use tfhe::{FheUint16, FheUint32, FheUint8, CompactFheUint8, CompactFheUint16, CompactFheUint32};
+use tfhe::{CompactFheUint16, CompactFheUint32, CompactFheUint8, FheUint16, FheUint32, FheUint8};
 
 macro_rules! deserialize_fhe_uint {
     ($name:ident, $type:ty, $compact_type:ty) => {
@@ -16,15 +16,18 @@ macro_rules! deserialize_fhe_uint {
         /// # Returns
         ///
         /// A `Result` with the deserialized `FheUint`, or a `Box<bincode::ErrorKind>` on error.
-        pub(crate) fn $name(
-            slice: &[u8],
-            compact: bool,
-        ) -> Result<$type, Box<bincode::ErrorKind>> {
+        pub(crate) fn $name(slice: &[u8], compact: bool) -> Result<$type, Box<bincode::ErrorKind>> {
             if compact {
                 let x: $compact_type = bincode::deserialize(slice)?;
                 Ok(x.expand())
             } else {
-                let x: $type = bincode::deserialize(slice)?;
+                let x: $type = bincode::deserialize(slice).map_err(|err| {
+                    #[cfg(target_arch = "wasm32")]
+                    crate::imports::console_log(
+                        format!("failed to deserialize: {:?}", err).as_str(),
+                    );
+                    err
+                })?;
                 Ok(x)
             }
         }
@@ -35,7 +38,6 @@ macro_rules! deserialize_fhe_uint {
 deserialize_fhe_uint!(deserialize_fhe_uint8, FheUint8, CompactFheUint8);
 deserialize_fhe_uint!(deserialize_fhe_uint16, FheUint16, CompactFheUint16);
 deserialize_fhe_uint!(deserialize_fhe_uint32, FheUint32, CompactFheUint32);
-
 
 // leaving this here because debugging and modifying macros is a bitch
 // so you can just uncomment this code and play with it

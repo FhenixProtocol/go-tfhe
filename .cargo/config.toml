@@ -1,0 +1,3 @@
+# this is here to be able to fetch crates from private repos via cli login
+[net]
+git-fetch-with-cli = true
