@@ -16,7 +16,8 @@ type Config struct {
 }
 
 var ConfigDefault = Config{
-	IsOracle:             true,
+	IsOracle: true,
+	// OracleType is "local" or "http" or "network"
 	OracleType:           "local",
 	OracleDbPath:         "data/oracle.db",
 	OracleAddress:        "http://127.0.0.1:9001",
