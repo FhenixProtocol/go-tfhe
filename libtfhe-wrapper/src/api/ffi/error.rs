@@ -2,6 +2,7 @@ use crate::api::ffi::memory::UnmanagedVector;
 use crate::error::RustError;
 #[cfg(not(target_arch = "wasm32"))]
 use errno::{set_errno, Errno};
+use std::fmt::Debug;
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -32,7 +33,6 @@ pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
         let errno = ErrnoValue::Other as i32;
         set_errno(Errno(errno));
     }
-
 }
 
 /// If `result` is Ok, this returns the Ok value and clears [errno].

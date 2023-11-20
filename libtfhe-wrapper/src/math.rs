@@ -28,16 +28,16 @@ macro_rules! define_op_fn {
         pub fn $func_name(lhs: &[u8], rhs: &[u8], operation: Op) -> Result<Vec<u8>, RustError> {
             match ($deserialize_func(lhs, false), $deserialize_func(rhs, false)) {
                 (Err(e), _) => {
-                    log::error!("failed to deserialize lhs value: {:?}", e);
+                    log::error!("faileddeserializing lhs value: {:?}", e);
                     Err(RustError::generic_error(format!(
-                        "failed to deserialize lhs value: {:?}",
+                        "faileddeserializing lhs value: {:?}",
                         e
                     )))
                 }
                 (_, Err(e)) => {
-                    log::error!("failed to deserialize rhs value: {:?}", e);
+                    log::error!("faileddeserializing rhs value: {:?}", e);
                     Err(RustError::generic_error(format!(
-                        "failed to deserialize rhs value: {:?}",
+                        "faileddeserializing rhs value: {:?}",
                         e
                     )))
                 }
@@ -90,9 +90,9 @@ fn common_op<
     };
 
     bincode::serialize(&result).map_err(|err| {
-        log::debug!("failed to serialize result: {:?}", err);
+        log::error!("failed serializing result: {:?}", err);
         RustError::generic_error(format!(
-            "failed to serialize result after operation: {:?}",
+            "failed serializing result after operation: {:?}",
             operation
         ))
     })

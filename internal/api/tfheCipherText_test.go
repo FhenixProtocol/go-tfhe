@@ -21,7 +21,7 @@ func TestNewCipherText(t *testing.T) {
 
 	res, err := ct.Decrypt()
 	if err != nil {
-		t.Fatalf("Failed to decrypt: %s", err)
+		t.Fatalf("failed decrypting: %s", err)
 	}
 
 	if res.Uint64() != value.Uint64() {
@@ -32,7 +32,7 @@ func TestNewCipherText(t *testing.T) {
 func TestCiphertextCastOperations(t *testing.T) {
 	err := setupKeysForTests()
 	if err != nil {
-		t.Fatalf("Failed to load keys: %s", err)
+		t.Fatalf("failed loading keys: %s", err)
 	}
 
 	val := big.NewInt(10)
@@ -86,7 +86,7 @@ func TestCiphertextCastOperations(t *testing.T) {
 func TestCipherTextOperations(t *testing.T) {
 	err := setupKeysForTests()
 	if err != nil {
-		t.Fatalf("Failed to load keys: %s", err)
+		t.Fatalf("failed loading keys: %s", err)
 	}
 
 	type operationFunc func(a, b *api.Ciphertext) (*api.Ciphertext, error)
