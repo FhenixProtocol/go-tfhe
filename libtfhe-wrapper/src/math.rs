@@ -3,7 +3,6 @@ use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
 use std::ops::{Add, Mul, Sub};
-use tfhe::prelude::FheOrd;
 use tfhe::prelude::*;
 
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
@@ -27,11 +26,23 @@ macro_rules! define_op_fn {
     ($func_name:ident, $deserialize_func:ident, $type:ty) => {
         #[export_name = stringify!($func_name)]
         pub fn $func_name(lhs: &[u8], rhs: &[u8], operation: Op) -> Result<Vec<u8>, RustError> {
-            common_op(
-                $deserialize_func(lhs, false).unwrap(),
-                $deserialize_func(rhs, false).unwrap(),
-                operation,
-            )
+            match ($deserialize_func(lhs, false), $deserialize_func(rhs, false)) {
+                (Err(e), _) => {
+                    log::error!("failed to deserialize lhs value: {:?}", e);
+                    Err(RustError::generic_error(format!(
+                        "failed to deserialize lhs value: {:?}",
+                        e
+                    )))
+                }
+                (_, Err(e)) => {
+                    log::error!("failed to deserialize rhs value: {:?}", e);
+                    Err(RustError::generic_error(format!(
+                        "failed to deserialize rhs value: {:?}",
+                        e
+                    )))
+                }
+                (Ok(l), Ok(r)) => common_op(l, r, operation),
+            }
         }
     };
 }
@@ -63,9 +74,10 @@ fn common_op<
     num2: T,
     operation: Op,
 ) -> Result<Vec<u8>, RustError> {
-
     if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error("server key must be set for math operation"));
+        return Err(RustError::generic_error(
+            "server key must be set for math operation",
+        ));
     }
     GlobalKeys::refresh_server_key_for_thread();
 

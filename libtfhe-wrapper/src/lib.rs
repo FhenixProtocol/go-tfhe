@@ -8,6 +8,7 @@ pub mod error;
 #[cfg(target_arch = "wasm32")]
 pub(crate) mod imports;
 
+pub(crate) mod cast;
 pub mod keys;
 pub(crate) mod math;
 pub(crate) mod serialization;

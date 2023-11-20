@@ -1,17 +1,23 @@
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
-// use crate::api::FheUintType::{Uint16, Uint32, Uint8};
+use crate::cast::*;
 use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
 use crate::error::RustError;
-use crate::keys::{deserialize_public_key_safe, load_server_key_safe, deserialize_client_key_safe, generate_keys_safe};
 use crate::keys::GlobalKeys;
+use crate::keys::{
+    deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
+    load_server_key_safe,
+};
 use crate::math::{op_uint16, op_uint32, op_uint8};
 
 #[cfg(target_arch = "wasm32")]
-use tfhe::{ConfigBuilder, CompactPublicKey, generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS};
+use tfhe::{
+    generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS,
+    CompactPublicKey, ConfigBuilder,
+};
 
 #[cfg(target_arch = "wasm32")]
-use crate::imports::{wavm_halt_and_set_finished, console_log};
+use crate::imports::{console_log, wavm_halt_and_set_finished};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -67,7 +73,8 @@ pub fn write_keys_to_file(
     pks: Vec<u8>,
     pks_path: &str,
     sks: Vec<u8>,
-    sks_path: &str) -> bool {
+    sks_path: &str,
+) -> bool {
     if let Err(e) = std::fs::write(cks_path, cks) {
         println!(
             "Failed to write cks to path: {:?}. Error: {:?}",
@@ -93,7 +100,6 @@ pub fn write_keys_to_file(
     };
 
     true
-
 }
 
 #[no_mangle]
@@ -144,12 +150,8 @@ pub unsafe extern "C" fn math_operation_wasm(
     operation: u32,
     uint_type: u32,
 ) -> (*const u8, u64) {
-    let lhs_slice: &[u8] = unsafe {
-        std::slice::from_raw_parts(lhs, lhs_len as usize)
-    };
-    let rhs_slice: &[u8] = unsafe {
-        std::slice::from_raw_parts(rhs, rhs_len as usize)
-    };
+    let lhs_slice: &[u8] = unsafe { std::slice::from_raw_parts(lhs, lhs_len as usize) };
+    let rhs_slice: &[u8] = unsafe { std::slice::from_raw_parts(rhs, rhs_len as usize) };
     let op_type = Op::from(operation);
     let fhe_type = FheUintType::from(uint_type);
 
@@ -158,14 +160,14 @@ pub unsafe extern "C" fn math_operation_wasm(
     let x = math_operation(
         ByteSliceView::new(lhs_slice),
         ByteSliceView::new(rhs_slice),
-            op_type,
+        op_type,
         fhe_type,
-        err
+        err,
     );
     // if err.is_none() {
     //     return (null(), 0)
     // }
-    return (x.ptr, x.len as u64)
+    return (x.ptr, x.len as u64);
 }
 
 #[no_mangle]
@@ -192,6 +194,47 @@ pub unsafe extern "C" fn math_operation(
         FheUintType::Uint8 => op_uint8(lhs_slice, rhs_slice, operation),
         FheUintType::Uint16 => op_uint16(lhs_slice, rhs_slice, operation),
         FheUintType::Uint32 => op_uint32(lhs_slice, rhs_slice, operation),
+    };
+
+    let result = handle_c_error_binary(result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn cast_operation(
+    val: ByteSliceView,
+    from_type: FheUintType,
+    to_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    let val_slice = match val.read() {
+        Some(v1) => v1,
+        _ => {
+            log::debug!("Failed to decode an input");
+            set_error(
+                RustError::generic_error("failed to read input server key"),
+                err_msg,
+            );
+            return UnmanagedVector::none();
+        }
+    };
+
+    let result = match from_type {
+        FheUintType::Uint8 => match to_type {
+            FheUintType::Uint8 => Ok(val_slice.to_vec()),
+            FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint8_to_uint32(val_slice),
+        },
+        FheUintType::Uint16 => match to_type {
+            FheUintType::Uint8 => cast_from_uint16_to_uint8(val_slice),
+            FheUintType::Uint16 => Ok(val_slice.to_vec()),
+            FheUintType::Uint32 => cast_from_uint16_to_uint32(val_slice),
+        },
+        FheUintType::Uint32 => match to_type {
+            FheUintType::Uint8 => cast_from_uint32_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint32_to_uint16(val_slice),
+            FheUintType::Uint32 => Ok(val_slice.to_vec()),
+        },
     };
 
     let result = handle_c_error_binary(result, err_msg);
@@ -303,7 +346,6 @@ pub unsafe extern "C" fn trivial_encrypt(
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
 }
-
 
 #[no_mangle]
 pub unsafe extern "C" fn encrypt(
@@ -434,4 +476,3 @@ pub unsafe extern "C" fn banana() {
 
     wavm_halt_and_set_finished();
 }
-

@@ -107,6 +107,11 @@ struct UnmanagedVector math_operation(struct ByteSliceView lhs,
                                       FheUintType uint_type,
                                       struct UnmanagedVector *err_msg);
 
+struct UnmanagedVector cast_operation(struct ByteSliceView val,
+                                      FheUintType from_type,
+                                      FheUintType to_type,
+                                      struct UnmanagedVector *err_msg);
+
 void load_server_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
 
 void load_client_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);

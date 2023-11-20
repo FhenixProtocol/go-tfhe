@@ -68,6 +68,20 @@ func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]
 	return copyAndDestroyUnmanagedVector(res), nil
 }
 
+func CastOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
+	errmsg := uninitializedUnmanagedVector()
+
+	valView := makeView(val)
+	defer runtime.KeepAlive(valView)
+
+	res, err := C.cast_operation(valView, C.FheUintType(fromType), C.FheUintType(toType), &errmsg)
+	if err != nil {
+		return nil, errorWithMessage(err, errmsg)
+	}
+
+	return copyAndDestroyUnmanagedVector(res), nil
+}
+
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 
 	sks := makeView(serverKeyBytes)
