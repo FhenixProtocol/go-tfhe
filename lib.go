@@ -126,24 +126,14 @@ func InitTfhe(config *Config) error {
 
 	api.SetConfig(*config)
 
-	clientKeyPath := config.ClientKeyPath
-	serverKeyPath := config.ServerKeyPath
-	publicKeyPath := config.PublicKeyPath
+	clientKeyPath := filepath.Join(config.HomeDir, config.ClientKeyPath)
+	serverKeyPath := filepath.Join(config.HomeDir, config.ServerKeyPath)
+	publicKeyPath := filepath.Join(config.HomeDir, config.PublicKeyPath)
 
-	oraclePrivatePath := config.OraclePrivateKeyPath
-	oraclePublicPath := config.OraclePublicKeyPath
-	oracleDbPath := config.OracleDbPath
+	oraclePrivatePath := filepath.Join(config.HomeDir, config.OraclePrivateKeyPath)
+	oraclePublicPath := filepath.Join(config.HomeDir, config.OraclePublicKeyPath)
 
-	if config.HomeDir != nil {
-		clientKeyPath = filepath.Join(*config.HomeDir, config.ClientKeyPath)
-		serverKeyPath = filepath.Join(*config.HomeDir, config.ServerKeyPath)
-		publicKeyPath = filepath.Join(*config.HomeDir, config.PublicKeyPath)
-
-		oraclePrivatePath = filepath.Join(*config.HomeDir, config.OraclePrivateKeyPath)
-		oraclePublicPath = filepath.Join(*config.HomeDir, config.OraclePublicKeyPath)
-
-		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
-	}
+	oracleDbPath := filepath.Join(config.HomeDir, config.OracleDbPath)
 
 	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
@@ -212,7 +202,6 @@ func CloseTfhe() {
 
 // GenerateFheKeys is a CLI command only or testing command
 func GenerateFheKeys(homeDir string, serverKeyPath string, clientKeyPath string, publicKeyPath string) error {
-
 	fullClientKeyPath := filepath.Join(homeDir, clientKeyPath)
 	fullServerKeyPath := filepath.Join(homeDir, serverKeyPath)
 	fullPublicKeyPath := filepath.Join(homeDir, publicKeyPath)
@@ -241,7 +230,7 @@ func createDirectoryIfNotExist(fullClientKeyPath string) error {
 	// Make directories for private key if they don't exist
 	clientDir := filepath.Dir(fullClientKeyPath)
 
-	if err := os.MkdirAll(clientDir, 0755); err != nil {
+	if err := os.MkdirAll(clientDir, 0o755); err != nil {
 		return err
 	}
 	return nil
@@ -269,10 +258,10 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 		return err
 	}
 
-	if err := os.WriteFile(fullPublicKeyPath, public, 0600); err != nil {
+	if err := os.WriteFile(fullPublicKeyPath, public, 0o600); err != nil {
 		return err
 	}
-	if err := os.WriteFile(fullPrivateKeyPath, private, 0600); err != nil {
+	if err := os.WriteFile(fullPrivateKeyPath, private, 0o600); err != nil {
 		return err
 	}
 	return nil
