@@ -6,10 +6,6 @@ jobs:
   go-unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Configure Git for HTTPS
-        run: |
-          git config --global url."https://cashmaney:${{ secrets.CI_TOKEN }}@github.com".insteadOf https://github.com
-
       - uses: actions/checkout@v4
         with:
           submodules: "true"
