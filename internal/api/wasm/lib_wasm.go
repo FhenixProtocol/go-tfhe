@@ -73,6 +73,10 @@ func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]
 
 // ******************** HERE BE PLACEHOLDERS ********** //
 
+func CastOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
+	return nil, nil
+}
+
 func Uint64ToByteSlice(ptr uint64, length int) []byte {
 	unsafePtr := unsafe.Pointer(uintptr(ptr))
 	return (*[1 << 30]byte)(unsafePtr)[:length:length]

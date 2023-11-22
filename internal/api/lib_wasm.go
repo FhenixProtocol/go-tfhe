@@ -1,12 +1,17 @@
 package api
 
 import (
-	"github.com/fhenixprotocol/go-tfhe/internal/api/wasm"
 	"math/big"
+
+	"github.com/fhenixprotocol/go-tfhe/internal/api/wasm"
 )
 
 func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, error) {
 	return wasm.MathOperation(lhs, rhs, uintType, wasm.OperationType(op))
+}
+
+func castOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
+	return wasm.CastOperation(val, fromType, toType)
 }
 
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
