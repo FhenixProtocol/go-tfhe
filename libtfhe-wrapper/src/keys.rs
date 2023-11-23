@@ -61,7 +61,7 @@ impl GlobalKeys {
 
     pub fn set_public_key(key: CompactPublicKey) -> Result<(), RustError> {
         if PUBLIC_KEY.get().is_some() {
-            log::info!("already loaded public key");
+            log::debug!("already loaded public key");
             return Ok(());
             // return Err(RustError::generic_error(
             //     "Cannot set public key multiple times",
@@ -74,7 +74,7 @@ impl GlobalKeys {
 
     pub fn set_client_key(key: ClientKey) -> Result<(), RustError> {
         if CLIENT_KEY.get().is_some() {
-            log::info!("already loaded client key");
+            log::debug!("already loaded client key");
             return Ok(());
             // return Err(RustError::generic_error(
             //     "Cannot set client key multiple times",
