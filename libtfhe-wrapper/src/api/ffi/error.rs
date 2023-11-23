@@ -2,7 +2,6 @@ use crate::api::ffi::memory::UnmanagedVector;
 use crate::error::RustError;
 #[cfg(not(target_arch = "wasm32"))]
 use errno::{set_errno, Errno};
-use std::fmt::Debug;
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]

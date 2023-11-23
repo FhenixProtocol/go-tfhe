@@ -33,5 +33,7 @@ var (
 	NewCipherTextTrivial   = api.NewCipherTextTrivial
 	BytesToHash            = api.BytesToHash
 	NewCipherTextFromBytes = api.NewCipherTextFromBytes
-	oracleStorage          = oracle.OracleInterface
+
+	InitLogger    = api.InitLogger
+	oracleStorage = oracle.OracleInterface
 )
