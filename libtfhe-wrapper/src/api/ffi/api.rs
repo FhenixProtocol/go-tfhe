@@ -1,17 +1,23 @@
 use crate::api::ffi::error::{handle_c_error_binary, handle_c_error_default, set_error};
 use crate::api::ffi::memory::{ByteSliceView, UnmanagedVector};
-// use crate::api::FheUintType::{Uint16, Uint32, Uint8};
+use crate::cast::*;
 use crate::encryption::{decrypt_safe, encrypt_safe, expand_compressed_safe, trivial_encrypt_safe};
 use crate::error::RustError;
-use crate::keys::{deserialize_public_key_safe, load_server_key_safe, deserialize_client_key_safe, generate_keys_safe};
 use crate::keys::GlobalKeys;
+use crate::keys::{
+    deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
+    load_server_key_safe,
+};
 use crate::math::{op_uint16, op_uint32, op_uint8};
 
 #[cfg(target_arch = "wasm32")]
-use tfhe::{ConfigBuilder, CompactPublicKey, generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS};
+use tfhe::{
+    generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS,
+    CompactPublicKey, ConfigBuilder,
+};
 
 #[cfg(target_arch = "wasm32")]
-use crate::imports::{wavm_halt_and_set_finished, console_log};
+use crate::imports::{console_log, wavm_halt_and_set_finished};
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -95,33 +101,24 @@ pub fn write_keys_to_file(
     pks: Vec<u8>,
     pks_path: &str,
     sks: Vec<u8>,
-    sks_path: &str) -> bool {
+    sks_path: &str,
+) -> bool {
     if let Err(e) = std::fs::write(cks_path, cks) {
-        println!(
-            "Failed to write cks to path: {:?}. Error: {:?}",
-            cks_path, e
-        );
+        log::error!("failed writing cks to path: {:?}. Error: {:?}", cks_path, e);
         return false;
     };
 
     if let Err(e) = std::fs::write(sks_path, sks) {
-        println!(
-            "Failed to write sks to path: {:?}. Error: {:?}",
-            sks_path, e
-        );
+        log::error!("failed writing sks to path: {:?}. Error: {:?}", sks_path, e);
         return false;
     };
 
     if let Err(e) = std::fs::write(pks_path, pks) {
-        println!(
-            "Failed to write pks to path: {:?}. Error: {:?}",
-            pks_path, e
-        );
+        log::error!("failed writing pks to path: {:?}. Error: {:?}", pks_path, e);
         return false;
     };
 
     true
-
 }
 
 #[no_mangle]
@@ -172,12 +169,8 @@ pub unsafe extern "C" fn math_operation_wasm(
     operation: u32,
     uint_type: u32,
 ) -> (*const u8, u64) {
-    let lhs_slice: &[u8] = unsafe {
-        std::slice::from_raw_parts(lhs, lhs_len as usize)
-    };
-    let rhs_slice: &[u8] = unsafe {
-        std::slice::from_raw_parts(rhs, rhs_len as usize)
-    };
+    let lhs_slice: &[u8] = unsafe { std::slice::from_raw_parts(lhs, lhs_len as usize) };
+    let rhs_slice: &[u8] = unsafe { std::slice::from_raw_parts(rhs, rhs_len as usize) };
     let op_type = Op::from(operation);
     let fhe_type = FheUintType::from(uint_type);
 
@@ -186,14 +179,14 @@ pub unsafe extern "C" fn math_operation_wasm(
     let x = math_operation(
         ByteSliceView::new(lhs_slice),
         ByteSliceView::new(rhs_slice),
-            op_type,
+        op_type,
         fhe_type,
-        err
+        err,
     );
     // if err.is_none() {
     //     return (null(), 0)
     // }
-    return (x.ptr, x.len as u64)
+    return (x.ptr, x.len as u64);
 }
 
 #[no_mangle]
@@ -207,9 +200,9 @@ pub unsafe extern "C" fn math_operation(
     let (lhs_slice, rhs_slice) = match (lhs.read(), rhs.read()) {
         (Some(k1), Some(k2)) => (k1, k2),
         _ => {
-            log::debug!("Failed to decode one or more inputs");
+            log::error!("failed decoding one or more inputs");
             set_error(
-                RustError::generic_error("failed to read input server key"),
+                RustError::generic_error("failed reading input server key"),
                 err_msg,
             );
             return UnmanagedVector::none();
@@ -227,6 +220,47 @@ pub unsafe extern "C" fn math_operation(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn cast_operation(
+    val: ByteSliceView,
+    from_type: FheUintType,
+    to_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    let val_slice = match val.read() {
+        Some(v1) => v1,
+        _ => {
+            log::error!("failed decoding an input");
+            set_error(
+                RustError::generic_error("failed reading input server key"),
+                err_msg,
+            );
+            return UnmanagedVector::none();
+        }
+    };
+
+    let result = match from_type {
+        FheUintType::Uint8 => match to_type {
+            FheUintType::Uint8 => Ok(val_slice.to_vec()),
+            FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint8_to_uint32(val_slice),
+        },
+        FheUintType::Uint16 => match to_type {
+            FheUintType::Uint8 => cast_from_uint16_to_uint8(val_slice),
+            FheUintType::Uint16 => Ok(val_slice.to_vec()),
+            FheUintType::Uint32 => cast_from_uint16_to_uint32(val_slice),
+        },
+        FheUintType::Uint32 => match to_type {
+            FheUintType::Uint8 => cast_from_uint32_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint32_to_uint16(val_slice),
+            FheUintType::Uint32 => Ok(val_slice.to_vec()),
+        },
+    };
+
+    let result = handle_c_error_binary(result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn load_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
@@ -236,9 +270,9 @@ pub unsafe extern "C" fn load_server_key(
 
         handle_c_error_default(r, err_msg)
     } else {
-        log::debug!("Failed to read input server key");
+        log::error!("failed reading input server key");
         set_error(
-            RustError::generic_error("failed to read input server key"),
+            RustError::generic_error("failed reading input server key"),
             err_msg,
         );
     }
@@ -254,9 +288,9 @@ pub unsafe extern "C" fn load_client_key(
 
         handle_c_error_default(r, err_msg)
     } else {
-        log::debug!("Failed to read input client key");
+        log::error!("failed reading input client key");
         set_error(
-            RustError::generic_error("failed to read input client key"),
+            RustError::generic_error("failed reading input client key"),
             err_msg,
         );
     };
@@ -272,9 +306,9 @@ pub unsafe extern "C" fn load_public_key(
 
         handle_c_error_default(r, err_msg)
     } else {
-        log::debug!("Failed to read input public key");
+        log::error!("failed reading input public key");
         set_error(
-            RustError::generic_error("failed to read public key"),
+            RustError::generic_error("failed reading public key"),
             err_msg,
         );
     }
@@ -285,12 +319,13 @@ pub unsafe extern "C" fn get_public_key(err_msg: Option<&mut UnmanagedVector>) -
     let public_key = GlobalKeys::get_public_key();
 
     if public_key.is_none() {
+        log::error!("public key not set");
         set_error(RustError::generic_error("public key not set"), err_msg);
         return UnmanagedVector::none();
     }
 
     let serialized = bincode::serialize(public_key.unwrap()).map_err(|err| {
-        log::debug!("failed to serialize public key: {:?}", err);
+        log::error!("failed serializing public key: {:?}", err);
         RustError::generic_error("public key not set")
     });
 
@@ -307,6 +342,7 @@ pub unsafe extern "C" fn expand_compressed(
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
+        log::error!("ciphertext cannot be empty");
         set_error(
             RustError::generic_error("ciphertext cannot be empty"),
             err_msg,
@@ -332,7 +368,6 @@ pub unsafe extern "C" fn trivial_encrypt(
     UnmanagedVector::new(Some(result))
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn encrypt(
     msg: u64,
@@ -354,6 +389,7 @@ pub unsafe extern "C" fn decrypt(
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
+        log::error!("ciphertext cannot be empty");
         set_error(
             RustError::generic_error("ciphertext cannot be empty"),
             err_msg,
@@ -366,100 +402,99 @@ pub unsafe extern "C" fn decrypt(
     handle_c_error_default(r, err_msg)
 }
 
-#[cfg(target_arch = "wasm32")]
-#[no_mangle]
-pub unsafe extern "C" fn banana() {
-    // let cks_bytes = include_bytes!("../../../keys/tfhe/cks");
-    // let sks_bytes = include_bytes!("../../../keys/tfhe/sks");
-    // let pks_bytes = include_bytes!("../../../keys/tfhe/pks");
-
-    // let cks = bincode::deserialize::<ClientKey>(cks_bytes).unwrap();
-    // let sks = bincode::deserialize::<ServerKey>(sks_bytes).unwrap();
-    // let pks = bincode::deserialize::<CompactPublicKey>(pks_bytes).unwrap();
-
-    console_log("gm");
-
-    console_log("generting keys (~15 seconds)...");
-
-    let config = ConfigBuilder::all_disabled()
-        .enable_custom_integers(KEYGEN_PARAMS, None)
-        .build();
-    let (cks, sks) = generate_keys(config);
-    let pks: CompactPublicKey = CompactPublicKey::new(&cks);
-
-    console_log("set_client_key...");
-
-    match GlobalKeys::set_client_key(cks) {
-        Ok(_) => {}
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    }
-
-    console_log("set_server_key...");
-
-    tfhe::set_server_key(sks);
-
-    console_log("set_public_key...");
-
-    match GlobalKeys::set_public_key(pks) {
-        Ok(_) => {}
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    }
-
-    console_log("encrypt_safe(10)...");
-
-    let ten = match encrypt_safe(10, FheUintType::Uint8) {
-        Ok(ten) => ten,
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    };
-
-    console_log("encrypt_safe(20)...");
-
-    let twenty = match encrypt_safe(20, FheUintType::Uint8) {
-        Ok(ten) => ten,
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    };
-
-    console_log("res = op_uint8(10, 20, add)...");
-
-    let res = match op_uint8(ten.as_slice(), twenty.as_slice(), Op::Add) {
-        Ok(res) => res,
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    };
-
-    console_log("decrypt_safe(res)...");
-
-    match decrypt_safe(res.as_slice(), FheUintType::Uint8) {
-        Ok(decrypted) => {
-            console_log(format!("decrypted: {}", decrypted).as_str());
-
-            if decrypted != 30 {
-                panic!(
-                    "error: got wrong decrypted value. Expected: {}, got: {}",
-                    30, decrypted
-                );
-            }
-        }
-        Err(err) => {
-            console_log(format!("error: {:?}", err).as_str());
-            panic!("error: {:?}", err);
-        }
-    }
-
-    wavm_halt_and_set_finished();
-}
-
+// #[cfg(target_arch = "wasm32")]
+// #[no_mangle]
+// pub unsafe extern "C" fn banana() {
+//     // let cks_bytes = include_bytes!("../../../keys/tfhe/cks");
+//     // let sks_bytes = include_bytes!("../../../keys/tfhe/sks");
+//     // let pks_bytes = include_bytes!("../../../keys/tfhe/pks");
+//
+//     // let cks = bincode::deserialize::<ClientKey>(cks_bytes).unwrap();
+//     // let sks = bincode::deserialize::<ServerKey>(sks_bytes).unwrap();
+//     // let pks = bincode::deserialize::<CompactPublicKey>(pks_bytes).unwrap();
+//
+//     console_log("gm");
+//
+//     console_log("generting keys (~15 seconds)...");
+//
+//     let config = ConfigBuilder::all_disabled()
+//         .enable_custom_integers(KEYGEN_PARAMS, None)
+//         .build();
+//     let (cks, sks) = generate_keys(config);
+//     let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+//
+//     console_log("set_client_key...");
+//
+//     match GlobalKeys::set_client_key(cks) {
+//         Ok(_) => {}
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     console_log("set_server_key...");
+//
+//     tfhe::set_server_key(sks);
+//
+//     console_log("set_public_key...");
+//
+//     match GlobalKeys::set_public_key(pks) {
+//         Ok(_) => {}
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     console_log("encrypt_safe(10)...");
+//
+//     let ten = match encrypt_safe(10, FheUintType::Uint8) {
+//         Ok(ten) => ten,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("encrypt_safe(20)...");
+//
+//     let twenty = match encrypt_safe(20, FheUintType::Uint8) {
+//         Ok(ten) => ten,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("res = op_uint8(10, 20, add)...");
+//
+//     let res = match op_uint8(ten.as_slice(), twenty.as_slice(), Op::Add) {
+//         Ok(res) => res,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("decrypt_safe(res)...");
+//
+//     match decrypt_safe(res.as_slice(), FheUintType::Uint8) {
+//         Ok(decrypted) => {
+//             console_log(format!("decrypted: {}", decrypted).as_str());
+//
+//             if decrypted != 30 {
+//                 panic!(
+//                     "error: got wrong decrypted value. Expected: {}, got: {}",
+//                     30, decrypted
+//                 );
+//             }
+//         }
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     wavm_halt_and_set_finished();
+// }

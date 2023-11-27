@@ -74,7 +74,7 @@ func CheckRequire(ciphertext *Ciphertext) (bool, error) {
 	}
 
 	if oracleStorage == nil {
-	    return false, fmt.Errorf("Cannot check require if database is not initialized")
+		return false, fmt.Errorf("Cannot check require if database is not initialized")
 	}
 
 	result, err := oracleStorage.GetRequire(ciphertext)
@@ -83,6 +83,44 @@ func CheckRequire(ciphertext *Ciphertext) (bool, error) {
 	}
 
 	return result, nil
+}
+
+func Require(ct *Ciphertext) bool {
+	config := api.GetConfig()
+	if config.OracleType == "local" {
+		return putRequire(ct)
+	} else if config.OracleType == "network" {
+		return getRequire(ct)
+	} else {
+		panic("Unknown oracle type: " + config.OracleType)
+	}
+}
+
+// Puts the given ciphertext as a require to the oracle DB or exits the process on errors.
+// Returns the require value.
+func putRequire(ct *Ciphertext) bool {
+	plaintext, err := Decrypt(*ct)
+	if err != nil {
+		panic(err)
+	}
+
+	result, err := StoreRequire(ct, plaintext)
+	if err != nil {
+		panic("Failed to decrypt value")
+	}
+
+	return result
+}
+
+// Gets the given require from the oracle DB and returns its value.
+// Exits the process on errors or signature verification failure.
+func getRequire(ct *Ciphertext) bool {
+	result, err := CheckRequire(ct)
+	if err != nil {
+		return false
+	}
+
+	return result
 }
 
 // StoreRequire stores a requirement into the oracle - this is used by the EVM to manage ciphertexts
@@ -126,24 +164,14 @@ func InitTfhe(config *Config) error {
 
 	api.SetConfig(*config)
 
-	clientKeyPath := config.ClientKeyPath
-	serverKeyPath := config.ServerKeyPath
-	publicKeyPath := config.PublicKeyPath
+	clientKeyPath := filepath.Join(config.HomeDir, config.ClientKeyPath)
+	serverKeyPath := filepath.Join(config.HomeDir, config.ServerKeyPath)
+	publicKeyPath := filepath.Join(config.HomeDir, config.PublicKeyPath)
 
-	oraclePrivatePath := config.OraclePrivateKeyPath
-	oraclePublicPath := config.OraclePublicKeyPath
-	oracleDbPath := config.OracleDbPath
+	oraclePrivatePath := filepath.Join(config.HomeDir, config.OraclePrivateKeyPath)
+	oraclePublicPath := filepath.Join(config.HomeDir, config.OraclePublicKeyPath)
 
-	if config.HomeDir != nil {
-		clientKeyPath = filepath.Join(*config.HomeDir, config.ClientKeyPath)
-		serverKeyPath = filepath.Join(*config.HomeDir, config.ServerKeyPath)
-		publicKeyPath = filepath.Join(*config.HomeDir, config.PublicKeyPath)
-
-		oraclePrivatePath = filepath.Join(*config.HomeDir, config.OraclePrivateKeyPath)
-		oraclePublicPath = filepath.Join(*config.HomeDir, config.OraclePublicKeyPath)
-
-		oracleDbPath = filepath.Join(*config.HomeDir, config.OracleDbPath)
-	}
+	oracleDbPath := filepath.Join(config.HomeDir, config.OracleDbPath)
 
 	api.SKS, err = os.ReadFile(serverKeyPath)
 	if err != nil {
@@ -212,7 +240,6 @@ func CloseTfhe() {
 
 // GenerateFheKeys is a CLI command only or testing command
 func GenerateFheKeys(homeDir string, serverKeyPath string, clientKeyPath string, publicKeyPath string) error {
-
 	fullClientKeyPath := filepath.Join(homeDir, clientKeyPath)
 	fullServerKeyPath := filepath.Join(homeDir, serverKeyPath)
 	fullPublicKeyPath := filepath.Join(homeDir, publicKeyPath)
@@ -241,7 +268,7 @@ func createDirectoryIfNotExist(fullClientKeyPath string) error {
 	// Make directories for private key if they don't exist
 	clientDir := filepath.Dir(fullClientKeyPath)
 
-	if err := os.MkdirAll(clientDir, 0755); err != nil {
+	if err := os.MkdirAll(clientDir, 0o755); err != nil {
 		return err
 	}
 	return nil
@@ -269,10 +296,10 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 		return err
 	}
 
-	if err := os.WriteFile(fullPublicKeyPath, public, 0600); err != nil {
+	if err := os.WriteFile(fullPublicKeyPath, public, 0o600); err != nil {
 		return err
 	}
-	if err := os.WriteFile(fullPrivateKeyPath, private, 0600); err != nil {
+	if err := os.WriteFile(fullPrivateKeyPath, private, 0o600); err != nil {
 		return err
 	}
 	return nil
@@ -281,4 +308,3 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 func Version() uint32 {
 	return api.LibTfheVersion()
 }
-

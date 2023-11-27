@@ -51,3 +51,8 @@ profile.cov
 target
 build
 libtfhe-wrapper/bindings.h
+
+*.so
+keys/cks
+keys/pks
+keys/sks

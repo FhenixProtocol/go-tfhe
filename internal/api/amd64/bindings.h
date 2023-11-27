@@ -120,6 +120,11 @@ struct UnmanagedVector math_operation(struct ByteSliceView lhs,
                                       FheUintType uint_type,
                                       struct UnmanagedVector *err_msg);
 
+struct UnmanagedVector cast_operation(struct ByteSliceView val,
+                                      FheUintType from_type,
+                                      FheUintType to_type,
+                                      struct UnmanagedVector *err_msg);
+
 void load_server_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
 
 void load_client_key(struct ByteSliceView key, struct UnmanagedVector *err_msg);
@@ -141,10 +146,6 @@ struct UnmanagedVector encrypt(uint64_t msg, FheUintType int_type, struct Unmana
 uint64_t decrypt(struct ByteSliceView ciphertext,
                  FheUintType int_type,
                  struct UnmanagedVector *err_msg);
-
-#if defined(DEFINE_WASM32)
-void banana(void);
-#endif
 
 struct UnmanagedVector new_unmanaged_vector(bool nil, const uint8_t *ptr, uintptr_t length);
 
