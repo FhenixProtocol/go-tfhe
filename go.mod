@@ -5,12 +5,12 @@ go 1.21
 //replace github.com/fhenixprotocol/decryption-oracle => ../decryption-oracle
 
 require (
-	github.com/fhenixprotocol/decryption-oracle v0.0.0-20231026124808-5b99acac9a8d
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/crypto v0.14.0
 )
 
 require (
+	github.com/fhenixprotocol/decryption-oracle-proto v0.0.0-20231127135430-74f6a7e6df5c // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 // indirect
