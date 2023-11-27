@@ -180,6 +180,23 @@ func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
 	}, nil
 }
 
+func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext, error) {
+	if (ifFalse.UintType != ifTrue.UintType) || (ct.UintType != ifTrue.UintType) {
+		return nil, fmt.Errorf("cannot use selector on uints / control of different types")
+	}
+
+	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ct.UintType))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
+}
+
 // Decrypt decrypts the ciphertext and returns the plaintext value.
 func (ct *Ciphertext) Decrypt() (*big.Int, error) {
 	res, err := Decrypt(ct.Serialization, ct.UintType)

@@ -11,6 +11,8 @@ pub(crate) mod imports;
 pub(crate) mod cast;
 pub mod keys;
 pub(crate) mod logger;
+
+#[macro_use]
 pub(crate) mod math;
 pub(crate) mod serialization;
 
