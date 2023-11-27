@@ -143,7 +143,6 @@ func InitTfhe(config *Config) error {
 	if config == nil {
 		return fmt.Errorf("config cannot be empty")
 	}
-	fmt.Println("Loading FHE keys.")
 	if api.LoadKeysDone {
 		_, err = LoadServerKey(api.SKS)
 		if err != nil {

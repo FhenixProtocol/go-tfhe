@@ -20,29 +20,29 @@ pub fn expand_compressed_safe(
     match int_type {
         FheUintType::Uint8 => {
             let value: FheUint8 = deserialize_fhe_uint8(ciphertext, true).map_err(|e| {
-                RustError::generic_error(format!("failed to deserialize compressed u8: {:?}", e))
+                RustError::generic_error(format!("failed deserializing compressed u8: {:?}", e))
             })?;
 
             bincode::serialize(&value).map_err(|e| {
-                RustError::generic_error(format!("failed to serialize compressed value: {:?}", e))
+                RustError::generic_error(format!("failed serializing compressed value: {:?}", e))
             })
         }
         FheUintType::Uint16 => {
             let value: FheUint16 = deserialize_fhe_uint16(ciphertext, true).map_err(|e| {
-                RustError::generic_error(format!("failed to deserialize compressed u16: {:?}", e))
+                RustError::generic_error(format!("failed deserializing compressed u16: {:?}", e))
             })?;
 
             bincode::serialize(&value).map_err(|e| {
-                RustError::generic_error(format!("failed to serialize compressed value: {:?}", e))
+                RustError::generic_error(format!("failed serializing compressed value: {:?}", e))
             })
         }
         FheUintType::Uint32 => {
             let value: FheUint32 = deserialize_fhe_uint32(ciphertext, true).map_err(|e| {
-                RustError::generic_error(format!("failed to deserialize compressed u32: {:?}", e))
+                RustError::generic_error(format!("failed deserializing compressed u32: {:?}", e))
             })?;
 
             bincode::serialize(&value).map_err(|e| {
-                RustError::generic_error(format!("failed to serialize compressed value: {:?}", e))
+                RustError::generic_error(format!("failed serializing compressed value: {:?}", e))
             })
         }
     }
@@ -68,10 +68,11 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
 
 pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
     if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error("server key must be set for trivial encryption"));
+        return Err(RustError::generic_error(
+            "server key must be set for trivial encryption",
+        ));
     }
     GlobalKeys::refresh_server_key_for_thread();
-
 
     match int_type {
         FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
@@ -89,22 +90,22 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
     let res = match int_type {
         FheUintType::Uint8 => _impl_decrypt_u8(
             deserialize_fhe_uint8(ciphertext, false).map_err(|err| {
-                log::debug!("Error decrypting u8: {:?}", err);
-                RustError::generic_error("Error decrypting u8")
+                log::error!("failed decrypting u8: {:?}", err);
+                RustError::generic_error("Failed decrypting u8")
             })?,
             client_key,
         ),
         FheUintType::Uint16 => _impl_decrypt_u16(
             deserialize_fhe_uint16(ciphertext, false).map_err(|err| {
-                log::debug!("Error decrypting u16: {:?}", err);
-                RustError::generic_error("Error decrypting u16")
+                log::error!("failed decrypting u16: {:?}", err);
+                RustError::generic_error("Failed decrypting u16")
             })?,
             client_key,
         ),
         FheUintType::Uint32 => _impl_decrypt_u32(
             deserialize_fhe_uint32(ciphertext, false).map_err(|err| {
-                log::debug!("Error decrypting u32: {:?}", err);
-                RustError::generic_error("Error decrypting u32")
+                log::error!("failed decrypting u32: {:?}", err);
+                RustError::generic_error("Failed decrypting u32")
             })?,
             client_key,
         ),
@@ -120,8 +121,8 @@ where
 {
     // todo: separate serialization from encryption so we can change it on-the-fly
     bincode::serialize(&Expanded::encrypt_trivial(value)).map_err(|err| {
-        log::error!("Error serializing trivial encryption: {:?}", err);
-        RustError::generic_error("error serializing trivial encryption")
+        log::error!("failed serializing trivial encryption: {:?}", err);
+        RustError::generic_error("failed serializing trivial encryption")
     })
 }
 
@@ -139,16 +140,16 @@ where
 {
     if !compact {
         bincode::serialize(&Expanded::encrypt(value, public_key)).map_err(|err| {
-            log::debug!("Failed to serialize value: {:?}", err);
+            log::error!("failed serializing value: {:?}", err);
             RustError::generic_error("ciphertext serialization error")
         })
     } else {
         let encrypted = &Compact::try_encrypt(value, public_key).map_err(|err| {
-            log::debug!("Failed to encrypt value: {:?}", err);
+            log::error!("failed encrypting value: {:?}", err);
             RustError::generic_error("encrypt failed")
         })?;
         bincode::serialize(encrypted).map_err(|err| {
-            log::debug!("Failed to serialize value: {:?}", err);
+            log::error!("failed serializing value: {:?}", err);
             RustError::generic_error("ciphertext serialization error")
         })
     }
