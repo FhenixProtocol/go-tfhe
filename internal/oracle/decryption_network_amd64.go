@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	decryptionoracle "github.com/fhenixprotocol/decryption-oracle/client"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle/memorydb"
 )
 
 type DecryptionOracle struct {
-	client *decryptionoracle.DecryptionNetworkClient
+	client *DecryptionNetworkClient
 	// local cache for decrypted numbers & require statement results
 	db *memorydb.Database
 }
@@ -36,7 +34,7 @@ func NewDecryptionOracleClient() *DecryptionOracle {
 		if address == "" {
 			address = DefaultDecryptionOracle
 		}
-		newClient := decryptionoracle.New(address)
+		newClient := NewDecryptionNetworkClient(address)
 
 		oracle.client = &newClient
 	}
