@@ -373,3 +373,100 @@ pub unsafe extern "C" fn decrypt(
 
     handle_c_error_default(r, err_msg)
 }
+
+// #[cfg(target_arch = "wasm32")]
+// #[no_mangle]
+// pub unsafe extern "C" fn banana() {
+//     // let cks_bytes = include_bytes!("../../../keys/tfhe/cks");
+//     // let sks_bytes = include_bytes!("../../../keys/tfhe/sks");
+//     // let pks_bytes = include_bytes!("../../../keys/tfhe/pks");
+//
+//     // let cks = bincode::deserialize::<ClientKey>(cks_bytes).unwrap();
+//     // let sks = bincode::deserialize::<ServerKey>(sks_bytes).unwrap();
+//     // let pks = bincode::deserialize::<CompactPublicKey>(pks_bytes).unwrap();
+//
+//     console_log("gm");
+//
+//     console_log("generting keys (~15 seconds)...");
+//
+//     let config = ConfigBuilder::all_disabled()
+//         .enable_custom_integers(KEYGEN_PARAMS, None)
+//         .build();
+//     let (cks, sks) = generate_keys(config);
+//     let pks: CompactPublicKey = CompactPublicKey::new(&cks);
+//
+//     console_log("set_client_key...");
+//
+//     match GlobalKeys::set_client_key(cks) {
+//         Ok(_) => {}
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     console_log("set_server_key...");
+//
+//     tfhe::set_server_key(sks);
+//
+//     console_log("set_public_key...");
+//
+//     match GlobalKeys::set_public_key(pks) {
+//         Ok(_) => {}
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     console_log("encrypt_safe(10)...");
+//
+//     let ten = match encrypt_safe(10, FheUintType::Uint8) {
+//         Ok(ten) => ten,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("encrypt_safe(20)...");
+//
+//     let twenty = match encrypt_safe(20, FheUintType::Uint8) {
+//         Ok(ten) => ten,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("res = op_uint8(10, 20, add)...");
+//
+//     let res = match op_uint8(ten.as_slice(), twenty.as_slice(), Op::Add) {
+//         Ok(res) => res,
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     };
+//
+//     console_log("decrypt_safe(res)...");
+//
+//     match decrypt_safe(res.as_slice(), FheUintType::Uint8) {
+//         Ok(decrypted) => {
+//             console_log(format!("decrypted: {}", decrypted).as_str());
+//
+//             if decrypted != 30 {
+//                 panic!(
+//                     "error: got wrong decrypted value. Expected: {}, got: {}",
+//                     30, decrypted
+//                 );
+//             }
+//         }
+//         Err(err) => {
+//             console_log(format!("error: {:?}", err).as_str());
+//             panic!("error: {:?}", err);
+//         }
+//     }
+//
+//     wavm_halt_and_set_finished();
+// }
