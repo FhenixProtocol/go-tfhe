@@ -59,7 +59,7 @@ build-go:
 
 test:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
-	RUST_BACKTRACE=1 GOARCH=amd64 go test -v -count=1 ./...
+	RUST_BACKTRACE=1 GOARCH=amd64 go test -v -count=1 $(TEST_PARAMS) ./...
 
 test-safety:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.

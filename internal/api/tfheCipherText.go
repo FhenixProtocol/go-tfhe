@@ -3,8 +3,13 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"math/big"
+	"os"
+	"strings"
 )
+
+var logger *logrus.Logger
 
 // Ciphertext represents the encrypted data structure.
 type Ciphertext struct {
@@ -117,9 +122,62 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
+func logLevelFromString(logLevel string, defaultLevel logrus.Level) logrus.Level {
+	logLevelUpper := strings.ToUpper(logLevel)
+	switch logLevelUpper {
+	case "ERROR":
+		return logrus.ErrorLevel
+	case "WARN":
+		return logrus.WarnLevel
+	case "INFO":
+		return logrus.InfoLevel
+	case "DEBUG":
+		return logrus.DebugLevel
+	case "TRACE":
+		return logrus.TraceLevel
+	default:
+		return defaultLevel
+	}
+}
+
+func getLogLevel(defaultLevel logrus.Level) logrus.Level {
+	LogLevelEnvVarName := "LOG_LEVEL"
+	logLevelEnvVar := os.Getenv(LogLevelEnvVarName)
+	logLevel := logLevelFromString(logLevelEnvVar, defaultLevel)
+
+	if logLevel > defaultLevel {
+		return defaultLevel
+	}
+
+	return logLevel
+}
+
+func InitLogger(logLevel logrus.Level) {
+	logger = logrus.New()
+	logger.SetOutput(os.Stderr)
+	logger.SetLevel(getLogLevel(logLevel))
+}
+
 // IsRandom checks if the ciphertext was randomly generated - this is used for gas simulation
 func (ct *Ciphertext) IsRandom() bool {
 	return ct.random
+}
+
+func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
+	if ct.UintType == toType {
+		return ct, nil
+	}
+
+	res, err := castOperation(ct.Serialization, uint8(ct.UintType), uint8(toType))
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
 }
 
 // Decrypt decrypts the ciphertext and returns the plaintext value.
@@ -149,7 +207,7 @@ func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciph
 
 // Add performs ciphertext addition.
 func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
-    return ct.performOperation(rhs, add)
+	return ct.performOperation(rhs, add)
 }
 
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {

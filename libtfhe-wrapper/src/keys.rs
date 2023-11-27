@@ -38,7 +38,7 @@ impl InitGuard {
         match &self.key {
             None => panic!("Server Key not set"),
             Some(key) => match self.init_threads.insert(thread::current().id()) {
-                false => {} // thread already set key in zama lib
+                false => {} // thread already set key
                 true => tfhe::set_server_key(key.clone()),
             },
         }
@@ -61,7 +61,7 @@ impl GlobalKeys {
 
     pub fn set_public_key(key: CompactPublicKey) -> Result<(), RustError> {
         if PUBLIC_KEY.get().is_some() {
-            println!("already loaded public key");
+            log::debug!("already loaded public key");
             return Ok(());
             // return Err(RustError::generic_error(
             //     "Cannot set public key multiple times",
@@ -69,12 +69,12 @@ impl GlobalKeys {
         }
         PUBLIC_KEY
             .set(key)
-            .map_err(|_key| RustError::generic_error("failed to set public key"))
+            .map_err(|_key| RustError::generic_error("failed setting public key"))
     }
 
     pub fn set_client_key(key: ClientKey) -> Result<(), RustError> {
         if CLIENT_KEY.get().is_some() {
-            println!("already loaded client key");
+            log::debug!("already loaded client key");
             return Ok(());
             // return Err(RustError::generic_error(
             //     "Cannot set client key multiple times",
@@ -82,7 +82,7 @@ impl GlobalKeys {
         }
         CLIENT_KEY
             .set(key)
-            .map_err(|_key| RustError::generic_error("failed to set client key"))
+            .map_err(|_key| RustError::generic_error("failed setting client key"))
     }
 
     pub fn is_server_key_set() -> bool {
@@ -127,8 +127,8 @@ pub static CLIENT_KEY: OnceCell<ClientKey> = OnceCell::new();
 
 pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
     let maybe_key_deserialized = bincode::deserialize::<ClientKey>(key).map_err(|err| {
-        log::debug!("failed to deserialize client key: {:?}", err);
-        RustError::generic_error("Failed to deserialize client key")
+        log::error!("failed deserializing client key: {:?}", err);
+        RustError::generic_error("failed deserializing client key")
     })?;
 
     GlobalKeys::set_client_key(maybe_key_deserialized)?;
@@ -138,8 +138,8 @@ pub fn deserialize_client_key_safe(key: &[u8]) -> Result<(), RustError> {
 
 pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
     let maybe_key_deserialized = bincode::deserialize::<CompactPublicKey>(key).map_err(|err| {
-        log::debug!("failed to deserialize public key: {:?}", err);
-        RustError::generic_error("Failed to deserialize public key")
+        log::error!("failed deserializing public key: {:?}", err);
+        RustError::generic_error("failed deserializing public key")
     })?;
 
     GlobalKeys::set_public_key(maybe_key_deserialized)?;
@@ -149,15 +149,15 @@ pub fn deserialize_public_key_safe(key: &[u8]) -> Result<(), RustError> {
 
 pub fn load_server_key_safe(key: &[u8]) -> Result<(), RustError> {
     let server_key = bincode::deserialize::<ServerKey>(key).map_err(|err| {
-        log::debug!("Failed to set server key: {:?}", err);
-        RustError::generic_error("failed to set server key: bad input")
+        log::error!("failed setting server key: {:?}", err);
+        RustError::generic_error("failed setting server key: bad input")
     })?;
 
     tfhe::set_server_key(server_key.clone());
 
     GlobalKeys::set_server_key(server_key).map_err(|_| {
-        log::debug!("Failed to set server key");
-        RustError::generic_error("failed to set server key: set failed")
+        log::error!("failed setting server key");
+        RustError::generic_error("failed setting server key: set failed")
     })
 }
 

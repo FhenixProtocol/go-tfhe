@@ -32,7 +32,6 @@ pub fn set_error(err: RustError, error_msg: Option<&mut UnmanagedVector>) {
         let errno = ErrnoValue::Other as i32;
         set_errno(Errno(errno));
     }
-
 }
 
 /// If `result` is Ok, this returns the Ok value and clears [errno].

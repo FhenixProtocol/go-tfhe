@@ -1,13 +1,18 @@
 package api
 
 import (
-	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
 	"math/big"
 	"strconv"
+
+	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
 )
 
 func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, error) {
 	return amd64.MathOperation(lhs, rhs, uintType, amd64.OperationType(op))
+}
+
+func castOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
+	return amd64.CastOperation(val, fromType, toType)
 }
 
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
