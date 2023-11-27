@@ -1,6 +1,6 @@
 package api
 
-var loadedConfig *Config
+var loadedConfig Config
 
 type Config struct {
 	IsOracle bool `koanf:"is-oracle"`
@@ -31,9 +31,9 @@ var ConfigDefault = Config{
 }
 
 func GetConfig() *Config {
-	return loadedConfig
+	return &loadedConfig
 }
 
 func SetConfig(config Config) {
-	loadedConfig = &config
+	loadedConfig = config
 }
