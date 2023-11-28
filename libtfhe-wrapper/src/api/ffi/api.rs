@@ -8,6 +8,7 @@ use crate::keys::{
     deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
     load_server_key_safe,
 };
+
 use crate::math::{op_uint16, op_uint32, op_uint8};
 
 #[cfg(target_arch = "wasm32")]
@@ -161,6 +162,19 @@ pub unsafe extern "C" fn math_operation_wasm(
     return (x.ptr, x.len as u64);
 }
 
+pub fn math_operation_helper(
+    lhs: &[u8],
+    rhs: &[u8],
+    operation: Op,
+    uint_type: FheUintType,
+) -> Result<Vec<u8>, RustError> {
+    match uint_type {
+        FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
+        FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
+        FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
+    }
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn math_operation(
     lhs: ByteSliceView,
@@ -181,13 +195,9 @@ pub unsafe extern "C" fn math_operation(
         }
     };
 
-    let result = match uint_type {
-        FheUintType::Uint8 => op_uint8(lhs_slice, rhs_slice, operation),
-        FheUintType::Uint16 => op_uint16(lhs_slice, rhs_slice, operation),
-        FheUintType::Uint32 => op_uint32(lhs_slice, rhs_slice, operation),
-    };
+    let inner_result = math_operation_helper(lhs_slice, rhs_slice, operation, uint_type);
 
-    let result = handle_c_error_binary(result, err_msg);
+    let result = handle_c_error_binary(inner_result, err_msg);
     UnmanagedVector::new(Some(result))
 }
 
@@ -210,7 +220,7 @@ pub unsafe extern "C" fn cast_operation(
         }
     };
 
-    let result = match from_type {
+    let inner_result = match from_type {
         FheUintType::Uint8 => match to_type {
             FheUintType::Uint8 => Ok(val_slice.to_vec()),
             FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
@@ -228,7 +238,58 @@ pub unsafe extern "C" fn cast_operation(
         },
     };
 
-    let result = handle_c_error_binary(result, err_msg);
+    let result = handle_c_error_binary(inner_result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn cmux(
+    control: ByteSliceView,
+    if_true: ByteSliceView,
+    if_false: ByteSliceView,
+    uint_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    let (control_slice, if_true_slice, if_false_slice) =
+        match (control.read(), if_true.read(), if_false.read()) {
+            (Some(k1), Some(k2), Some(k3)) => (k1, k2, k3),
+            _ => {
+                log::error!("failed decoding an input");
+                set_error(
+                    RustError::generic_error("failed reading input server key"),
+                    err_msg,
+                );
+                return UnmanagedVector::none();
+            }
+        };
+
+    // result = (ifTrue - ifFalse) * control + ifFalse
+    let mut internal_result =
+        math_operation_helper(if_true_slice, if_false_slice, Op::Sub, uint_type);
+    if internal_result.is_err() {
+        let result = handle_c_error_binary(internal_result, err_msg);
+        return UnmanagedVector::new(Some(result));
+    }
+
+    internal_result = math_operation_helper(
+        control_slice,
+        internal_result.unwrap().as_slice(),
+        Op::Mul,
+        uint_type,
+    );
+    if internal_result.is_err() {
+        let result = handle_c_error_binary(internal_result, err_msg);
+        return UnmanagedVector::new(Some(result));
+    }
+
+    internal_result = math_operation_helper(
+        if_false_slice,
+        internal_result.unwrap().as_slice(),
+        Op::Add,
+        uint_type,
+    );
+
+    let result = handle_c_error_binary(internal_result, err_msg);
     UnmanagedVector::new(Some(result))
 }
 
