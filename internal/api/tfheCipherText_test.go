@@ -9,6 +9,9 @@ import (
 
 func TestNewCipherText(t *testing.T) {
 	err := setupKeysForTests()
+	if err != nil {
+		t.Fatalf("failed loading keys: %s", err)
+	}
 
 	value := big.NewInt(12345)
 	ct, err := api.NewCipherText(*value, api.Uint32, false)
@@ -26,6 +29,73 @@ func TestNewCipherText(t *testing.T) {
 
 	if res.Uint64() != value.Uint64() {
 		t.Fatalf("Expected: %d != %d", res.Uint64(), value.Uint64())
+	}
+}
+
+func TestCmux(t *testing.T) {
+	err := setupKeysForTests()
+	if err != nil {
+		t.Fatalf("failed loading keys: %s", err)
+	}
+
+	boolTrue := big.NewInt(1)
+	boolFalse := big.NewInt(0)
+
+	tr := big.NewInt(10)
+	fl := big.NewInt(20)
+
+	testCases := []struct {
+		name          string
+		shouldSuccess bool
+		uintType      api.UintType
+	}{
+
+		{"TrueUint8", true, api.Uint8},
+		{"TrueUint16", true, api.Uint16},
+		{"TrueUint32", true, api.Uint32},
+		{"FalseUint8", false, api.Uint8},
+		{"FalseUint16", false, api.Uint16},
+		{"FalseUint32", false, api.Uint32},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			var control *api.Ciphertext
+			var expectedResult *big.Int
+
+			if tt.shouldSuccess {
+				control, _ = api.NewCipherText(*boolTrue, tt.uintType, false)
+				expectedResult = tr
+			} else {
+				control, _ = api.NewCipherText(*boolFalse, tt.uintType, false)
+				expectedResult = fl
+			}
+
+			ifTrue, _ := api.NewCipherText(*tr, tt.uintType, false)
+			ifFalse, _ := api.NewCipherText(*fl, tt.uintType, false)
+
+			res, err := control.Cmux(ifTrue, ifFalse)
+			if err != nil {
+				t.Fatalf("Got error %v", err)
+			}
+			if res == nil {
+				t.Fatalf("Expected a result, got nil")
+			}
+
+			gotHash := res.Hash()
+			expectedHash := api.Keccak256(res.Serialization)
+			if gotHash != api.Hash(expectedHash) {
+				t.Fatalf("Mismatch in ciphertext hash")
+			}
+
+			resDec, err := res.Decrypt()
+			if err != nil {
+				t.Fatalf("Error while decrypting %+v", err)
+			}
+
+			assert.Equal(t, resDec, expectedResult)
+
+		})
 	}
 }
 

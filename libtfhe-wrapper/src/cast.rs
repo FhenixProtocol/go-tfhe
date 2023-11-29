@@ -1,3 +1,4 @@
+#[macro_use]
 use crate::error::RustError;
 use crate::serialization::*;
 use tfhe::{FheUint16, FheUint32, FheUint8};

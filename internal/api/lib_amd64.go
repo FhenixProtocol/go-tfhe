@@ -15,6 +15,10 @@ func castOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
 	return amd64.CastOperation(val, fromType, toType)
 }
 
+func cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte, error) {
+	return amd64.Cmux(control, ifTrue, ifFalse, uintType)
+}
+
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 	return amd64.DeserializeServerKey(serverKeyBytes)
 

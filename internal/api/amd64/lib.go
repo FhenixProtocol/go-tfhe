@@ -82,6 +82,26 @@ func CastOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
 	return copyAndDestroyUnmanagedVector(res), nil
 }
 
+func Cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte, error) {
+	errmsg := uninitializedUnmanagedVector()
+
+	con := makeView(control)
+	defer runtime.KeepAlive(control)
+
+	t := makeView(ifTrue)
+	defer runtime.KeepAlive(t)
+
+	f := makeView(ifFalse)
+	defer runtime.KeepAlive(f)
+
+	res, err := C.cmux(con, t, f, C.FheUintType(uintType), &errmsg)
+	if err != nil {
+		return nil, errorWithMessage(err, errmsg)
+	}
+
+	return copyAndDestroyUnmanagedVector(res), nil
+}
+
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 
 	sks := makeView(serverKeyBytes)
