@@ -291,8 +291,6 @@ func TestCipherTextOperations(t *testing.T) {
 	}
 	shrResultFunc := func(a, b *big.Int) *big.Int { return a.Rsh(a, uint(b.Uint64())) }
 
-	// todo add more ops
-
 	testCases := []struct {
 		name     string
 		value1   *big.Int

@@ -40,7 +40,6 @@ const (
 	max        = 15
 	shl        = 16
 	shr        = 17
-	// todo add more ops
 )
 
 type UintType uint32

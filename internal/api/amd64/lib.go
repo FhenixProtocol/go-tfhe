@@ -37,15 +37,6 @@ type (
 
 type OperationType C.Op
 
-const (
-	add OperationType = C.Op_Add
-	sub               = C.Op_Sub
-	mul               = C.Op_Mul
-	lt                = C.Op_Lt
-	lte               = C.Op_Lte
-	// todo why is this here?
-)
-
 // Pointers
 type (
 	cu8_ptr = *C.uint8_t

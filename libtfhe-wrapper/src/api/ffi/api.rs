@@ -66,7 +66,6 @@ impl From<u32> for Op {
             15 => Op::Max,
             16 => Op::Shl,
             17 => Op::Shr,
-            // todo add remaining ops
             _ => Op::Add,
         }
     }

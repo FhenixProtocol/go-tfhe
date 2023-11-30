@@ -294,5 +294,3 @@ func (ct *Ciphertext) Shl(rhs *Ciphertext) (*Ciphertext, error) {
 func (ct *Ciphertext) Shr(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, shr)
 }
-
-// todo add more ops
