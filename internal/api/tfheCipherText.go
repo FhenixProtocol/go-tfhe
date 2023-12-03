@@ -242,3 +242,55 @@ func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
 func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
 	return ct.performOperation(rhs, lte)
 }
+
+func (ct *Ciphertext) Div(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, div)
+}
+
+func (ct *Ciphertext) Gt(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, gt)
+}
+
+func (ct *Ciphertext) Gte(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, gte)
+}
+
+func (ct *Ciphertext) Rem(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, rem)
+}
+
+func (ct *Ciphertext) And(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, and)
+}
+
+func (ct *Ciphertext) Or(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, or)
+}
+
+func (ct *Ciphertext) Xor(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, xor)
+}
+
+func (ct *Ciphertext) Eq(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, eq)
+}
+
+func (ct *Ciphertext) Ne(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, ne)
+}
+
+func (ct *Ciphertext) Min(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, min)
+}
+
+func (ct *Ciphertext) Max(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, max)
+}
+
+func (ct *Ciphertext) Shl(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, shl)
+}
+
+func (ct *Ciphertext) Shr(rhs *Ciphertext) (*Ciphertext, error) {
+	return ct.performOperation(rhs, shr)
+}

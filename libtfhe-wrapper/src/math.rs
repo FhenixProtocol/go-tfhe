@@ -2,7 +2,7 @@ use crate::api::Op;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
 use serde::Serialize;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, Div, Rem, BitOr, BitAnd, BitXor, Shl, Shr};
 use tfhe::prelude::*;
 
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
@@ -68,7 +68,21 @@ define_op_fn!(op_uint32, deserialize_fhe_uint32, FheUint32);
 ///
 /// An `UnmanagedVector` containing the serialized result.
 fn common_op<
-    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + FheOrd<Output = T> + FheEq + Serialize,
+    T: Add<Output = T> +
+    Sub<Output = T> +
+    Mul<Output = T> +
+    Div<Output = T> +
+    BitAnd<Output = T> +
+    BitOr<Output = T> +
+    BitXor<Output = T> +
+    Rem<Output = T> +
+    FheOrd<Output = T> +
+    FheEq<Output = T> +
+    for <'a> FheMin<&'a T, Output = T> +
+    for <'a> FheMax<&'a T, Output = T> +
+    Shl<Output = T> +
+    Shr<Output = T> +
+    Serialize,
 >(
     num1: T,
     num2: T,
@@ -87,6 +101,19 @@ fn common_op<
         Op::Mul => num1 * num2,
         Op::Lt => num1.lt(num2),
         Op::Lte => num1.le(num2),
+        Op::Div => num1 / num2,
+        Op::Gt => num1.gt(num2),
+        Op::Gte => num1.ge(num2),
+        Op::Rem => num1 % num2,
+        Op::BitAnd => num1 & num2,
+        Op::BitOr => num1 | num2,
+        Op::BitXor => num1 ^ num2,
+        Op::Eq => num1.eq(num2),
+        Op::Ne => num1.ne(num2),
+        Op::Min => num1.min(&num2),
+        Op::Max => num1.max(&num2),
+        Op::Shl => num1 << num2,
+        Op::Shr => num1 >> num2,
     };
 
     bincode::serialize(&result).map_err(|err| {

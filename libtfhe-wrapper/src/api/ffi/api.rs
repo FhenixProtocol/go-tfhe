@@ -29,6 +29,20 @@ pub enum Op {
     Mul = 2,
     Lt = 3,
     Lte = 4,
+    Div = 5,
+    Gt = 6,
+    Gte = 7,
+    Rem = 8,
+    BitAnd = 9,
+    BitOr = 10,
+    BitXor = 11,
+    Eq = 12,
+    Ne = 13,
+    Min = 14,
+    Max = 15,
+    Shl = 16,
+    Shr = 17,
+    // todo remaining ops
 }
 
 impl From<u32> for Op {
@@ -39,6 +53,19 @@ impl From<u32> for Op {
             2 => Op::Mul,
             3 => Op::Lt,
             4 => Op::Lte,
+            5 => Op::Div,
+            6 => Op::Gt,
+            7 => Op::Gte,
+            8 => Op::Rem,
+            9 => Op::BitAnd,
+            10 => Op::BitOr,
+            11 => Op::BitXor,
+            12 => Op::Eq,
+            13 => Op::Ne,
+            14 => Op::Min,
+            15 => Op::Max,
+            16 => Op::Shl,
+            17 => Op::Shr,
             _ => Op::Add,
         }
     }
