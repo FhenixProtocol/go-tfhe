@@ -29,7 +29,7 @@ type GrpcDecryptionNetworkClient struct {
 
 // New creates a new GrpcDecryptionNetworkClient
 func NewDecryptionNetworkClient(address string) DecryptionNetworkClient {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}
