@@ -203,7 +203,7 @@ func (ct *Ciphertext) Decrypt() (*big.Int, error) {
 	return big.NewInt(int64(res)), err
 }
 
-func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciphertext, error) {
+func (ct *Ciphertext) performMathOperation(rhs *Ciphertext, operation uint32) (*Ciphertext, error) {
 	if ct.UintType != rhs.UintType {
 		return nil, fmt.Errorf("cannot perform operation on uints of different types")
 	}
@@ -220,77 +220,94 @@ func (ct *Ciphertext) performOperation(rhs *Ciphertext, operation uint32) (*Ciph
 	}, nil
 }
 
+func (ct *Ciphertext) performUnaryMathOperation(operation uint32) (*Ciphertext, error) {
+	res, err := unaryMathOperation(ct.Serialization, uint8(ct.UintType), operation)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Ciphertext{
+		Serialization: res,
+		hash:          Keccak256(res),
+		UintType:      ct.UintType,
+	}, nil
+}
+
 // Now you can use the above function to implement the original methods:
 
 // Add performs ciphertext addition.
 func (ct *Ciphertext) Add(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, add)
+	return ct.performMathOperation(rhs, add)
 }
 
 func (ct *Ciphertext) Sub(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, sub)
+	return ct.performMathOperation(rhs, sub)
 }
 
 func (ct *Ciphertext) Mul(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, mul)
+	return ct.performMathOperation(rhs, mul)
 }
 
 func (ct *Ciphertext) Lt(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, lt)
+	return ct.performMathOperation(rhs, lt)
 }
 
 func (ct *Ciphertext) Lte(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, lte)
+	return ct.performMathOperation(rhs, lte)
 }
 
 func (ct *Ciphertext) Div(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, div)
+	return ct.performMathOperation(rhs, div)
 }
 
 func (ct *Ciphertext) Gt(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, gt)
+	return ct.performMathOperation(rhs, gt)
 }
 
 func (ct *Ciphertext) Gte(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, gte)
+	return ct.performMathOperation(rhs, gte)
 }
 
 func (ct *Ciphertext) Rem(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, rem)
+	return ct.performMathOperation(rhs, rem)
 }
 
 func (ct *Ciphertext) And(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, and)
+	return ct.performMathOperation(rhs, and)
 }
 
 func (ct *Ciphertext) Or(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, or)
+	return ct.performMathOperation(rhs, or)
 }
 
 func (ct *Ciphertext) Xor(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, xor)
+	return ct.performMathOperation(rhs, xor)
 }
 
 func (ct *Ciphertext) Eq(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, eq)
+	return ct.performMathOperation(rhs, eq)
 }
 
 func (ct *Ciphertext) Ne(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, ne)
+	return ct.performMathOperation(rhs, ne)
 }
 
 func (ct *Ciphertext) Min(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, min)
+	return ct.performMathOperation(rhs, min)
 }
 
 func (ct *Ciphertext) Max(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, max)
+	return ct.performMathOperation(rhs, max)
 }
 
 func (ct *Ciphertext) Shl(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, shl)
+	return ct.performMathOperation(rhs, shl)
 }
 
 func (ct *Ciphertext) Shr(rhs *Ciphertext) (*Ciphertext, error) {
-	return ct.performOperation(rhs, shr)
+	return ct.performMathOperation(rhs, shr)
+}
+
+func (ct *Ciphertext) Not() (*Ciphertext, error) {
+	return ct.performUnaryMathOperation(not)
 }

@@ -73,6 +73,10 @@ func MathOperation(lhs []byte, rhs []byte, uintType uint8, op OperationType) ([]
 
 // ******************** HERE BE PLACEHOLDERS ********** //
 
+func UnaryMathOperation(lhs []byte, uintType uint8, op OperationType) ([]byte, error) {
+	return nil, nil
+}
+
 func CastOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
 	return nil, nil
 }

@@ -42,6 +42,10 @@ const (
 	shr        = 17
 )
 
+const (
+	not uint32 = 0
+)
+
 type UintType uint32
 
 const HashLength = 32

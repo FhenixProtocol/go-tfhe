@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"fmt"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -423,6 +424,87 @@ func TestCipherTextOperations(t *testing.T) {
 			}
 
 			expected := tt.resultFn(tt.value1, tt.value2)
+			if resDec.Cmp(expected) != 0 {
+				t.Fatalf("Result is not what we expected: %s vs %s", resDec, expected)
+			}
+		})
+	}
+}
+
+func TestCipherTextUnaryMathOperation(t *testing.T) {
+	err := setupKeysForTests()
+	if err != nil {
+		t.Fatalf("Failed to load keys: %s", err)
+	}
+
+	notOp := func(a *api.Ciphertext) (*api.Ciphertext, error) {
+		return a.Not()
+	}
+	notResultFunc := func(a *big.Int, uintType api.UintType) *big.Int {
+		fmt.Println("received number:", a)
+		not := new(big.Int).Not(a)
+		fmt.Println("number not'ed:", not)
+
+		// convert to unsigned:
+		signed := not.Int64()
+		var max int64 = 0
+		switch uintType {
+		case api.Uint8:
+			max = 0b11111111
+		case api.Uint16:
+			max = 0b11111111_11111111
+		case api.Uint32:
+			max = 0b11111111_11111111_11111111_11111111
+		}
+
+		if signed > 0 {
+			return not
+		} else {
+			// https://stackoverflow.com/questions/29811702/convert-signed-to-unsigned-integer-mathematically
+			return big.NewInt(signed + max + 1)
+		}
+	}
+
+	// todo add more ops
+
+	testCases := []struct {
+		name     string
+		value1   *big.Int
+		uintType api.UintType
+		op       func(a *api.Ciphertext) (*api.Ciphertext, error)
+		resultFn func(a *big.Int, uintType api.UintType) *big.Int
+		err      error
+	}{
+		// Bitwise Not tests
+		{"NotUint8", big.NewInt(10), api.Uint8, notOp, notResultFunc, nil},
+		{"NotUint16", big.NewInt(10_123), api.Uint16, notOp, notResultFunc, nil},
+		{"NotUint32", big.NewInt(1_100_000), api.Uint32, notOp, notResultFunc, nil},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			ct1, _ := api.NewCipherText(*tt.value1, tt.uintType, false)
+
+			result, err := tt.op(ct1)
+			if err != tt.err {
+				t.Fatalf("Expected error %v, got %v", tt.err, err)
+			}
+			if err == nil && result == nil {
+				t.Fatalf("Expected a result, got nil")
+			}
+
+			gotHash := result.Hash()
+			expectedHash := api.Keccak256(result.Serialization)
+			if gotHash != api.Hash(expectedHash) {
+				t.Fatalf("Mismatch in ciphertext hash")
+			}
+
+			resDec, err := result.Decrypt()
+			if err != nil {
+				t.Fatalf("Expected an error when adding decrypting")
+			}
+
+			expected := tt.resultFn(tt.value1, tt.uintType)
 			if resDec.Cmp(expected) != 0 {
 				t.Fatalf("Result is not what we expected: %s vs %s", resDec, expected)
 			}

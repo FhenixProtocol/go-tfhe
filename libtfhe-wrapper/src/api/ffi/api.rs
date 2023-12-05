@@ -9,7 +9,9 @@ use crate::keys::{
     load_server_key_safe,
 };
 
-use crate::math::{op_uint16, op_uint32, op_uint8};
+use crate::math::{
+    op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
+};
 
 #[cfg(target_arch = "wasm32")]
 use tfhe::{
@@ -43,6 +45,21 @@ pub enum Op {
     Shl = 16,
     Shr = 17,
     // todo remaining ops
+}
+
+#[repr(i32)]
+#[derive(Debug)]
+pub enum UnaryOp {
+    Not = 0,
+}
+
+impl From<u32> for UnaryOp {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => UnaryOp::Not,
+            _ => UnaryOp::Not,
+        }
+    }
 }
 
 impl From<u32> for Op {
@@ -225,6 +242,35 @@ pub unsafe extern "C" fn math_operation(
     let inner_result = math_operation_helper(lhs_slice, rhs_slice, operation, uint_type);
 
     let result = handle_c_error_binary(inner_result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn unary_math_operation(
+    lhs: ByteSliceView,
+    operation: UnaryOp,
+    uint_type: FheUintType,
+    err_msg: Option<&mut UnmanagedVector>,
+) -> UnmanagedVector {
+    let lhs_slice = match lhs.read() {
+        Some(k1) => k1,
+        _ => {
+            log::debug!("Failed to decode input");
+            set_error(
+                RustError::generic_error("failed to read input server key"),
+                err_msg,
+            );
+            return UnmanagedVector::none();
+        }
+    };
+
+    let result = match uint_type {
+        FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
+        FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
+        FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
+    };
+
+    let result = handle_c_error_binary(result, err_msg);
     UnmanagedVector::new(Some(result))
 }
 
