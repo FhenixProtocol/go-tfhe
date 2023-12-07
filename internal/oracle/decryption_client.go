@@ -15,9 +15,9 @@ const (
 
 // DecryptionNetworkClient defines the interface for our client
 type DecryptionNetworkClient interface {
-	Decrypt(string) (string, string, error)
-	Reencrypt(string, string) (string, string, error)
-	AssertIsNil(string) (bool, string, error)
+	Decrypt(*pb.FheEncrypted) (string, string, error)
+	Reencrypt(*pb.FheEncrypted, string) (string, string, error)
+	AssertIsNil(*pb.FheEncrypted) (bool, string, error)
 	Close()
 }
 
@@ -29,7 +29,7 @@ type GrpcDecryptionNetworkClient struct {
 
 // New creates a new GrpcDecryptionNetworkClient
 func NewDecryptionNetworkClient(address string) DecryptionNetworkClient {
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}
@@ -42,7 +42,7 @@ func NewDecryptionNetworkClient(address string) DecryptionNetworkClient {
 }
 
 // AssertIsNil wraps around the gRPC AssertIsNil call
-func (g *GrpcDecryptionNetworkClient) AssertIsNil(encrypted string) (result bool, signature string, err error) {
+func (g *GrpcDecryptionNetworkClient) AssertIsNil(encrypted *pb.FheEncrypted) (result bool, signature string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 
@@ -55,7 +55,7 @@ func (g *GrpcDecryptionNetworkClient) AssertIsNil(encrypted string) (result bool
 }
 
 // Decrypt wraps around the gRPC Decrypt call
-func (g *GrpcDecryptionNetworkClient) Decrypt(encrypted string) (decrypted string, signature string, err error) {
+func (g *GrpcDecryptionNetworkClient) Decrypt(encrypted *pb.FheEncrypted) (decrypted string, signature string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 
@@ -68,7 +68,7 @@ func (g *GrpcDecryptionNetworkClient) Decrypt(encrypted string) (decrypted strin
 }
 
 // Reencrypt wraps around the gRPC Reencrypt call
-func (g *GrpcDecryptionNetworkClient) Reencrypt(encrypted string, userPublicKey string) (decrypted string, signature string, err error) {
+func (g *GrpcDecryptionNetworkClient) Reencrypt(encrypted *pb.FheEncrypted, userPublicKey string) (decrypted string, signature string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 

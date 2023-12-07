@@ -1,10 +1,11 @@
 package oracle
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	pb "github.com/fhenixprotocol/decryption-oracle-proto/go/oracle"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle/memorydb"
 )
@@ -50,7 +51,10 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 	if err != nil {
 		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
 			// Key does not exist in local db; try checking via decryption network
-			decrypted, signature, err := (*oracle.client).Decrypt(hex.EncodeToString(ciphertext))
+			decrypted, signature, err := (*oracle.client).Decrypt(&pb.FheEncrypted{
+				Data: ct.Serialization,
+				Type: pb.EncryptedType(ct.UintType),
+			})
 			if err != nil {
 				return "", fmt.Errorf("could not decrypt: %v", err)
 			}
@@ -85,7 +89,10 @@ func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
 	if err != nil {
 		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
 			// Key does not exist in local db; try checking via decryption network
-			decrypted, signature, err := (*oracle.client).AssertIsNil(hex.EncodeToString(ciphertext))
+			decrypted, signature, err := (*oracle.client).AssertIsNil(&pb.FheEncrypted{
+				Data: ct.Serialization,
+				Type: pb.EncryptedType(ct.UintType),
+			})
 			if err != nil {
 				return false, fmt.Errorf("could not decrypt: %v", err)
 			}

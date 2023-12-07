@@ -217,7 +217,7 @@ func InitTfhe(config *Config) error {
 
 		oracleStorage = oracle.HttpOracle{}
 	} else if config.OracleType == "network" {
-		oracleStorage = oracle.DecryptionOracle{}
+		oracleStorage = oracle.NewDecryptionOracleClient()
 	} else {
 		db, err := oracle.NewLocalDbStorage(oracleDbPath)
 		if err != nil {
