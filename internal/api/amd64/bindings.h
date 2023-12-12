@@ -47,6 +47,11 @@ enum Op {
 };
 typedef int32_t Op;
 
+enum UnaryOp {
+  Not = 0,
+};
+typedef int32_t UnaryOp;
+
 /**
  * An optional Vector type that requires explicit creation and destruction
  * and can be sent via FFI.
@@ -119,6 +124,11 @@ struct UnmanagedVector math_operation(struct ByteSliceView lhs,
                                       Op operation,
                                       FheUintType uint_type,
                                       struct UnmanagedVector *err_msg);
+
+struct UnmanagedVector unary_math_operation(struct ByteSliceView lhs,
+                                            UnaryOp operation,
+                                            FheUintType uint_type,
+                                            struct UnmanagedVector *err_msg);
 
 struct UnmanagedVector cast_operation(struct ByteSliceView val,
                                       FheUintType from_type,

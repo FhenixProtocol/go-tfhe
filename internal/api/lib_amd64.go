@@ -19,6 +19,10 @@ func cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte
 	return amd64.Cmux(control, ifTrue, ifFalse, uintType)
 }
 
+func unaryMathOperation(lhs []byte, uintType uint8, op uint32) ([]byte, error) {
+	return amd64.UnaryMathOperation(lhs, uintType, amd64.OperationType(op))
+}
+
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 	return amd64.DeserializeServerKey(serverKeyBytes)
 
