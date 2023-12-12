@@ -10,6 +10,10 @@ func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, e
 	return wasm.MathOperation(lhs, rhs, uintType, wasm.OperationType(op))
 }
 
+func unaryMathOperation(lhs []byte, uintType uint8, op uint32) ([]byte, error) {
+	return wasm.UnaryMathOperation(lhs, uintType, wasm.OperationType(op))
+}
+
 func castOperation(val []byte, fromType uint8, toType uint8) ([]byte, error) {
 	return wasm.CastOperation(val, fromType, toType)
 }
