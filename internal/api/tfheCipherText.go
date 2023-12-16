@@ -181,8 +181,8 @@ func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
 }
 
 func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext, error) {
-	if (ifFalse.UintType != ifTrue.UintType) || (ct.UintType != ifTrue.UintType) {
-		return nil, fmt.Errorf("cannot use selector on uints / control of different types")
+	if ifFalse.UintType != ifTrue.UintType {
+		return nil, fmt.Errorf("cannot use selector on uints of different types")
 	}
 
 	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ct.UintType))
