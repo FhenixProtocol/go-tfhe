@@ -12,6 +12,9 @@ use crate::keys::{
 use crate::math::{
     op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
 };
+use std::fs::OpenOptions;
+use std::io::{self, Write};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[cfg(target_arch = "wasm32")]
 use tfhe::{
@@ -104,6 +107,42 @@ impl From<u32> for FheUintType {
             1 => FheUintType::Uint16,
             2 => FheUintType::Uint32,
             _ => FheUintType::Uint32,
+        }
+    }
+}
+
+fn print_routine_time(name: &str, is_end: bool) {
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("/home/user/perf/perf.txt");
+
+    match file {
+        Ok(mut file) => {
+            let depth = 5;
+            let mut log = String::new();
+
+            for _ in 0..depth {
+                log.push('\t');
+            }
+
+            let banner = if is_end { "--" } else { "++" };
+
+            log.push_str(&format!(
+                "{} function {} at {:?}",
+                banner,
+                name,
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+            ));
+
+            if let Err(err) = writeln!(file, "{}", log) {
+                eprintln!("Error writing to file: {}", err);
+            }
+        }
+        Err(err) => {
+            eprintln!("Error opening file: {}", err);
         }
     }
 }
@@ -212,11 +251,14 @@ pub fn math_operation_helper(
     operation: Op,
     uint_type: FheUintType,
 ) -> Result<Vec<u8>, RustError> {
-    match uint_type {
+    print_routine_time("math_operation_helper", false);
+    let res = match uint_type {
         FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
         FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
         FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
-    }
+    };
+    print_routine_time("math_operation_helper", true);
+    res
 }
 
 #[no_mangle]
@@ -227,6 +269,7 @@ pub unsafe extern "C" fn math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("math_operation", false);
     let (lhs_slice, rhs_slice) = match (lhs.read(), rhs.read()) {
         (Some(k1), Some(k2)) => (k1, k2),
         _ => {
@@ -242,6 +285,7 @@ pub unsafe extern "C" fn math_operation(
     let inner_result = math_operation_helper(lhs_slice, rhs_slice, operation, uint_type);
 
     let result = handle_c_error_binary(inner_result, err_msg);
+    print_routine_time("math_operation", false);
     UnmanagedVector::new(Some(result))
 }
 
@@ -252,6 +296,7 @@ pub unsafe extern "C" fn unary_math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("unary_math_operation", false);
     let lhs_slice = match lhs.read() {
         Some(k1) => k1,
         _ => {
@@ -271,6 +316,7 @@ pub unsafe extern "C" fn unary_math_operation(
     };
 
     let result = handle_c_error_binary(result, err_msg);
+    print_routine_time("unary_math_operation", true);
     UnmanagedVector::new(Some(result))
 }
 
@@ -281,6 +327,7 @@ pub unsafe extern "C" fn cast_operation(
     to_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("cast_operation", false);
     let val_slice = match val.read() {
         Some(v1) => v1,
         _ => {
@@ -312,6 +359,7 @@ pub unsafe extern "C" fn cast_operation(
     };
 
     let result = handle_c_error_binary(inner_result, err_msg);
+    print_routine_time("cast_operation", true);
     UnmanagedVector::new(Some(result))
 }
 
@@ -323,6 +371,7 @@ pub unsafe extern "C" fn cmux(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("cmux", false);
     let (control_slice, if_true_slice, if_false_slice) =
         match (control.read(), if_true.read(), if_false.read()) {
             (Some(k1), Some(k2), Some(k3)) => (k1, k2, k3),
@@ -363,6 +412,7 @@ pub unsafe extern "C" fn cmux(
     );
 
     let result = handle_c_error_binary(internal_result, err_msg);
+    print_routine_time("cmux", true);
     UnmanagedVector::new(Some(result))
 }
 
@@ -468,9 +518,11 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("trivial_encrypt", false);
     let r = trivial_encrypt_safe(msg, int_type);
 
     let result = handle_c_error_binary(r, err_msg);
+    print_routine_time("trivial_encrypt", true);
     UnmanagedVector::new(Some(result))
 }
 
@@ -480,9 +532,11 @@ pub unsafe extern "C" fn encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    print_routine_time("encrypt", false);
     let r = encrypt_safe(msg, int_type);
 
     let result = handle_c_error_binary(r, err_msg);
+    print_routine_time("encrypt", true);
     UnmanagedVector::new(Some(result))
 }
 
@@ -492,6 +546,7 @@ pub unsafe extern "C" fn decrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> u64 {
+    print_routine_time("decrypt", false);
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
@@ -504,7 +559,7 @@ pub unsafe extern "C" fn decrypt(
     }
 
     let r = decrypt_safe(ciphertext_slice.unwrap(), int_type);
-
+    print_routine_time("decrypt", true);
     handle_c_error_default(r, err_msg)
 }
 

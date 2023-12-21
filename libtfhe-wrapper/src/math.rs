@@ -1,6 +1,7 @@
 use crate::api::{Op, UnaryOp};
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
+use crate::serialization::print_routine_time;
 use serde::Serialize;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use tfhe::prelude::*;
@@ -67,6 +68,7 @@ define_op_fn!(op_uint32, deserialize_fhe_uint32, FheUint32);
 /// # Returns
 ///
 /// An `UnmanagedVector` containing the serialized result.
+///
 fn common_op<
     T: Add<Output = T>
         + Sub<Output = T>
@@ -95,6 +97,7 @@ fn common_op<
     }
     GlobalKeys::refresh_server_key_for_thread();
 
+    print_routine_time("common_op- rust call", false);
     let result = match operation {
         Op::Add => num1 + num2,
         Op::Sub => num1 - num2,
@@ -115,6 +118,7 @@ fn common_op<
         Op::Shl => num1 << num2,
         Op::Shr => num1 >> num2,
     };
+    print_routine_time("common_op- rust call", true);
 
     bincode::serialize(&result).map_err(|err| {
         log::error!("failed serializing result: {:?}", err);
@@ -178,10 +182,12 @@ fn unary_op<T: Not<Output = T> + Serialize>(
     }
     GlobalKeys::refresh_server_key_for_thread();
 
+    print_routine_time("unary_op- rust call", false);
     let result = match operation {
         UnaryOp::Not => !num1,
         // todo add remaining unary ops
     };
+    print_routine_time("unary_op- rust call", true);
 
     bincode::serialize(&result).map_err(|err| {
         log::debug!("failed to serialize result: {:?}", err);

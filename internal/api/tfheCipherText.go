@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"math/big"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -37,9 +38,44 @@ func (ct *Ciphertext) Hash() Hash {
 	return h
 }
 
+func PrintRoutineTime(name string, isEnd bool) {
+	file, err := os.OpenFile("/home/user/perf/perf/perf.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+
+	defer file.Close()
+	depth := 4
+	log := ""
+
+	for i := 0; i < depth; i++ {
+		log += "\t"
+	}
+
+	banner := "++"
+	if isEnd {
+		banner = "--"
+	}
+
+	log += fmt.Sprintf("%s function %s at %d\n ", banner, name, "{} function {} at {}")
+	_, err = file.WriteString(log)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		return
+	}
+}
+
+func getFunctionName() string {
+	pc, _, _, _ := runtime.Caller(1)
+	funcName := runtime.FuncForPC(pc).Name()
+	return funcName
+}
+
 // NewCipherText creates a new Ciphertext instance with encryption of the provided value.
 func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error) {
 	// Perform encryption, potentially expanding the result if compact is false
+	PrintRoutineTime(getFunctionName(), false)
 	res, err := Encrypt(value, t)
 	if err != nil {
 		return nil, err
@@ -51,39 +87,48 @@ func NewCipherText(value big.Int, t UintType, compact bool) (*Ciphertext, error)
 			return nil, err
 		}
 
-		return &Ciphertext{
+		c := &Ciphertext{
 			Serialization: res,
 			UintType:      t,
 			hash:          Keccak256(res),
-		}, nil
+		}
+
+		PrintRoutineTime(getFunctionName(), true)
+		return c, nil
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		UintType:      t,
 		hash:          Keccak256(res),
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 // NewCipherTextTrivial creates a new Ciphertext using trivial encryption - trivial encryption is used to encrypt "public" constants to
 // inject into FHE operations
 func NewCipherTextTrivial(value big.Int, t UintType) (*Ciphertext, error) {
-
+	PrintRoutineTime(getFunctionName(), false)
 	res, err := EncryptTrivial(value, t)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		UintType:      t,
 		hash:          Keccak256(res),
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 // NewCipherTextFromBytes creates a new Ciphertext from its byte representation.
 func NewCipherTextFromBytes(ctBytes []byte, t UintType, compact bool) (*Ciphertext, error) {
-
+	PrintRoutineTime(getFunctionName(), false)
 	// Validate and potentially expand the ciphertext bytes
 	if compact {
 		res, err := ExpandCompressedValue(ctBytes, t)
@@ -91,35 +136,45 @@ func NewCipherTextFromBytes(ctBytes []byte, t UintType, compact bool) (*Cipherte
 			return nil, err
 		}
 
-		return &Ciphertext{
+		c := &Ciphertext{
 			Serialization: res,
 			UintType:      t,
 			hash:          Keccak256(res),
-		}, nil
+		}
+
+		PrintRoutineTime(getFunctionName(), true)
+		return c, nil
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: ctBytes,
 		UintType:      t,
 		hash:          Keccak256(ctBytes),
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 // NewRandomCipherText creates a random Ciphertext - only not really. It's just used for simulations and testing, so we inject some
 // constant value here instead of an actual random
 func NewRandomCipherText(t UintType) (*Ciphertext, error) {
+	PrintRoutineTime(getFunctionName(), false)
 	// Not really though!
 	res, err := Encrypt(*big.NewInt(int64(5)), t)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		UintType:      t,
 		random:        true,
 		hash:          Keccak256(res),
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 func logLevelFromString(logLevel string, defaultLevel logrus.Level) logrus.Level {
@@ -164,6 +219,7 @@ func (ct *Ciphertext) IsRandom() bool {
 }
 
 func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
+	PrintRoutineTime(getFunctionName(), false)
 	if ct.UintType == toType {
 		return ct, nil
 	}
@@ -173,14 +229,18 @@ func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
 		UintType:      ct.UintType,
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext, error) {
+	PrintRoutineTime(getFunctionName(), false)
 	if ifFalse.UintType != ifTrue.UintType {
 		return nil, fmt.Errorf("cannot use selector on uints of different types")
 	}
@@ -190,20 +250,26 @@ func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
 		UintType:      ct.UintType,
-	}, nil
+	}
+
+	PrintRoutineTime(getFunctionName(), true)
+	return c, nil
 }
 
 // Decrypt decrypts the ciphertext and returns the plaintext value.
 func (ct *Ciphertext) Decrypt() (*big.Int, error) {
+	PrintRoutineTime(getFunctionName(), false)
 	res, err := Decrypt(ct.Serialization, ct.UintType)
+	PrintRoutineTime(getFunctionName(), true)
 	return big.NewInt(int64(res)), err
 }
 
 func (ct *Ciphertext) performMathOperation(rhs *Ciphertext, operation uint32) (*Ciphertext, error) {
+	PrintRoutineTime(fmt.Sprintf("MathOperation:%u", operation), false)
 	if ct.UintType != rhs.UintType {
 		return nil, fmt.Errorf("cannot perform operation on uints of different types")
 	}
@@ -213,24 +279,31 @@ func (ct *Ciphertext) performMathOperation(rhs *Ciphertext, operation uint32) (*
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
 		UintType:      ct.UintType,
-	}, nil
+	}
+
+	PrintRoutineTime(fmt.Sprintf("MathOperation:%u", operation), true)
+	return c, nil
 }
 
 func (ct *Ciphertext) performUnaryMathOperation(operation uint32) (*Ciphertext, error) {
+	PrintRoutineTime(fmt.Sprintf("UnaryMathOperation:%u", operation), false)
 	res, err := unaryMathOperation(ct.Serialization, uint8(ct.UintType), operation)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Ciphertext{
+	c := &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
 		UintType:      ct.UintType,
-	}, nil
+	}
+
+	PrintRoutineTime(fmt.Sprintf("UnaryMathOperation:%u", operation), true)
+	return c, nil
 }
 
 // Now you can use the above function to implement the original methods:

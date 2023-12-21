@@ -1,3 +1,6 @@
+use std::fs::OpenOptions;
+use std::io::{self, Write};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tfhe::{CompactFheUint16, CompactFheUint32, CompactFheUint8, FheUint16, FheUint32, FheUint8};
 
 macro_rules! deserialize_fhe_uint {
@@ -54,3 +57,39 @@ deserialize_fhe_uint!(deserialize_fhe_uint32, FheUint32, CompactFheUint32);
 //         Ok(x)
 //     }
 // }
+
+pub(crate) fn print_routine_time(name: &str, is_end: bool) {
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("/home/user/perf/perf.txt");
+
+    match file {
+        Ok(mut file) => {
+            let depth = 6;
+            let mut log = String::new();
+
+            for _ in 0..depth {
+                log.push('\t');
+            }
+
+            let banner = if is_end { "--" } else { "++" };
+
+            log.push_str(&format!(
+                "{} function {} at {:?}",
+                banner,
+                name,
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards")
+            ));
+
+            if let Err(err) = writeln!(file, "{}", log) {
+                eprintln!("Error writing to file: {}", err);
+            }
+        }
+        Err(err) => {
+            eprintln!("Error opening file: {}", err);
+        }
+    }
+}

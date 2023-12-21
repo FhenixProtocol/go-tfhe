@@ -1,6 +1,7 @@
 use crate::api::FheUintType;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
+use crate::serialization::print_routine_time;
 use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
 
 use tfhe::prelude::FheTrivialEncrypt;
@@ -74,11 +75,14 @@ pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, 
     }
     GlobalKeys::refresh_server_key_for_thread();
 
-    match int_type {
+    print_routine_time("trivial - rust func", false);
+    let res = match int_type {
         FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
         FheUintType::Uint16 => _encrypt_trivial_impl::<_, FheUint16>(msg as u16),
         FheUintType::Uint32 => _encrypt_trivial_impl::<_, FheUint32>(msg as u32),
-    }
+    };
+    print_routine_time("trivial - rust func", true);
+    res
 }
 
 pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, RustError> {
@@ -87,6 +91,7 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
         None => Err(RustError::generic_error("client key not set")),
     }?;
 
+    print_routine_time("decrypt - rust func", false);
     let res = match int_type {
         FheUintType::Uint8 => _impl_decrypt_u8(
             deserialize_fhe_uint8(ciphertext, false).map_err(|err| {
@@ -110,6 +115,7 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
             client_key,
         ),
     };
+    print_routine_time("decrypt - rust func", true);
     Ok(res)
 }
 

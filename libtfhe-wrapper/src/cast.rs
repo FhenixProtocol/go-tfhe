@@ -9,7 +9,9 @@ macro_rules! define_cast_fn {
         pub(crate) fn $func_name(val: &[u8]) -> Result<Vec<u8>, RustError> {
             match $deserialize_func(val, false) {
                 Ok(v) => {
+                    print_routine_time("cast- rust call", false);
                     let out = <$to_type>::cast_from(v);
+                    print_routine_time("cast- rust call", true);
                     bincode::serialize(&out).map_err(|err| {
                         log::error!("failed serializing value: {:?}", err);
                         RustError::generic_error(format!("failed serializing result for cast"))
