@@ -59,6 +59,36 @@ func Decrypt(ciphertext Ciphertext) (uint64, error) {
 	//return result, nil
 }
 
+// Reencrypt decrypts the given Ciphertext and then encrypts it back to the given public key.
+// It checks if the keys are initialized before performing decryption
+func Reencrypt(ciphertext Ciphertext, pubKey []byte) (uint64, error) {
+	if len(ciphertext.Serialization) == 0 {
+		return 0, fmt.Errorf("cannot check require without encrypted bytes")
+	}
+
+	result, err := oracleStorage.Reencrypt(&ciphertext, pubKey)
+	if err != nil {
+		return 0, err
+	}
+
+	resultAsNumber, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, nil
+	}
+
+	return uint64(resultAsNumber), nil
+	//if api.LoadKeysDone {
+	//	return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
+	//}
+	//
+	//result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
+	//if err != nil {
+	//	return 0, err
+	//}
+	//
+	//return result, nil
+}
+
 // PublicKey retrieves the current public key
 func PublicKey() ([]byte, error) {
 	return api.GetPublicKey()

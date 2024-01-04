@@ -1,9 +1,11 @@
 package oracle
 
+import "C"
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 
 	pb "github.com/fhenixprotocol/decryption-oracle-proto/go/oracle"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
@@ -78,6 +80,58 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 		return "", fmt.Errorf("failed to unmarshal require signature")
 	}
 	return msg.Value, nil
+}
+
+// todo add pubkey
+func (oracle DecryptionOracle) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
+	ciphertext := ct.Serialization
+	key := decryptKey(ciphertext)
+
+	data, err := oracle.db.Get([]byte(key))
+	if err != nil {
+		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
+			// Key does not exist in local db; try checking via decryption network
+			decrypted, signature, err := (*oracle.client).Decrypt(&pb.FheEncrypted{
+				Data: ct.Serialization,
+				Type: pb.EncryptedType(ct.UintType),
+			})
+			if err != nil {
+				return "", fmt.Errorf("could not decrypt: %v", err)
+			}
+
+			fmt.Printf("Decrypted: %v\n", decrypted)
+			fmt.Printf("Signature: %s\n", signature)
+
+			// todo: verify signature
+			// todo: reencrypt
+
+			// store result in local cache before returning
+			return decrypted, oracle.CacheDecryptResult(ct, decrypted)
+		}
+
+		// Some other error occurred
+		return "", err
+	}
+
+	msg := dbDecryptMessage{}
+	if err := json.Unmarshal(data, &msg); err != nil {
+		// failed to validate signature
+		return "", fmt.Errorf("failed to unmarshal require signature")
+	}
+	return msg.Value, nil
+}
+
+func Reencrypt(value big.Int, intType UintType) ([]byte, error) {
+	val := value.Uint64()
+
+	errmsg := uninitializedUnmanagedVector()
+
+	res, err := C.encrypt(cu64(val), C.FheUintType(intType), &errmsg)
+	if err != nil {
+		return nil, errorWithMessage(err, errmsg)
+	}
+
+	return copyAndDestroyUnmanagedVector(res), nil
 }
 
 func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {

@@ -37,6 +37,25 @@ func (o MemoryDb) Decrypt(ct *api.Ciphertext) (string, error) {
 	return resultAsString, nil
 }
 
+// todo document and implement
+// todo return value should be bytes or ct?
+func (o MemoryDb) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
+	result, err := ct.Decrypt()
+	if err != nil {
+		return "", err
+	}
+	resultAsString := strconv.Itoa(int(result.Int64()))
+
+	err = o.CacheDecryptResult(ct, resultAsString)
+	if err != nil {
+		return "", err
+	}
+
+	// todo encrypt again
+
+	return resultAsString, nil
+}
+
 func (o MemoryDb) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {
 	key := requireKey(ct.Serialization)
 	j, err := json.Marshal(dbRequireMessage{decryptedNotZero})
