@@ -37,8 +37,8 @@ func (o MemoryDb) Decrypt(ct *api.Ciphertext) (string, error) {
 	return resultAsString, nil
 }
 
-// todo document and implement
-// todo return value should be bytes or ct?
+// todo (eshel) document and implement
+// todo (eshel) return value should be bytes or ct?
 func (o MemoryDb) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
 	result, err := ct.Decrypt()
 	if err != nil {
@@ -51,7 +51,8 @@ func (o MemoryDb) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
 		return "", err
 	}
 
-	// todo encrypt again
+	// todo (eshel) encrypt again
+	//reencryptedValue, err := encryptToUserKey(bgDecrypted, pubKey)
 
 	return resultAsString, nil
 }

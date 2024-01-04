@@ -1,11 +1,9 @@
 package oracle
 
-import "C"
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 
 	pb "github.com/fhenixprotocol/decryption-oracle-proto/go/oracle"
 	"github.com/fhenixprotocol/go-tfhe/internal/api"
@@ -82,37 +80,43 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 	return msg.Value, nil
 }
 
-// todo add pubkey
+// todo (eshel) add pubkey
 func (oracle DecryptionOracle) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
 	ciphertext := ct.Serialization
 	key := decryptKey(ciphertext)
 
+	// todo (eshel): probably don't check with cache
 	data, err := oracle.db.Get([]byte(key))
 	if err != nil {
 		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
 			// Key does not exist in local db; try checking via decryption network
-			decrypted, signature, err := (*oracle.client).Decrypt(&pb.FheEncrypted{
-				Data: ct.Serialization,
-				Type: pb.EncryptedType(ct.UintType),
-			})
+			reencrypted, signature, err := (*oracle.client).Reencrypt(
+				&pb.FheEncrypted{
+					Data: ct.Serialization,
+					Type: pb.EncryptedType(ct.UintType),
+				},
+				// todo (eshel) convert to string:
+				pubKey
+			)
 			if err != nil {
-				return "", fmt.Errorf("could not decrypt: %v", err)
+				return "", fmt.Errorf("could not reencrypt: %v", err)
 			}
 
-			fmt.Printf("Decrypted: %v\n", decrypted)
+			fmt.Printf("Reencrypted: %v\n", reencrypted)
 			fmt.Printf("Signature: %s\n", signature)
 
-			// todo: verify signature
-			// todo: reencrypt
+			// todo (eshel): verify signature
+			// todo (eshel): reencrypt
 
-			// store result in local cache before returning
-			return decrypted, oracle.CacheDecryptResult(ct, decrypted)
+			// todo (eshel): verify that we should not store the result in local cache before returning
+			return reencrypted, nil
 		}
 
 		// Some other error occurred
 		return "", err
 	}
 
+	// todo (eshel): probably remove cache match processing, as these values should not be cached
 	msg := dbDecryptMessage{}
 	if err := json.Unmarshal(data, &msg); err != nil {
 		// failed to validate signature
@@ -121,21 +125,7 @@ func (oracle DecryptionOracle) Reencrypt(ct *api.Ciphertext, pubKey []byte) (str
 	return msg.Value, nil
 }
 
-func Reencrypt(value big.Int, intType UintType) ([]byte, error) {
-	val := value.Uint64()
-
-	errmsg := uninitializedUnmanagedVector()
-
-	res, err := C.encrypt(cu64(val), C.FheUintType(intType), &errmsg)
-	if err != nil {
-		return nil, errorWithMessage(err, errmsg)
-	}
-
-	return copyAndDestroyUnmanagedVector(res), nil
-}
-
 func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
-
 	ciphertext := ct.Serialization
 	key := requireKey(ciphertext)
 

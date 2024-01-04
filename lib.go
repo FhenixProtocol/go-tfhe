@@ -2,6 +2,7 @@ package tfhe
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,32 +62,18 @@ func Decrypt(ciphertext Ciphertext) (uint64, error) {
 
 // Reencrypt decrypts the given Ciphertext and then encrypts it back to the given public key.
 // It checks if the keys are initialized before performing decryption
-func Reencrypt(ciphertext Ciphertext, pubKey []byte) (uint64, error) {
+func Reencrypt(ciphertext Ciphertext, pubKey []byte) ([]byte, error) {
 	if len(ciphertext.Serialization) == 0 {
-		return 0, fmt.Errorf("cannot check require without encrypted bytes")
+		return nil, fmt.Errorf("cannot check require without encrypted bytes")
 	}
 
 	result, err := oracleStorage.Reencrypt(&ciphertext, pubKey)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	resultAsNumber, err := strconv.Atoi(result)
-	if err != nil {
-		return 0, nil
-	}
-
-	return uint64(resultAsNumber), nil
-	//if api.LoadKeysDone {
-	//	return 0, fmt.Errorf("cannot decrypt if keys are not initialized")
-	//}
-	//
-	//result, err := api.Decrypt(ciphertext.Serialization, ciphertext.UintType)
-	//if err != nil {
-	//	return 0, err
-	//}
-	//
-	//return result, nil
+	// todo: verify that this is the correct conversion from string to bytes
+	return hex.DecodeString(result)
 }
 
 // PublicKey retrieves the current public key
