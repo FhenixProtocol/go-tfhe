@@ -81,7 +81,6 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 }
 
 func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
-
 	ciphertext := ct.Serialization
 	key := requireKey(ciphertext)
 
