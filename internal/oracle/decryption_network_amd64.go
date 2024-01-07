@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,7 +97,7 @@ func (oracle DecryptionOracle) Reencrypt(ct *api.Ciphertext, pubKey []byte) (str
 					Type: pb.EncryptedType(ct.UintType),
 				},
 				// todo (eshel) convert to string:
-				pubKey
+				hex.EncodeToString(pubKey),
 			)
 			if err != nil {
 				return "", fmt.Errorf("could not reencrypt: %v", err)
