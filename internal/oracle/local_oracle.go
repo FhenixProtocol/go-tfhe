@@ -93,21 +93,18 @@ func encryptToUserKey(value *big.Int, pubKey []byte) ([]byte, error) {
 	return ct, nil
 }
 
-// todo (eshel) document and implement
-// todo (eshel) return value should be bytes or ct?
-func (o MemoryDb) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
+func (o MemoryDb) SealOutput(ct *api.Ciphertext, pubKey []byte) (string, error) {
 	result, err := ct.Decrypt()
 	if err != nil {
 		return "", err
 	}
 
-	// todo (eshel) encrypt again
-	reencrypted, err := encryptToUserKey(result, pubKey)
+	sealedResult, err := encryptToUserKey(result, pubKey)
 
 	// todo (eshel) should we cache something here?
-	reencryptedAsString := hex.EncodeToString(reencrypted)
+	sealedAsString := hex.EncodeToString(sealedResult)
 
-	return reencryptedAsString, nil
+	return sealedAsString, nil
 }
 
 func (o MemoryDb) PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error {

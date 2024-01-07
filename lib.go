@@ -60,14 +60,14 @@ func Decrypt(ciphertext Ciphertext) (uint64, error) {
 	//return result, nil
 }
 
-// Reencrypt decrypts the given Ciphertext and then encrypts it back to the given public key.
+// SealOutput encrypts the given Ciphertext to the given public key.
 // It checks if the keys are initialized before performing decryption
-func Reencrypt(ciphertext Ciphertext, pubKey []byte) ([]byte, error) {
+func SealOutput(ciphertext Ciphertext, pubKey []byte) ([]byte, error) {
 	if len(ciphertext.Serialization) == 0 {
 		return nil, fmt.Errorf("cannot check require without encrypted bytes")
 	}
 
-	result, err := oracleStorage.Reencrypt(&ciphertext, pubKey)
+	result, err := oracleStorage.SealOutput(&ciphertext, pubKey)
 	if err != nil {
 		return nil, err
 	}

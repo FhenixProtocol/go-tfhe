@@ -111,7 +111,7 @@ func (HttpOracle) Decrypt(ciphertext *api.Ciphertext) (string, error) {
 	// return "", nil
 }
 
-func (HttpOracle) Reencrypt(ciphertext *api.Ciphertext, pubKey []byte) (string, error) {
+func (HttpOracle) SealOutput(ciphertext *api.Ciphertext, pubKey []byte) (string, error) {
 	panic("Not implemented yet :(")
 	// return "", nil
 }

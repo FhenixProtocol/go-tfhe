@@ -28,7 +28,7 @@ func decryptKey(ciphertext []byte) string {
 type Oracle interface {
 	GetRequire(ct *api.Ciphertext) (bool, error)
 	Decrypt(ct *api.Ciphertext) (string, error)
-	Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error)
+	SealOutput(ct *api.Ciphertext, pubKey []byte) (string, error)
 	PutRequire(ct *api.Ciphertext, decryptedNotZero bool) error
 	Close()
 }
