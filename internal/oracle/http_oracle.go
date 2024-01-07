@@ -110,3 +110,8 @@ func (HttpOracle) Decrypt(ciphertext *api.Ciphertext) (string, error) {
 	panic("Not implemented yet :(")
 	// return "", nil
 }
+
+func (HttpOracle) Reencrypt(ciphertext *api.Ciphertext, pubKey []byte) (string, error) {
+	panic("Not implemented yet :(")
+	// return "", nil
+}

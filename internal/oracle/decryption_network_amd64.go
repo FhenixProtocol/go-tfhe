@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -72,6 +73,51 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 		return "", err
 	}
 
+	msg := dbDecryptMessage{}
+	if err := json.Unmarshal(data, &msg); err != nil {
+		// failed to validate signature
+		return "", fmt.Errorf("failed to unmarshal require signature")
+	}
+	return msg.Value, nil
+}
+
+// todo (eshel) add pubkey
+func (oracle DecryptionOracle) Reencrypt(ct *api.Ciphertext, pubKey []byte) (string, error) {
+	ciphertext := ct.Serialization
+	key := decryptKey(ciphertext)
+
+	// todo (eshel): probably don't check with cache
+	data, err := oracle.db.Get([]byte(key))
+	if err != nil {
+		if errors.Is(err, memorydb.ErrMemorydbNotFound) {
+			// Key does not exist in local db; try checking via decryption network
+			reencrypted, signature, err := (*oracle.client).Reencrypt(
+				&pb.FheEncrypted{
+					Data: ct.Serialization,
+					Type: pb.EncryptedType(ct.UintType),
+				},
+				// todo (eshel) convert to string:
+				hex.EncodeToString(pubKey),
+			)
+			if err != nil {
+				return "", fmt.Errorf("could not reencrypt: %v", err)
+			}
+
+			fmt.Printf("Reencrypted: %v\n", reencrypted)
+			fmt.Printf("Signature: %s\n", signature)
+
+			// todo (eshel): verify signature
+			// todo (eshel): reencrypt
+
+			// todo (eshel): verify that we should not store the result in local cache before returning
+			return reencrypted, nil
+		}
+
+		// Some other error occurred
+		return "", err
+	}
+
+	// todo (eshel): probably remove cache match processing, as these values should not be cached
 	msg := dbDecryptMessage{}
 	if err := json.Unmarshal(data, &msg); err != nil {
 		// failed to validate signature
