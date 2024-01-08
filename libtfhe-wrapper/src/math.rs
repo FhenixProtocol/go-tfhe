@@ -28,16 +28,16 @@ macro_rules! define_op_fn {
         pub fn $func_name(lhs: &[u8], rhs: &[u8], operation: Op) -> Result<Vec<u8>, RustError> {
             match ($deserialize_func(lhs, false), $deserialize_func(rhs, false)) {
                 (Err(e), _) => {
-                    log::error!("faileddeserializing lhs value: {:?}", e);
+                    log::error!("failed deserializing lhs value: {:?}", e);
                     Err(RustError::generic_error(format!(
-                        "faileddeserializing lhs value: {:?}",
+                        "failed deserializing lhs value: {:?}",
                         e
                     )))
                 }
                 (_, Err(e)) => {
-                    log::error!("faileddeserializing rhs value: {:?}", e);
+                    log::error!("failed deserializing rhs value: {:?}", e);
                     Err(RustError::generic_error(format!(
-                        "faileddeserializing rhs value: {:?}",
+                        "failed deserializing rhs value: {:?}",
                         e
                     )))
                 }
