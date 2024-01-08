@@ -199,7 +199,6 @@ func ExpandCompressedValue(cipherText []byte, intType UintType) ([]byte, error) 
 	}
 
 	return copyAndDestroyUnmanagedVector(res), nil
-
 }
 
 func Decrypt(cipherText []byte, intType UintType) (uint64, error) {

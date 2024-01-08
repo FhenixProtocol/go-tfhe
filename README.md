@@ -37,6 +37,7 @@ You can build it using `make build-go`. I recently improved the interface, so a 
 - `LoadPublicKey([]byte) (bool, error)`: Loads a public key
 - `LoadServerKey([]byte) (bool, error)`: Loads a server key
 - `Decrypt(Ciphertext) (uint64, error)`: Decrypts a ciphertext
+- `SealOutput(Ciphertext, []byte)`: Seals the decrypted value of a ciphertext to a specific user's public key
 - `PublicKey() ([]byte, error)`: Retrieves the public key
 - `CheckRequire(*Ciphertext) (bool, error)`: Checks a requirement via the oracle
 - `StoreRequire(*Ciphertext, uint64) (bool, error)`: Stores a requirement into the oracle
@@ -71,6 +72,34 @@ Ciphertext API List
 - `Mul(*Ciphertext) (*Ciphertext, error)`: Performs ciphertext multiplication.
 
 - `Lt(*Ciphertext) (*Ciphertext, error)`: Performs less than comparison between ciphertexts.
+
+- `Lte(*Ciphertext) (*Ciphertext, error)`: Performs less than or equal comparison between ciphertexts.
+
+- `Div(*Ciphertext) (*Ciphertext, error)`: Performs ciphertext division.
+
+- `Gt(*Ciphertext) (*Ciphertext, error)`: Performs greater than comparison between ciphertexts.
+
+- `Gte(*Ciphertext) (*Ciphertext, error)`: Performs greater than or equal comparison between ciphertexts.
+
+- `And(*Ciphertext) (*Ciphertext, error)`: Performs ciphertext bitwise And operation.
+
+- `Or(*Ciphertext) (*Ciphertext, error)`: Performs ciphertext bitwise Or operation.
+
+- `Xor(*Ciphertext) (*Ciphertext, error)`: Performs ciphertext bitwise Xor operation.
+
+- `Eq(*Ciphertext) (*Ciphertext, error)`: Performs equality comparison between ciphertexts.
+
+- `Ne(*Ciphertext) (*Ciphertext, error)`: Performs inequality comparison between ciphertexts.
+
+- `Min(*Ciphertext) (*Ciphertext, error)`: Returns the smaller of the two ciphertexts.
+
+- `Max(*Ciphertext) (*Ciphertext, error)`: Returns the bigger of the two ciphertexts.
+
+- `Shl(*Ciphertext) (*Ciphertext, error)`: Performs bitwise Shift-left operation.
+
+- `Shr(*Ciphertext) (*Ciphertext, error)`: Performs bitwise Shift-right operation.
+
+- `Not() (*Ciphertext, error)`: Performs bitwise Not operation.
 
 #### Encryption & Decryption
 

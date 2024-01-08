@@ -1,6 +1,7 @@
 package oracle
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -80,8 +81,29 @@ func (oracle DecryptionOracle) Decrypt(ct *api.Ciphertext) (string, error) {
 	return msg.Value, nil
 }
 
-func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
+func (oracle DecryptionOracle) SealOutput(ct *api.Ciphertext, pubKey []byte) (string, error) {
+	// todo: maybe cache something here
+	// todo: NOTE that this is how we should call the decryption network, but it doesn't work yet over there
+	reencrypted, signature, err := (*oracle.client).Reencrypt(
+		&pb.FheEncrypted{
+			Data: ct.Serialization,
+			Type: pb.EncryptedType(ct.UintType),
+		},
+		hex.EncodeToString(pubKey),
+	)
+	if err != nil {
+		return "", fmt.Errorf("could not reencrypt: %v", err)
+	}
 
+	fmt.Printf("Reencrypted: %v\n", reencrypted)
+	fmt.Printf("Signature: %s\n", signature)
+
+	// todo: verify signature
+
+	return reencrypted, nil
+}
+
+func (oracle DecryptionOracle) GetRequire(ct *api.Ciphertext) (bool, error) {
 	ciphertext := ct.Serialization
 	key := requireKey(ciphertext)
 
