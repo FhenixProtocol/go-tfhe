@@ -72,7 +72,6 @@ func SealOutput(ciphertext Ciphertext, pubKey []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// todo: verify that this is the correct conversion from string to bytes
 	return hex.DecodeString(result)
 }
 
