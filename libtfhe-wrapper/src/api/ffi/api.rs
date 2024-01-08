@@ -13,6 +13,8 @@ use crate::math::{
     op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
 };
 
+use std::panic::catch_unwind;
+
 #[cfg(target_arch = "wasm32")]
 use tfhe::{
     generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS,
@@ -212,10 +214,18 @@ pub fn math_operation_helper(
     operation: Op,
     uint_type: FheUintType,
 ) -> Result<Vec<u8>, RustError> {
-    match uint_type {
-        FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
-        FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
-        FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
+    let result = catch_unwind(|| {
+        match uint_type {
+            FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
+            FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
+            FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
+        }
+    });
+
+    match result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::math_panic(format!("panic in math operation: {}", e.to_string()))),
     }
 }
 
@@ -264,10 +274,18 @@ pub unsafe extern "C" fn unary_math_operation(
         }
     };
 
-    let result = match uint_type {
-        FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
-        FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
-        FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
+    let result_may_panic = catch_unwind(|| {
+        match uint_type {
+            FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
+            FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
+            FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
+        }
+    });
+
+    let result = match result_may_panic {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::math_panic(format!("panic in unary math operation: {}", e.to_string()))),
     };
 
     let result = handle_c_error_binary(result, err_msg);
