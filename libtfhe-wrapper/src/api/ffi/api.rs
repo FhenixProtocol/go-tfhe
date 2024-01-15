@@ -224,9 +224,7 @@ pub fn math_operation_helper(
     match result {
         Ok(Ok(x)) => Ok(x),
         Ok(Err(e)) => Err(e),
-        // Err(e) => Err(RustError::math_panic(format!("panic in math operation: {}", e.to_string()))),
-        // todo (eshel): retrieve error message
-        Err(_) => Err(RustError::math_panic("")),
+        Err(e) => Err(RustError::math_panic(format!("panic in math operation: {:#?}", e.downcast_ref::<&str>()))),
     }
 }
 
@@ -286,10 +284,7 @@ pub unsafe extern "C" fn unary_math_operation(
     let result = match result_may_panic {
         Ok(Ok(x)) => Ok(x),
         Ok(Err(e)) => Err(e),
-        // Err(e) => Err(RustError::math_panic(format!("panic in math operation: {}", e.to_string()))),
-        // todo (eshel): retrieve error message
-        // Err(_) => Err(RustError::math_panic(format!())),
-        Err(_) => Err(RustError::math_panic("")),
+        Err(e) => Err(RustError::math_panic(format!("panic in math operation: {:#?}", e.downcast_ref::<&str>()))),
     };
 
     let result = handle_c_error_binary(result, err_msg);

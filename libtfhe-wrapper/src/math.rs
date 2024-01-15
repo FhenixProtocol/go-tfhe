@@ -113,11 +113,7 @@ fn common_op<
         Op::Min => num1.min(&num2),
         Op::Max => num1.max(&num2),
         Op::Shl => num1 << num2,
-        Op::Shr => {
-            // todo (eshel): remove
-            assert!(false, "todo: testing panic");
-            num1 >> num2
-        },
+        Op::Shr => num1 >> num2
     };
 
     bincode::serialize(&result).map_err(|err| {
