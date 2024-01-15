@@ -11,7 +11,6 @@ import (
 	"github.com/fhenixprotocol/go-tfhe/internal/oracle/memorydb"
 	"golang.org/x/crypto/nacl/box"
 	"math/big"
-	"os"
 	"strconv"
 )
 
@@ -80,12 +79,6 @@ func encryptForUser(value *big.Int, userPublicKey []byte) ([]byte, error) {
 
 func encryptToUserKey(value *big.Int, pubKey []byte) ([]byte, error) {
 	ct, err := encryptForUser(value, pubKey)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: for testing
-	err = os.WriteFile("/tmp/public_encrypt_result", ct, 0o644)
 	if err != nil {
 		return nil, err
 	}
