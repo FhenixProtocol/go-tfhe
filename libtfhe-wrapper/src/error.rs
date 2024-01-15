@@ -11,6 +11,7 @@ pub enum RustError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Panic during math operation: {}", name)]
     MathPanic {
         name: String,
         #[cfg(feature = "backtraces")]
