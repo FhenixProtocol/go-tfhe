@@ -31,7 +31,7 @@ required-features = ["wasm32"]
 #crate-type = ["staticlib"]
 
 [features]
-default = ["tfhe/seeder_x86_64_rdseed"]
+default = ["tfhe/custom-seeder"]
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
 wasm32 = ["tfhe/custom-seeder"]
