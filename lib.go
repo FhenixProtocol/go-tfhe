@@ -2,6 +2,7 @@ package tfhe
 
 import (
 	"crypto/ed25519"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -57,6 +58,21 @@ func Decrypt(ciphertext Ciphertext) (uint64, error) {
 	//}
 	//
 	//return result, nil
+}
+
+// SealOutput encrypts the given Ciphertext to the given public key.
+// It checks if the keys are initialized before performing decryption
+func SealOutput(ciphertext Ciphertext, pubKey []byte) ([]byte, error) {
+	if len(ciphertext.Serialization) == 0 {
+		return nil, fmt.Errorf("cannot check require without encrypted bytes")
+	}
+
+	result, err := oracleStorage.SealOutput(&ciphertext, pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return hex.DecodeString(result)
 }
 
 // PublicKey retrieves the current public key
