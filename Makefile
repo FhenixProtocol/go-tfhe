@@ -18,7 +18,8 @@ else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		SHARED_LIB_SRC = libtfhe_wrapper.so
-		SHARED_LIB_DST = libtfhe_wrapper.$(shell rustc --print cfg | grep target_arch | cut  -d '"' -f 2).so
+#		SHARED_LIB_DST = libtfhe_wrapper.$(shell rustc --print cfg | grep target_arch | cut  -d '"' -f 2).so
+                SHARED_LIB_DST = libtfhe_wrapper.so
 		TARGET_RUST_DIR = target
 		RUST_TARGET =
 		GOARCH=amd64
