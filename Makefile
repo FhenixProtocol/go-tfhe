@@ -9,6 +9,11 @@ USER_ID := $(shell id -u)
 USER_GROUP = $(shell id -g)
 GO_ROOT = $(shell go env GOROOT)
 
+GOARCH=arm64
+ifeq ($(shell uname --hardware-platform), x86_64)
+	GOARCH=amd64
+endif
+
 SHARED_LIB_SRC = "" # File name of the shared library as created by the Rust build system
 SHARED_LIB_DST = "amd64/" # File name of the shared library that we store
 ifeq ($(OS),Windows_NT)
@@ -22,7 +27,6 @@ else
                 SHARED_LIB_DST = libtfhe_wrapper.so
 		TARGET_RUST_DIR = target
 		RUST_TARGET =
-		GOARCH=amd64
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		SHARED_LIB_SRC = libtfhe_wrapper.dylib
