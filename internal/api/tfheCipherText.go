@@ -152,6 +152,7 @@ func getLogLevel(defaultLevel logrus.Level) logrus.Level {
 	return logLevel
 }
 
+// todo (eshel) check if there's a way to use fheos logger without importing go-ethereum
 func InitLogger(logLevel logrus.Level) {
 	logger = logrus.New()
 	logger.SetOutput(os.Stderr)
