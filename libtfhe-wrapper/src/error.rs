@@ -11,11 +11,25 @@ pub enum RustError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Panic during math operation: {}", name)]
+    MathPanic {
+        name: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
 }
 
 impl RustError {
     pub fn generic_error<T: Into<String>>(name: T) -> Self {
         RustError::GenericError {
+            name: name.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn math_panic<T: Into<String>>(name: T) -> Self {
+        RustError::MathPanic {
             name: name.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
