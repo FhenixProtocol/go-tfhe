@@ -3,13 +3,19 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/big"
-	"os"
-	"strings"
 )
 
-var logger *logrus.Logger
+type Logger interface {
+	Trace(msg string, ctx ...interface{})
+	Debug(msg string, ctx ...interface{})
+	Info(msg string, ctx ...interface{})
+	Warn(msg string, ctx ...interface{})
+	Error(msg string, ctx ...interface{})
+	Crit(msg string, ctx ...interface{})
+}
+
+var logger Logger
 
 // Ciphertext represents the encrypted data structure.
 type Ciphertext struct {
@@ -122,40 +128,8 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 	}, nil
 }
 
-func logLevelFromString(logLevel string, defaultLevel logrus.Level) logrus.Level {
-	logLevelUpper := strings.ToUpper(logLevel)
-	switch logLevelUpper {
-	case "ERROR":
-		return logrus.ErrorLevel
-	case "WARN":
-		return logrus.WarnLevel
-	case "INFO":
-		return logrus.InfoLevel
-	case "DEBUG":
-		return logrus.DebugLevel
-	case "TRACE":
-		return logrus.TraceLevel
-	default:
-		return defaultLevel
-	}
-}
-
-func getLogLevel(defaultLevel logrus.Level) logrus.Level {
-	LogLevelEnvVarName := "LOG_LEVEL"
-	logLevelEnvVar := os.Getenv(LogLevelEnvVarName)
-	logLevel := logLevelFromString(logLevelEnvVar, defaultLevel)
-
-	if logLevel > defaultLevel {
-		return defaultLevel
-	}
-
-	return logLevel
-}
-
-func InitLogger(logLevel logrus.Level) {
-	logger = logrus.New()
-	logger.SetOutput(os.Stderr)
-	logger.SetLevel(getLogLevel(logLevel))
+func SetLogger(loggerToSet Logger) {
+	logger = loggerToSet
 }
 
 // IsRandom checks if the ciphertext was randomly generated - this is used for gas simulation
