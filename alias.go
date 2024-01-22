@@ -34,7 +34,7 @@ var (
 	BytesToHash            = api.BytesToHash
 	NewCipherTextFromBytes = api.NewCipherTextFromBytes
 
-	InitLogger    = api.InitLogger
+	SetLogger     = api.SetLogger
 	oracleStorage = oracle.OracleInterface
 	ConfigDefault = api.ConfigDefault
 	// GlobalConfig is set after calling ParseNode() in cmd/nitro-val/nitro_val.go and cmd/nitro/nitro.go.
