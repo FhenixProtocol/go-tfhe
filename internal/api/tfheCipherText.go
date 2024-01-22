@@ -6,17 +6,6 @@ import (
 	"math/big"
 )
 
-type Logger interface {
-	Trace(msg string, ctx ...interface{})
-	Debug(msg string, ctx ...interface{})
-	Info(msg string, ctx ...interface{})
-	Warn(msg string, ctx ...interface{})
-	Error(msg string, ctx ...interface{})
-	Crit(msg string, ctx ...interface{})
-}
-
-var logger Logger
-
 // Ciphertext represents the encrypted data structure.
 type Ciphertext struct {
 	Serialization []byte   // Serialized representation of the ciphertext
@@ -126,10 +115,6 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 		random:        true,
 		hash:          Keccak256(res),
 	}, nil
-}
-
-func SetLogger(loggerToSet Logger) {
-	logger = loggerToSet
 }
 
 // IsRandom checks if the ciphertext was randomly generated - this is used for gas simulation
