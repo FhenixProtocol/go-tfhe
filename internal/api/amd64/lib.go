@@ -77,13 +77,13 @@ func Cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte
 	errmsg := uninitializedUnmanagedVector()
 
 	con := makeView(control)
-	defer runtime.KeepAlive(control)
+	defer runtime.KeepAlive(con)
 
 	t := makeView(ifTrue)
-	defer runtime.KeepAlive(ifTrue)
+	defer runtime.KeepAlive(t)
 
 	f := makeView(ifFalse)
-	defer runtime.KeepAlive(ifFalse)
+	defer runtime.KeepAlive(f)
 
 	res, err := C.cmux(con, t, f, C.FheUintType(uintType), &errmsg)
 	if err != nil {
