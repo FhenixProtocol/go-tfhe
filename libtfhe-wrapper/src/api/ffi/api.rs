@@ -8,6 +8,7 @@ use crate::keys::{
     deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
     load_server_key_safe,
 };
+use std::time::Instant;
 
 use crate::math::{
     op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
@@ -45,7 +46,7 @@ pub enum Op {
     Min = 14,
     Max = 15,
     Shl = 16,
-    Shr = 17,
+    Shr = 17
 }
 
 #[repr(i32)]
@@ -91,7 +92,7 @@ impl From<u32> for Op {
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum FheUintType {
     Uint8 = 0,
     Uint16 = 1,
@@ -273,6 +274,13 @@ pub unsafe extern "C" fn unary_math_operation(
         }
     };
 
+    let result = unary_operation_helper(lhs_slice, operation, uint_type);
+
+    let result = handle_c_error_binary(result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+fn unary_operation_helper(lhs_slice: &[u8], operation: UnaryOp, uint_type: FheUintType) -> Result<Vec<u8>, RustError> {
     let result_may_panic = catch_unwind(|| {
         match uint_type {
             FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
@@ -286,9 +294,7 @@ pub unsafe extern "C" fn unary_math_operation(
         Ok(Err(e)) => Err(e),
         Err(e) => Err(RustError::math_panic(format!("panic in math operation: {:#?}", e.downcast_ref::<&str>()))),
     };
-
-    let result = handle_c_error_binary(result, err_msg);
-    UnmanagedVector::new(Some(result))
+    result
 }
 
 #[no_mangle]
@@ -353,34 +359,39 @@ pub unsafe extern "C" fn cmux(
             }
         };
 
-    // result = (ifTrue - ifFalse) * control + ifFalse
+    let start = Instant::now();
+
+    let result = perform_cmux(uint_type, control_slice, if_true_slice, if_false_slice);
+    if result.is_err() {
+        let result = handle_c_error_binary(result, err_msg);
+        return UnmanagedVector::new(Some(result));
+    }
+    let elapsed = start.elapsed();
+    log::info!("Time taken for perform_cmux: {:?}", elapsed);
+
+    UnmanagedVector::new(Some(result.unwrap()))
+}
+
+fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u8], if_false_slice: &[u8]) -> Result<Vec<u8>, RustError> {
+
+    let mut mask = trivial_encrypt_safe(0, uint_type)?;
+    mask = math_operation_helper(mask.as_slice(), control_slice, Op::Sub, uint_type)?;
+    let mut inv_mask = unary_operation_helper(mask.as_slice(), UnaryOp::Not, uint_type)?;
+
     let mut internal_result =
-        math_operation_helper(if_true_slice, if_false_slice, Op::Sub, uint_type);
-    if internal_result.is_err() {
-        let result = handle_c_error_binary(internal_result, err_msg);
-        return UnmanagedVector::new(Some(result));
-    }
+        math_operation_helper(mask.as_slice(), if_true_slice, Op::BitAnd, uint_type)?;
+
+    let mut internal_result2 =
+        math_operation_helper(inv_mask.as_slice(), if_false_slice, Op::BitAnd, uint_type)?;
 
     internal_result = math_operation_helper(
-        control_slice,
-        internal_result.unwrap().as_slice(),
-        Op::Mul,
+        internal_result.as_slice(),
+        internal_result2.as_slice(),
+        Op::BitOr,
         uint_type,
-    );
-    if internal_result.is_err() {
-        let result = handle_c_error_binary(internal_result, err_msg);
-        return UnmanagedVector::new(Some(result));
-    }
+    )?;
 
-    internal_result = math_operation_helper(
-        if_false_slice,
-        internal_result.unwrap().as_slice(),
-        Op::Add,
-        uint_type,
-    );
-
-    let result = handle_c_error_binary(internal_result, err_msg);
-    UnmanagedVector::new(Some(result))
+    Ok(internal_result)
 }
 
 #[no_mangle]

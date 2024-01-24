@@ -73,7 +73,6 @@ pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, 
         ));
     }
     GlobalKeys::refresh_server_key_for_thread();
-
     match int_type {
         FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
         FheUintType::Uint16 => _encrypt_trivial_impl::<_, FheUint16>(msg as u16),

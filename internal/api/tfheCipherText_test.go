@@ -94,7 +94,7 @@ func TestCmux(t *testing.T) {
 				t.Fatalf("Error while decrypting %+v", err)
 			}
 
-			assert.Equal(t, resDec, expectedResult)
+			assert.Equal(t, expectedResult, resDec)
 
 		})
 	}

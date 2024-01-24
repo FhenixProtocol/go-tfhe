@@ -80,17 +80,19 @@ func Cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte
 	defer runtime.KeepAlive(control)
 
 	t := makeView(ifTrue)
-	defer runtime.KeepAlive(t)
+	defer runtime.KeepAlive(ifTrue)
 
 	f := makeView(ifFalse)
-	defer runtime.KeepAlive(f)
+	defer runtime.KeepAlive(ifFalse)
 
 	res, err := C.cmux(con, t, f, C.FheUintType(uintType), &errmsg)
 	if err != nil {
 		return nil, errorWithMessage(err, errmsg)
 	}
 
-	return copyAndDestroyUnmanagedVector(res), nil
+	result := copyAndDestroyUnmanagedVector(res)
+
+	return result, nil
 }
 
 func UnaryMathOperation(lhs []byte, uintType uint8, op OperationType) ([]byte, error) {
