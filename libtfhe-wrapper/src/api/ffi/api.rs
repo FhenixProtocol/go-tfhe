@@ -389,17 +389,16 @@ pub unsafe extern "C" fn cmux(
 /// # Errors
 /// Returns an error if any of the FHE operations fail.
 fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u8], if_false_slice: &[u8]) -> Result<Vec<u8>, RustError> {
-
     // Encrypt a 0 value as a base for creating a mask.
     let mut mask = trivial_encrypt_safe(0, uint_type)?;
     // Subtract the control slice from the mask, effectively creating an encryption of (0 - control).
     mask = math_operation_helper(mask.as_slice(), control_slice, Op::Sub, uint_type)?;
 
-    // Invert the mask, effectively creating an encryption of (1 - control).
-    let mut inv_mask = unary_operation_helper(mask.as_slice(), UnaryOp::Not, uint_type)?;
+    // Invert the mask - either 0 or 0xFFFF....
+    let inv_mask = unary_operation_helper(mask.as_slice(), UnaryOp::Not, uint_type)?;
 
     // Perform a bitwise AND operation on the mask and the if_true_slice.
-    let mut left =
+    let left =
         math_operation_helper(mask.as_slice(), if_true_slice, Op::BitAnd, uint_type)?;
 
     // Perform a bitwise AND operation on the inverted mask and the if_false_slice.
@@ -407,14 +406,12 @@ fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u
         math_operation_helper(inv_mask.as_slice(), if_false_slice, Op::BitAnd, uint_type)?;
 
     // Perform a bitwise OR operation on the two intermediate results.
-    left = math_operation_helper(
+    math_operation_helper(
         left.as_slice(),
         right.as_slice(),
         Op::BitOr,
         uint_type,
-    )?;
-
-    Ok(left)
+    )
 }
 
 #[no_mangle]

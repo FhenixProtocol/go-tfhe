@@ -90,9 +90,7 @@ func Cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte
 		return nil, errorWithMessage(err, errmsg)
 	}
 
-	result := copyAndDestroyUnmanagedVector(res)
-
-	return result, nil
+	return copyAndDestroyUnmanagedVector(res), nil
 }
 
 func UnaryMathOperation(lhs []byte, uintType uint8, op OperationType) ([]byte, error) {
