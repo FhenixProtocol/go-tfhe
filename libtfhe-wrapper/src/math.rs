@@ -1,6 +1,6 @@
 use crate::api::{Op, UnaryOp};
 use crate::error::RustError;
-use crate::keys::{GlobalKeys, SERVER_KEY};
+use crate::keys::GlobalKeys;
 use serde::Serialize;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use tfhe::prelude::*;
