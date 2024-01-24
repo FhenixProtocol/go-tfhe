@@ -368,26 +368,53 @@ pub unsafe extern "C" fn cmux(
     UnmanagedVector::new(Some(result.unwrap()))
 }
 
+/// Perform a conditional multiplexer (cmux) operation on Fully Homomorphic Encryption (FHE) data.
+///
+/// The cmux operation selects between `if_true_slice` and `if_false_slice` based on the `control_slice`.
+/// If the `control_slice` is `1`, `if_true_slice` is selected; otherwise, `if_false_slice` is selected.
+///
+/// Basically the logic is:
+///     let mask = if control == 0 { zero() } else { max_value() };
+//      return (if_true & mask) | (if_false & !mask);
+///
+/// # Parameters
+/// - `uint_type`: The FHE uint type indicating the size and properties of the encrypted data.
+/// - `control_slice`: A slice representing the control bit in encrypted form.
+/// - `if_true_slice`: A slice representing the 'true' option in encrypted form.
+/// - `if_false_slice`: A slice representing the 'false' option in encrypted form.
+///
+/// # Returns
+/// A `Result` containing either the encrypted result of the cmux operation or a `RustError`.
+///
+/// # Errors
+/// Returns an error if any of the FHE operations fail.
 fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u8], if_false_slice: &[u8]) -> Result<Vec<u8>, RustError> {
 
+    // Encrypt a 0 value as a base for creating a mask.
     let mut mask = trivial_encrypt_safe(0, uint_type)?;
+    // Subtract the control slice from the mask, effectively creating an encryption of (0 - control).
     mask = math_operation_helper(mask.as_slice(), control_slice, Op::Sub, uint_type)?;
+
+    // Invert the mask, effectively creating an encryption of (1 - control).
     let mut inv_mask = unary_operation_helper(mask.as_slice(), UnaryOp::Not, uint_type)?;
 
-    let mut internal_result =
+    // Perform a bitwise AND operation on the mask and the if_true_slice.
+    let mut left =
         math_operation_helper(mask.as_slice(), if_true_slice, Op::BitAnd, uint_type)?;
 
-    let mut internal_result2 =
+    // Perform a bitwise AND operation on the inverted mask and the if_false_slice.
+    let right =
         math_operation_helper(inv_mask.as_slice(), if_false_slice, Op::BitAnd, uint_type)?;
 
-    internal_result = math_operation_helper(
-        internal_result.as_slice(),
-        internal_result2.as_slice(),
+    // Perform a bitwise OR operation on the two intermediate results.
+    left = math_operation_helper(
+        left.as_slice(),
+        right.as_slice(),
         Op::BitOr,
         uint_type,
     )?;
 
-    Ok(internal_result)
+    Ok(left)
 }
 
 #[no_mangle]
