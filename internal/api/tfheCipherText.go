@@ -3,10 +3,11 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/big"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 var logger *logrus.Logger
