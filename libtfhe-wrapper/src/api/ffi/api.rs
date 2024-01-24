@@ -8,7 +8,6 @@ use crate::keys::{
     deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
     load_server_key_safe,
 };
-use std::time::Instant;
 
 use crate::math::{
     op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
@@ -359,15 +358,12 @@ pub unsafe extern "C" fn cmux(
             }
         };
 
-    let start = Instant::now();
 
     let result = perform_cmux(uint_type, control_slice, if_true_slice, if_false_slice);
     if result.is_err() {
         let result = handle_c_error_binary(result, err_msg);
         return UnmanagedVector::new(Some(result));
     }
-    let elapsed = start.elapsed();
-    log::info!("Time taken for perform_cmux: {:?}", elapsed);
 
     UnmanagedVector::new(Some(result.unwrap()))
 }
