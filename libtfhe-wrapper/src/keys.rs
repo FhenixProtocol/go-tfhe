@@ -108,14 +108,6 @@ impl GlobalKeys {
         guard.ensure_init();
         Ok(())
     }
-
-    // pub fn set_server_key(key: ServerKey) -> Result<(), bool> {
-    //     if SERVER_KEY.get().is_none() {
-    //         return Err(false);
-    //     }
-    //     SERVER_KEY.get_mut().unwrap().set_key(key);
-    //     Ok(())
-    // }
 }
 
 /// InitGuard is only defined on the server key, as this is the only key that tfhe-rs assumes

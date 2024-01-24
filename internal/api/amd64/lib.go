@@ -77,7 +77,7 @@ func Cmux(control []byte, ifTrue []byte, ifFalse []byte, uintType uint8) ([]byte
 	errmsg := uninitializedUnmanagedVector()
 
 	con := makeView(control)
-	defer runtime.KeepAlive(control)
+	defer runtime.KeepAlive(con)
 
 	t := makeView(ifTrue)
 	defer runtime.KeepAlive(t)
