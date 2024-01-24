@@ -3,10 +3,11 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"math/big"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 var logger *logrus.Logger
@@ -176,7 +177,7 @@ func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
 	return &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
-		UintType:      ct.UintType,
+		UintType:      toType,
 	}, nil
 }
 
