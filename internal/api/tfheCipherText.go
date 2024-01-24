@@ -194,7 +194,7 @@ func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext
 	return &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
-		UintType:      ct.UintType,
+		UintType:      ifTrue.UintType,
 	}, nil
 }
 
