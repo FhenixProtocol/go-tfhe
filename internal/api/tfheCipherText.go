@@ -186,7 +186,7 @@ func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext
 		return nil, fmt.Errorf("cannot use selector on uints of different types")
 	}
 
-	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ct.UintType))
+	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ifTrue.UintType))
 	if err != nil {
 		return nil, err
 	}
