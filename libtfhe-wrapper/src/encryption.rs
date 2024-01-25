@@ -67,11 +67,6 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
 }
 
 pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
-    if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error(
-            "server key must be set for trivial encryption",
-        ));
-    }
     GlobalKeys::refresh_server_key_for_thread();
     match int_type {
         FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),

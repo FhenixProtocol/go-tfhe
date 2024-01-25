@@ -45,7 +45,7 @@ pub enum Op {
     Min = 14,
     Max = 15,
     Shl = 16,
-    Shr = 17
+    Shr = 17,
 }
 
 #[repr(i32)]
@@ -213,19 +213,42 @@ pub fn math_operation_helper(
     operation: Op,
     uint_type: FheUintType,
 ) -> Result<Vec<u8>, RustError> {
-    let result = catch_unwind(|| {
-        match uint_type {
-            FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
-            FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
-            FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
-        }
+    let result = catch_unwind(|| match uint_type {
+        FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
+        FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
+        FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
     });
 
     match result {
         Ok(Ok(x)) => Ok(x),
         Ok(Err(e)) => Err(e),
-        Err(e) => Err(RustError::math_panic(format!("panic in math operation: {:#?}", e.downcast_ref::<&str>()))),
+        Err(e) => Err(RustError::math_panic(format!(
+            "panic in math operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     }
+}
+
+fn check_and_refresh_server_key() -> Result<(), ()> {
+    if !GlobalKeys::is_server_key_set() {
+        return Err(());
+    }
+    GlobalKeys::refresh_server_key_for_thread();
+
+    Ok(())
+}
+
+macro_rules! check_and_refresh_server_key_macro {
+    ($err_msg:expr) => {
+        let result = check_and_refresh_server_key();
+        if result.is_err() {
+            set_error(
+                RustError::generic_error("server key must be set for math operation"),
+                $err_msg,
+            );
+            return UnmanagedVector::none();
+        }
+    };
 }
 
 #[no_mangle]
@@ -236,6 +259,8 @@ pub unsafe extern "C" fn math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let (lhs_slice, rhs_slice) = match (lhs.read(), rhs.read()) {
         (Some(k1), Some(k2)) => (k1, k2),
         _ => {
@@ -261,6 +286,8 @@ pub unsafe extern "C" fn unary_math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let lhs_slice = match lhs.read() {
         Some(k1) => k1,
         _ => {
@@ -279,19 +306,24 @@ pub unsafe extern "C" fn unary_math_operation(
     UnmanagedVector::new(Some(result))
 }
 
-fn unary_operation_helper(lhs_slice: &[u8], operation: UnaryOp, uint_type: FheUintType) -> Result<Vec<u8>, RustError> {
-    let result_may_panic = catch_unwind(|| {
-        match uint_type {
-            FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
-            FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
-            FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
-        }
+fn unary_operation_helper(
+    lhs_slice: &[u8],
+    operation: UnaryOp,
+    uint_type: FheUintType,
+) -> Result<Vec<u8>, RustError> {
+    let result_may_panic = catch_unwind(|| match uint_type {
+        FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
+        FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
+        FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
     });
 
     let result = match result_may_panic {
         Ok(Ok(x)) => Ok(x),
         Ok(Err(e)) => Err(e),
-        Err(e) => Err(RustError::math_panic(format!("panic in math operation: {:#?}", e.downcast_ref::<&str>()))),
+        Err(e) => Err(RustError::math_panic(format!(
+            "panic in math operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     };
     result
 }
@@ -303,6 +335,8 @@ pub unsafe extern "C" fn cast_operation(
     to_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let val_slice = match val.read() {
         Some(v1) => v1,
         _ => {
@@ -345,6 +379,8 @@ pub unsafe extern "C" fn cmux(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let (control_slice, if_true_slice, if_false_slice) =
         match (control.read(), if_true.read(), if_false.read()) {
             (Some(k1), Some(k2), Some(k3)) => (k1, k2, k3),
@@ -357,7 +393,6 @@ pub unsafe extern "C" fn cmux(
                 return UnmanagedVector::none();
             }
         };
-
 
     let result = perform_cmux(uint_type, control_slice, if_true_slice, if_false_slice);
     if result.is_err() {
@@ -388,7 +423,12 @@ pub unsafe extern "C" fn cmux(
 ///
 /// # Errors
 /// Returns an error if any of the FHE operations fail.
-fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u8], if_false_slice: &[u8]) -> Result<Vec<u8>, RustError> {
+fn perform_cmux(
+    uint_type: FheUintType,
+    control_slice: &[u8],
+    if_true_slice: &[u8],
+    if_false_slice: &[u8],
+) -> Result<Vec<u8>, RustError> {
     // Encrypt a 0 value as a base for creating a mask.
     let mut mask = trivial_encrypt_safe(0, uint_type)?;
     // Subtract the control slice from the mask, effectively creating an encryption of (0 - control).
@@ -398,20 +438,13 @@ fn perform_cmux(uint_type: FheUintType, control_slice: &[u8], if_true_slice: &[u
     let inv_mask = unary_operation_helper(mask.as_slice(), UnaryOp::Not, uint_type)?;
 
     // Perform a bitwise AND operation on the mask and the if_true_slice.
-    let left =
-        math_operation_helper(mask.as_slice(), if_true_slice, Op::BitAnd, uint_type)?;
+    let left = math_operation_helper(mask.as_slice(), if_true_slice, Op::BitAnd, uint_type)?;
 
     // Perform a bitwise AND operation on the inverted mask and the if_false_slice.
-    let right =
-        math_operation_helper(inv_mask.as_slice(), if_false_slice, Op::BitAnd, uint_type)?;
+    let right = math_operation_helper(inv_mask.as_slice(), if_false_slice, Op::BitAnd, uint_type)?;
 
     // Perform a bitwise OR operation on the two intermediate results.
-    math_operation_helper(
-        left.as_slice(),
-        right.as_slice(),
-        Op::BitOr,
-        uint_type,
-    )
+    math_operation_helper(left.as_slice(), right.as_slice(), Op::BitOr, uint_type)
 }
 
 #[no_mangle]
@@ -493,6 +526,8 @@ pub unsafe extern "C" fn expand_compressed(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
@@ -516,6 +551,8 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
+    check_and_refresh_server_key_macro!(err_msg);
+
     let r = trivial_encrypt_safe(msg, int_type);
 
     let result = handle_c_error_binary(r, err_msg);

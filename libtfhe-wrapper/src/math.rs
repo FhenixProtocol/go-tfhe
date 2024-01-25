@@ -88,11 +88,6 @@ fn common_op<
     num2: T,
     operation: Op,
 ) -> Result<Vec<u8>, RustError> {
-    if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error(
-            "server key must be set for math operation",
-        ));
-    }
     GlobalKeys::refresh_server_key_for_thread();
 
     let result = match operation {
@@ -113,7 +108,7 @@ fn common_op<
         Op::Min => num1.min(&num2),
         Op::Max => num1.max(&num2),
         Op::Shl => num1 << num2,
-        Op::Shr => num1 >> num2
+        Op::Shr => num1 >> num2,
     };
 
     bincode::serialize(&result).map_err(|err| {
@@ -171,11 +166,6 @@ fn unary_op<T: Not<Output = T> + Serialize>(
     num1: T,
     operation: UnaryOp,
 ) -> Result<Vec<u8>, RustError> {
-    if !GlobalKeys::is_server_key_set() {
-        return Err(RustError::generic_error(
-            "server key must be set for math operation",
-        ));
-    }
     GlobalKeys::refresh_server_key_for_thread();
 
     let result = match operation {
