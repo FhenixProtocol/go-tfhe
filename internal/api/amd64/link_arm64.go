@@ -1,4 +1,4 @@
-//go:build !linux && muslc
+//go:build linux && arm64
 
 package amd64
 
