@@ -349,7 +349,29 @@ pub unsafe extern "C" fn cast_operation(
         }
     };
 
-    let inner_result = match from_type {
+    let cast_result = catch_unwind(||
+        cast_helper(val_slice, from_type, to_type)
+    );
+
+    let cast_result = match cast_result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::cast_panic(format!(
+            "panic in cast operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
+    };
+
+    let result = handle_c_error_binary(cast_result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+fn cast_helper(
+    val_slice: &[u8],
+    from_type: FheUintType,
+    to_type: FheUintType,
+) -> Result<Vec<u8>, RustError> {
+    match from_type {
         FheUintType::Uint8 => match to_type {
             FheUintType::Uint8 => Ok(val_slice.to_vec()),
             FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
@@ -365,10 +387,7 @@ pub unsafe extern "C" fn cast_operation(
             FheUintType::Uint16 => cast_from_uint32_to_uint16(val_slice),
             FheUintType::Uint32 => Ok(val_slice.to_vec()),
         },
-    };
-
-    let result = handle_c_error_binary(inner_result, err_msg);
-    UnmanagedVector::new(Some(result))
+    }
 }
 
 #[no_mangle]
@@ -539,7 +558,18 @@ pub unsafe extern "C" fn expand_compressed(
         return UnmanagedVector::none();
     }
 
-    let r = expand_compressed_safe(ciphertext_slice.unwrap(), int_type);
+    let expand_compressed_result = catch_unwind(||
+        expand_compressed_safe(ciphertext_slice.unwrap(), int_type)
+    );
+
+    let r = match expand_compressed_result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::expand_compressed_panic(format!(
+            "panic in expand compressed operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
+    };
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
@@ -565,7 +595,18 @@ pub unsafe extern "C" fn encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    let r = encrypt_safe(msg, int_type);
+    let encrypt_result = catch_unwind(||
+        encrypt_safe(msg, int_type)
+    );
+
+    let r = match encrypt_result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::encrypt_panic(format!(
+            "panic in encrypt operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
+    };
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
@@ -588,7 +629,18 @@ pub unsafe extern "C" fn decrypt(
         return 0;
     }
 
-    let r = decrypt_safe(ciphertext_slice.unwrap(), int_type);
+    let decrypt_result = catch_unwind(||
+        decrypt_safe(ciphertext_slice.unwrap(), int_type)
+    );
+
+    let r = match decrypt_result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::decrypt_panic(format!(
+            "panic in decrypt operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
+    };
 
     handle_c_error_default(r, err_msg)
 }

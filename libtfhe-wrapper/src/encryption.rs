@@ -1,3 +1,4 @@
+use std::panic::catch_unwind;
 use crate::api::FheUintType;
 use crate::error::RustError;
 use crate::keys::GlobalKeys;
@@ -47,6 +48,7 @@ pub fn expand_compressed_safe(
         }
     }
 }
+
 pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
     let public_key = match GlobalKeys::get_public_key() {
         Some(key) => Ok(key),
@@ -67,11 +69,22 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
 }
 
 pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
-    GlobalKeys::refresh_server_key_for_thread();
-    match int_type {
-        FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
-        FheUintType::Uint16 => _encrypt_trivial_impl::<_, FheUint16>(msg as u16),
-        FheUintType::Uint32 => _encrypt_trivial_impl::<_, FheUint32>(msg as u32),
+    let trivial_encrypt_result = catch_unwind(|| {
+        GlobalKeys::refresh_server_key_for_thread();
+        match int_type {
+            FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
+            FheUintType::Uint16 => _encrypt_trivial_impl::<_, FheUint16>(msg as u16),
+            FheUintType::Uint32 => _encrypt_trivial_impl::<_, FheUint32>(msg as u32),
+        }
+    });
+
+    match trivial_encrypt_result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::trivial_encrypt_panic(format!(
+            "panic in trivial encrypt operation: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     }
 }
 
@@ -104,6 +117,7 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
             client_key,
         ),
     };
+
     Ok(res)
 }
 
