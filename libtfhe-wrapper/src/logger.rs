@@ -10,8 +10,8 @@ pub(crate) fn init_logger() -> Result<(), fern::InitError> {
         .format(|out, message, record| {
             out.finish(format_args!(
                 "{} [{}] {}",
-                humantime::format_rfc3339_seconds(SystemTime::now()),
                 record.level(),
+                humantime::format_rfc3339_seconds(SystemTime::now()),
                 message
             ))
         })

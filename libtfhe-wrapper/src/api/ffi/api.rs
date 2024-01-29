@@ -145,7 +145,6 @@ pub unsafe extern "C" fn generate_full_keys(
     path_to_sks: *const std::ffi::c_char,
     path_to_pks: *const std::ffi::c_char,
 ) -> bool {
-    log::info!("entering rust generate keys"); // todo remove
     let (c_str_cks, c_str_sks, c_str_pks) = unsafe {
         (
             std::ffi::CStr::from_ptr(path_to_cks),
@@ -260,7 +259,6 @@ pub unsafe extern "C" fn math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust math operation"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let (lhs_slice, rhs_slice) = match (lhs.read(), rhs.read()) {
@@ -288,7 +286,6 @@ pub unsafe extern "C" fn unary_math_operation(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust unary math operation"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let lhs_slice = match lhs.read() {
@@ -338,7 +335,6 @@ pub unsafe extern "C" fn cast_operation(
     to_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust cast"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let val_slice = match val.read() {
@@ -383,7 +379,6 @@ pub unsafe extern "C" fn cmux(
     uint_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust cmux"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let (control_slice, if_true_slice, if_false_slice) =
@@ -457,7 +452,6 @@ pub unsafe extern "C" fn load_server_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) {
-    log::info!("entering rust load server key"); // todo remove
     if let Some(server_key_slice) = key.read() {
         let r = load_server_key_safe(server_key_slice);
 
@@ -476,7 +470,6 @@ pub unsafe extern "C" fn load_client_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) {
-    log::info!("entering rust load client key"); // todo remove
     if let Some(client_key_slice) = key.read() {
         let r = deserialize_client_key_safe(client_key_slice);
 
@@ -495,8 +488,6 @@ pub unsafe extern "C" fn load_public_key(
     key: ByteSliceView,
     err_msg: Option<&mut UnmanagedVector>,
 ) {
-    log::info!("entering rust load public key"); // todo remove
-
     if let Some(public_key_slice) = key.read() {
         let r = deserialize_public_key_safe(public_key_slice);
 
@@ -512,7 +503,6 @@ pub unsafe extern "C" fn load_public_key(
 
 #[no_mangle]
 pub unsafe extern "C" fn get_public_key(err_msg: Option<&mut UnmanagedVector>) -> UnmanagedVector {
-    log::info!("entering rust get public key"); // todo remove
     let public_key = GlobalKeys::get_public_key();
 
     if public_key.is_none() {
@@ -536,7 +526,6 @@ pub unsafe extern "C" fn expand_compressed(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust expand compressed"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let ciphertext_slice = ciphertext.read();
@@ -562,7 +551,6 @@ pub unsafe extern "C" fn trivial_encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust trivial encrypt"); // todo remove
     check_and_refresh_server_key_macro!(err_msg);
 
     let r = trivial_encrypt_safe(msg, int_type);
@@ -577,7 +565,6 @@ pub unsafe extern "C" fn encrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    log::info!("entering rust encrypt"); // todo remove
     let r = encrypt_safe(msg, int_type);
 
     let result = handle_c_error_binary(r, err_msg);
@@ -590,8 +577,6 @@ pub unsafe extern "C" fn decrypt(
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> u64 {
-    // todo remove:
-    log::info!("entering rust decrypt"); // todo remove
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
