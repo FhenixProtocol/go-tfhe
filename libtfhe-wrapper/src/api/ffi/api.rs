@@ -593,16 +593,6 @@ pub unsafe extern "C" fn decrypt(
     handle_c_error_default(r, err_msg)
 }
 
-// #[no_mangle]
-// pub unsafe extern "C" fn set_logger(
-//     log_file_path: *const std::ffi::c_char,
-//     int_type: log::LevelFilter,
-// ) -> UnmanagedVector {
-//
-//     let result = handle_c_error_binary(r, err_msg);
-//     UnmanagedVector::new(Some(result))
-// }
-
 // #[cfg(target_arch = "wasm32")]
 // #[no_mangle]
 // pub unsafe extern "C" fn banana() {
