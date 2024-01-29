@@ -2,9 +2,11 @@ use std::env;
 use std::time::SystemTime;
 
 pub const LOG_LEVEL_ENV_VAR: &str = "LOG_LEVEL";
+pub const LOG_FILE_ENV_VAR: &str = "LOG_FILE";
 
 pub(crate) fn init_logger() -> Result<(), fern::InitError> {
     let default_log_level = log::LevelFilter::Info;
+    let default_log_file = "go-tfhe.log";
 
     fern::Dispatch::new()
         .format(|out, message, record| {
@@ -17,7 +19,10 @@ pub(crate) fn init_logger() -> Result<(), fern::InitError> {
         })
         .level(get_log_level(default_log_level))
         .chain(std::io::stderr())
-        .chain(fern::log_file("go-tfhe.log")?)
+        .chain(
+            fern::log_file(
+                get_logfile(default_log_file)
+            )?)
         .apply()?;
 
     Ok(())
@@ -47,5 +52,13 @@ pub fn get_log_level(default: log::LevelFilter) -> log::LevelFilter {
             }
         }
         None => default,
+    }
+}
+
+pub fn get_logfile(default: &str) -> String {
+    // TODO: read from config when it is implemented
+    match env::var(LOG_FILE_ENV_VAR) {
+        Ok(env_file) => env_file,
+        Err(_) => default.to_string(),
     }
 }
