@@ -9,6 +9,11 @@ USER_ID := $(shell id -u)
 USER_GROUP = $(shell id -g)
 GO_ROOT = $(shell go env GOROOT)
 
+GOARCH=arm64
+ifeq ($(shell uname --hardware-platform), x86_64)
+	GOARCH=amd64
+endif
+
 SHARED_LIB_SRC = "" # File name of the shared library as created by the Rust build system
 SHARED_LIB_DST = "amd64/" # File name of the shared library that we store
 ifeq ($(OS),Windows_NT)
@@ -18,11 +23,17 @@ else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
 		SHARED_LIB_SRC = libtfhe_wrapper.so
-		SHARED_LIB_DST = libtfhe_wrapper.$(shell rustc --print cfg | grep target_arch | cut  -d '"' -f 2).so
+#		SHARED_LIB_DST = libtfhe_wrapper.$(shell rustc --print cfg | grep target_arch | cut  -d '"' -f 2).so
+                SHARED_LIB_DST = libtfhe_wrapper.so
+		TARGET_RUST_DIR = target
+		RUST_TARGET =
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		SHARED_LIB_SRC = libtfhe_wrapper.dylib
 		SHARED_LIB_DST = libtfhe_wrapper.dylib
+		TARGET_RUST_DIR = target/aarch64-apple-darwin
+		RUST_TARGET = --target aarch64-apple-darwin
+		GOARCH=darwin
 	endif
 endif
 
@@ -39,8 +50,8 @@ build-rust: build-rust-release
 # Use debug build for quick testing.
 # In order to use "--features backtraces" here we need a Rust nightly toolchain, which we don't have by default
 build-rust-debug:
-	(cd libtfhe-wrapper && cargo build)
-	cp libtfhe-wrapper/target/debug/$(SHARED_LIB_SRC) internal/api/$(SHARED_LIB_DST)
+	(cd libtfhe-wrapper && cargo build ${RUST_TARGET})
+	cp libtfhe-wrapper/${TARGET_RUST_DIR}/debug/$(SHARED_LIB_SRC) internal/api/$(SHARED_LIB_DST)
 	make update-bindings
 
 # use release build to actually ship - smaller and much faster
@@ -48,8 +59,8 @@ build-rust-debug:
 # See https://github.com/CosmWasm/wasmvm/issues/222#issuecomment-880616953 for two approaches to
 # enable stripping through cargo (if that is desired).
 build-rust-release:
-	(cd libtfhe-wrapper && cargo build --release)
-	cp libtfhe-wrapper/target/release/$(SHARED_LIB_SRC) internal/api/amd64/$(SHARED_LIB_DST)
+	(cd libtfhe-wrapper && cargo build --release ${RUST_TARGET})
+	cp libtfhe-wrapper/${TARGET_RUST_DIR}/release/$(SHARED_LIB_SRC) internal/api/amd64/$(SHARED_LIB_DST)
 	make update-bindings
 	@ #this pulls out ELF symbols, 80% size reduction!
 
@@ -59,7 +70,7 @@ build-go:
 
 test:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.
-	RUST_BACKTRACE=1 GOARCH=amd64 go test -v -count=1 $(TEST_PARAMS) ./...
+	RUST_BACKTRACE=1 GOARCH=${GOARCH} go test -v -count=1 $(TEST_PARAMS) ./...
 
 test-safety:
 	# Use package list mode to include all subdirectores. The -count=1 turns off caching.

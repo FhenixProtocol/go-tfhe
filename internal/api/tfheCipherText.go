@@ -135,7 +135,7 @@ func (ct *Ciphertext) Cast(toType UintType) (*Ciphertext, error) {
 	return &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
-		UintType:      ct.UintType,
+		UintType:      toType,
 	}, nil
 }
 
@@ -144,7 +144,7 @@ func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext
 		return nil, fmt.Errorf("cannot use selector on uints of different types")
 	}
 
-	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ct.UintType))
+	res, err := cmux(ct.Serialization, ifTrue.Serialization, ifFalse.Serialization, uint8(ifTrue.UintType))
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (ct *Ciphertext) Cmux(ifTrue *Ciphertext, ifFalse *Ciphertext) (*Ciphertext
 	return &Ciphertext{
 		Serialization: res,
 		hash:          Keccak256(res),
-		UintType:      ct.UintType,
+		UintType:      ifTrue.UintType,
 	}, nil
 }
 
