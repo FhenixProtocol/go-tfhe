@@ -294,6 +294,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6999dc1837253364c2ebb0704ba97994bd874e8f195d665c50b7548f6ea92764"
 
 [[package]]
+name = "fern"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9f0c14694cbd524c8720dd69b0e3179344f04ebb5f90f2e4a440c6ea3b2f1ee"
+dependencies = [
+ "log",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -335,6 +344,12 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "indexmap"
@@ -605,17 +620,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_logger"
-version = "2.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48047e77b528151aaf841a10a9025f9459da80ba820e425ff7eb005708a76dc7"
-dependencies = [
- "atty",
- "log",
- "winapi",
-]
-
-[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -701,11 +705,12 @@ dependencies = [
  "cbindgen",
  "ctor",
  "errno",
+ "fern",
  "hex",
+ "humantime",
  "log",
  "once_cell",
  "serde",
- "simple_logger",
  "tempfile",
  "tfhe",
  "thiserror",

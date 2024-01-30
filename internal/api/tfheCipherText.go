@@ -4,13 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
-	"os"
-	"strings"
-
-	"github.com/sirupsen/logrus"
 )
-
-var logger *logrus.Logger
 
 // Ciphertext represents the encrypted data structure.
 type Ciphertext struct {
@@ -121,42 +115,6 @@ func NewRandomCipherText(t UintType) (*Ciphertext, error) {
 		random:        true,
 		hash:          Keccak256(res),
 	}, nil
-}
-
-func logLevelFromString(logLevel string, defaultLevel logrus.Level) logrus.Level {
-	logLevelUpper := strings.ToUpper(logLevel)
-	switch logLevelUpper {
-	case "ERROR":
-		return logrus.ErrorLevel
-	case "WARN":
-		return logrus.WarnLevel
-	case "INFO":
-		return logrus.InfoLevel
-	case "DEBUG":
-		return logrus.DebugLevel
-	case "TRACE":
-		return logrus.TraceLevel
-	default:
-		return defaultLevel
-	}
-}
-
-func getLogLevel(defaultLevel logrus.Level) logrus.Level {
-	LogLevelEnvVarName := "LOG_LEVEL"
-	logLevelEnvVar := os.Getenv(LogLevelEnvVarName)
-	logLevel := logLevelFromString(logLevelEnvVar, defaultLevel)
-
-	if logLevel > defaultLevel {
-		return defaultLevel
-	}
-
-	return logLevel
-}
-
-func InitLogger(logLevel logrus.Level) {
-	logger = logrus.New()
-	logger.SetOutput(os.Stderr)
-	logger.SetLevel(getLogLevel(logLevel))
 }
 
 // IsRandom checks if the ciphertext was randomly generated - this is used for gas simulation

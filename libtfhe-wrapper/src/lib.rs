@@ -17,8 +17,8 @@ pub(crate) mod math;
 pub(crate) mod serialization;
 
 use ctor::ctor;
+
 #[ctor]
 fn init_logger() {
-    let default_log_level = log::Level::Info;
-    simple_logger::init_with_level(logger::get_log_level(default_log_level)).unwrap();
+    logger::init_logger().unwrap();
 }
