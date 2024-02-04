@@ -20,5 +20,8 @@ use ctor::ctor;
 
 #[ctor]
 fn init_logger() {
-    logger::init_logger().unwrap();
+    match logger::init_logger() {
+        Ok(_) => (),
+        Err(e) => eprintln!("Failed to initialize logger: {:?}", e),
+    }
 }
