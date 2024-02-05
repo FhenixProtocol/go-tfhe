@@ -1,4 +1,7 @@
-use tfhe::{CompactFheUint16, CompactFheUint32, CompactFheUint8, FheUint16, FheUint32, FheUint8};
+use tfhe::{
+    CompactFheUint128, CompactFheUint16, CompactFheUint256, CompactFheUint32, CompactFheUint64,
+    CompactFheUint8, FheUint128, FheUint16, FheUint256, FheUint32, FheUint64, FheUint8,
+};
 
 macro_rules! deserialize_fhe_uint {
     ($name:ident, $type:ty, $compact_type:ty) => {
@@ -38,19 +41,6 @@ macro_rules! deserialize_fhe_uint {
 deserialize_fhe_uint!(deserialize_fhe_uint8, FheUint8, CompactFheUint8);
 deserialize_fhe_uint!(deserialize_fhe_uint16, FheUint16, CompactFheUint16);
 deserialize_fhe_uint!(deserialize_fhe_uint32, FheUint32, CompactFheUint32);
-
-// leaving this here because debugging and modifying macros is a bitch
-// so you can just uncomment this code and play with it
-
-// pub(crate) fn deserialize_fhe_uint32(
-//     slice: &[u8],
-//     compact: bool,
-// ) -> Result<FheUint32, Box<bincode::ErrorKind>> {
-//     if compact {
-//         let x: CompactFheUint32 = bincode::deserialize::<CompactFheUint32>(slice)?;
-//         Ok(x.expand())
-//     } else {
-//         let x: FheUint32 = bincode::deserialize::<FheUint32>(slice)?;
-//         Ok(x)
-//     }
-// }
+deserialize_fhe_uint!(deserialize_fhe_uint64, FheUint64, CompactFheUint64);
+deserialize_fhe_uint!(deserialize_fhe_uint128, FheUint128, CompactFheUint128);
+deserialize_fhe_uint!(deserialize_fhe_uint256, FheUint256, CompactFheUint256);

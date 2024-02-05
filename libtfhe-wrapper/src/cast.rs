@@ -1,7 +1,11 @@
 #[macro_use]
 use crate::error::RustError;
 use crate::serialization::*;
-use tfhe::{FheUint16, FheUint32, FheUint8};
+// use tfhe::prelude::*;
+use tfhe::{
+    CompactFheUint128, CompactFheUint16, CompactFheUint256, CompactFheUint32, CompactFheUint64,
+    CompactFheUint8, FheUint128, FheUint16, FheUint256, FheUint32, FheUint64, FheUint8,
+};
 
 macro_rules! define_cast_fn {
     ($func_name:ident, $deserialize_func:ident, $from_type:ty, $to_type:ty) => {
@@ -27,7 +31,7 @@ macro_rules! define_cast_fn {
     };
 }
 
-// Use the macro to define the functions
+// Defining cast from FheUint8
 define_cast_fn!(
     cast_from_uint8_to_uint16,
     deserialize_fhe_uint8,
@@ -41,26 +45,180 @@ define_cast_fn!(
     FheUint32
 );
 define_cast_fn!(
-    cast_from_uint16_to_uint8,
+    cast_from_uint8_to_uint64,
     deserialize_fhe_uint8,
     FheUint8,
+    FheUint64
+);
+define_cast_fn!(
+    cast_from_uint8_to_uint128,
+    deserialize_fhe_uint8,
+    FheUint8,
+    FheUint128
+);
+define_cast_fn!(
+    cast_from_uint8_to_uint256,
+    deserialize_fhe_uint8,
+    FheUint8,
+    FheUint256
+);
+
+// Defining cast from FheUint16
+define_cast_fn!(
+    cast_from_uint16_to_uint8,
+    deserialize_fhe_uint16,
+    FheUint16,
     FheUint8
 );
 define_cast_fn!(
     cast_from_uint16_to_uint32,
-    deserialize_fhe_uint8,
-    FheUint8,
+    deserialize_fhe_uint16,
+    FheUint16,
     FheUint32
 );
 define_cast_fn!(
+    cast_from_uint16_to_uint64,
+    deserialize_fhe_uint16,
+    FheUint16,
+    FheUint64
+);
+define_cast_fn!(
+    cast_from_uint16_to_uint128,
+    deserialize_fhe_uint16,
+    FheUint16,
+    FheUint128
+);
+define_cast_fn!(
+    cast_from_uint16_to_uint256,
+    deserialize_fhe_uint16,
+    FheUint16,
+    FheUint256
+);
+
+// Defining cast from FheUint32
+define_cast_fn!(
     cast_from_uint32_to_uint8,
-    deserialize_fhe_uint8,
-    FheUint8,
+    deserialize_fhe_uint32,
+    FheUint32,
     FheUint8
 );
 define_cast_fn!(
     cast_from_uint32_to_uint16,
-    deserialize_fhe_uint8,
-    FheUint8,
+    deserialize_fhe_uint32,
+    FheUint32,
     FheUint16
+);
+define_cast_fn!(
+    cast_from_uint32_to_uint64,
+    deserialize_fhe_uint32,
+    FheUint32,
+    FheUint64
+);
+define_cast_fn!(
+    cast_from_uint32_to_uint128,
+    deserialize_fhe_uint32,
+    FheUint32,
+    FheUint128
+);
+define_cast_fn!(
+    cast_from_uint32_to_uint256,
+    deserialize_fhe_uint32,
+    FheUint32,
+    FheUint256
+);
+
+// Defining cast from FheUint64
+define_cast_fn!(
+    cast_from_uint64_to_uint8,
+    deserialize_fhe_uint64,
+    FheUint64,
+    FheUint8
+);
+define_cast_fn!(
+    cast_from_uint64_to_uint16,
+    deserialize_fhe_uint64,
+    FheUint64,
+    FheUint16
+);
+define_cast_fn!(
+    cast_from_uint64_to_uint32,
+    deserialize_fhe_uint64,
+    FheUint64,
+    FheUint32
+);
+define_cast_fn!(
+    cast_from_uint64_to_uint128,
+    deserialize_fhe_uint64,
+    FheUint64,
+    FheUint128
+);
+define_cast_fn!(
+    cast_from_uint64_to_uint256,
+    deserialize_fhe_uint64,
+    FheUint64,
+    FheUint256
+);
+
+// Defining cast from FheUint128
+define_cast_fn!(
+    cast_from_uint128_to_uint8,
+    deserialize_fhe_uint128,
+    FheUint128,
+    FheUint8
+);
+define_cast_fn!(
+    cast_from_uint128_to_uint16,
+    deserialize_fhe_uint128,
+    FheUint128,
+    FheUint16
+);
+define_cast_fn!(
+    cast_from_uint128_to_uint32,
+    deserialize_fhe_uint128,
+    FheUint128,
+    FheUint32
+);
+define_cast_fn!(
+    cast_from_uint128_to_uint64,
+    deserialize_fhe_uint128,
+    FheUint128,
+    FheUint64
+);
+define_cast_fn!(
+    cast_from_uint128_to_uint256,
+    deserialize_fhe_uint128,
+    FheUint128,
+    FheUint256
+);
+
+define_cast_fn!(
+    cast_from_uint256_to_uint8,
+    deserialize_fhe_uint256,
+    FheUint256,
+    FheUint8
+);
+
+define_cast_fn!(
+    cast_from_uint256_to_uint16,
+    deserialize_fhe_uint256,
+    FheUint256,
+    FheUint16
+);
+define_cast_fn!(
+    cast_from_uint256_to_uint32,
+    deserialize_fhe_uint256,
+    FheUint256,
+    FheUint32
+);
+define_cast_fn!(
+    cast_from_uint256_to_uint64,
+    deserialize_fhe_uint256,
+    FheUint256,
+    FheUint64
+);
+define_cast_fn!(
+    cast_from_uint256_to_uint128,
+    deserialize_fhe_uint256,
+    FheUint256,
+    FheUint128
 );

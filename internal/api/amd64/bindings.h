@@ -22,6 +22,9 @@ enum FheUintType {
   FheUintType_Uint8 = 0,
   FheUintType_Uint16 = 1,
   FheUintType_Uint32 = 2,
+  FheUintType_Uint64 = 3,
+  FheUintType_Uint128 = 4,
+  FheUintType_Uint256 = 5,
 };
 typedef int32_t FheUintType;
 
@@ -117,6 +120,8 @@ typedef struct ByteSliceView {
   uintptr_t len;
 } ByteSliceView;
 
+typedef uint8_t PlaintextNumber[32];
+
 bool generate_full_keys(const char *path_to_cks, const char *path_to_sks, const char *path_to_pks);
 
 struct UnmanagedVector math_operation(struct ByteSliceView lhs,
@@ -153,15 +158,17 @@ struct UnmanagedVector expand_compressed(struct ByteSliceView ciphertext,
                                          FheUintType int_type,
                                          struct UnmanagedVector *err_msg);
 
-struct UnmanagedVector trivial_encrypt(uint64_t msg,
+struct UnmanagedVector trivial_encrypt(const PlaintextNumber *msg,
                                        FheUintType int_type,
                                        struct UnmanagedVector *err_msg);
 
-struct UnmanagedVector encrypt(uint64_t msg, FheUintType int_type, struct UnmanagedVector *err_msg);
+struct UnmanagedVector encrypt(const PlaintextNumber *msg,
+                               FheUintType int_type,
+                               struct UnmanagedVector *err_msg);
 
-uint64_t decrypt(struct ByteSliceView ciphertext,
-                 FheUintType int_type,
-                 struct UnmanagedVector *err_msg);
+PlaintextNumber decrypt(struct ByteSliceView ciphertext,
+                        FheUintType int_type,
+                        struct UnmanagedVector *err_msg);
 
 struct UnmanagedVector new_unmanaged_vector(bool nil, const uint8_t *ptr, uintptr_t length);
 

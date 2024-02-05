@@ -5,7 +5,10 @@ use serde::Serialize;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Not, Rem, Shl, Shr, Sub};
 use tfhe::prelude::*;
 
-use crate::serialization::{deserialize_fhe_uint16, deserialize_fhe_uint32, deserialize_fhe_uint8};
+use crate::serialization::{
+    deserialize_fhe_uint128, deserialize_fhe_uint16, deserialize_fhe_uint256,
+    deserialize_fhe_uint32, deserialize_fhe_uint64, deserialize_fhe_uint8,
+};
 
 /// Performs the specified operation on two encrypted x-bit unsigned integers.
 ///
@@ -51,6 +54,9 @@ macro_rules! define_op_fn {
 define_op_fn!(op_uint8, deserialize_fhe_uint8, FheUint8);
 define_op_fn!(op_uint16, deserialize_fhe_uint16, FheUint16);
 define_op_fn!(op_uint32, deserialize_fhe_uint32, FheUint32);
+define_op_fn!(op_uint64, deserialize_fhe_uint64, FheUint64);
+define_op_fn!(op_uint128, deserialize_fhe_uint128, FheUint128);
+define_op_fn!(op_uint256, deserialize_fhe_uint256, FheUint256);
 
 /// A generic function that performs the given operation on two encrypted numbers.
 ///
@@ -147,6 +153,9 @@ macro_rules! define_unary_op_fn {
 define_unary_op_fn!(unary_op_uint8, deserialize_fhe_uint8, FheUint8);
 define_unary_op_fn!(unary_op_uint16, deserialize_fhe_uint16, FheUint16);
 define_unary_op_fn!(unary_op_uint32, deserialize_fhe_uint32, FheUint32);
+define_unary_op_fn!(unary_op_uint64, deserialize_fhe_uint64, FheUint64);
+define_unary_op_fn!(unary_op_uint128, deserialize_fhe_uint128, FheUint128);
+define_unary_op_fn!(unary_op_uint256, deserialize_fhe_uint256, FheUint256);
 
 /// A generic function that performs the given operation on a single encrypted number.
 ///

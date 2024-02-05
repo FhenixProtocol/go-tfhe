@@ -8,13 +8,15 @@ use crate::keys::{
     deserialize_client_key_safe, deserialize_public_key_safe, generate_keys_safe,
     load_server_key_safe,
 };
-
 use crate::math::{
-    op_uint16, op_uint32, op_uint8, unary_op_uint16, unary_op_uint32, unary_op_uint8,
+    op_uint128, op_uint16, op_uint256, op_uint32, op_uint64, op_uint8, unary_op_uint128,
+    unary_op_uint16, unary_op_uint256, unary_op_uint32, unary_op_uint64, unary_op_uint8,
 };
 
+use primitive_types::U256;
 use std::panic::catch_unwind;
 
+use tfhe::core_crypto::prelude::CastInto;
 #[cfg(target_arch = "wasm32")]
 use tfhe::{
     generate_keys, shortint::parameters::PARAM_MESSAGE_2_CARRY_2_COMPACT_PK as KEYGEN_PARAMS,
@@ -23,6 +25,8 @@ use tfhe::{
 
 #[cfg(target_arch = "wasm32")]
 use crate::imports::{console_log, wavm_halt_and_set_finished};
+
+pub type PlaintextNumber = [u8; 32];
 
 /// cbindgen:prefix-with-name
 #[repr(i32)]
@@ -96,6 +100,9 @@ pub enum FheUintType {
     Uint8 = 0,
     Uint16 = 1,
     Uint32 = 2,
+    Uint64 = 3,
+    Uint128 = 4,
+    Uint256 = 5,
 }
 
 impl From<u32> for FheUintType {
@@ -104,7 +111,10 @@ impl From<u32> for FheUintType {
             0 => FheUintType::Uint8,
             1 => FheUintType::Uint16,
             2 => FheUintType::Uint32,
-            _ => FheUintType::Uint32,
+            3 => FheUintType::Uint64,
+            4 => FheUintType::Uint128,
+            5 => FheUintType::Uint256,
+            _ => FheUintType::Uint8,
         }
     }
 }
@@ -217,6 +227,9 @@ pub fn math_operation_helper(
         FheUintType::Uint8 => op_uint8(lhs, rhs, operation),
         FheUintType::Uint16 => op_uint16(lhs, rhs, operation),
         FheUintType::Uint32 => op_uint32(lhs, rhs, operation),
+        FheUintType::Uint64 => op_uint64(lhs, rhs, operation),
+        FheUintType::Uint128 => op_uint128(lhs, rhs, operation),
+        FheUintType::Uint256 => op_uint256(lhs, rhs, operation),
     });
 
     match result {
@@ -315,6 +328,9 @@ fn unary_operation_helper(
         FheUintType::Uint8 => unary_op_uint8(lhs_slice, operation),
         FheUintType::Uint16 => unary_op_uint16(lhs_slice, operation),
         FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
+        FheUintType::Uint64 => unary_op_uint64(lhs_slice, operation),
+        FheUintType::Uint128 => unary_op_uint128(lhs_slice, operation),
+        FheUintType::Uint256 => unary_op_uint256(lhs_slice, operation),
     });
 
     let result = match result_may_panic {
@@ -349,26 +365,68 @@ pub unsafe extern "C" fn cast_operation(
         }
     };
 
+    let inner_result = cast_generic(from_type, to_type, val_slice);
+
+    let result = handle_c_error_binary(inner_result, err_msg);
+    UnmanagedVector::new(Some(result))
+}
+
+fn cast_generic(
+    from_type: FheUintType,
+    to_type: FheUintType,
+    val_slice: &[u8],
+) -> Result<Vec<u8>, RustError> {
     let inner_result = match from_type {
         FheUintType::Uint8 => match to_type {
             FheUintType::Uint8 => Ok(val_slice.to_vec()),
             FheUintType::Uint16 => cast_from_uint8_to_uint16(val_slice),
             FheUintType::Uint32 => cast_from_uint8_to_uint32(val_slice),
+            FheUintType::Uint64 => cast_from_uint8_to_uint64(val_slice),
+            FheUintType::Uint128 => cast_from_uint8_to_uint128(val_slice),
+            FheUintType::Uint256 => cast_from_uint8_to_uint256(val_slice),
         },
         FheUintType::Uint16 => match to_type {
             FheUintType::Uint8 => cast_from_uint16_to_uint8(val_slice),
             FheUintType::Uint16 => Ok(val_slice.to_vec()),
             FheUintType::Uint32 => cast_from_uint16_to_uint32(val_slice),
+            FheUintType::Uint64 => cast_from_uint16_to_uint64(val_slice),
+            FheUintType::Uint128 => cast_from_uint16_to_uint128(val_slice),
+            FheUintType::Uint256 => cast_from_uint16_to_uint256(val_slice),
         },
         FheUintType::Uint32 => match to_type {
             FheUintType::Uint8 => cast_from_uint32_to_uint8(val_slice),
             FheUintType::Uint16 => cast_from_uint32_to_uint16(val_slice),
             FheUintType::Uint32 => Ok(val_slice.to_vec()),
+            FheUintType::Uint64 => cast_from_uint32_to_uint64(val_slice),
+            FheUintType::Uint128 => cast_from_uint32_to_uint128(val_slice),
+            FheUintType::Uint256 => cast_from_uint32_to_uint256(val_slice),
+        },
+        FheUintType::Uint64 => match to_type {
+            FheUintType::Uint8 => cast_from_uint64_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint64_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint64_to_uint32(val_slice),
+            FheUintType::Uint64 => Ok(val_slice.to_vec()),
+            FheUintType::Uint128 => cast_from_uint64_to_uint128(val_slice),
+            FheUintType::Uint256 => cast_from_uint64_to_uint256(val_slice),
+        },
+        FheUintType::Uint128 => match to_type {
+            FheUintType::Uint8 => cast_from_uint128_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint128_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint128_to_uint32(val_slice),
+            FheUintType::Uint64 => cast_from_uint128_to_uint64(val_slice),
+            FheUintType::Uint128 => Ok(val_slice.to_vec()),
+            FheUintType::Uint256 => cast_from_uint128_to_uint256(val_slice),
+        },
+        FheUintType::Uint256 => match to_type {
+            FheUintType::Uint8 => cast_from_uint256_to_uint8(val_slice),
+            FheUintType::Uint16 => cast_from_uint256_to_uint16(val_slice),
+            FheUintType::Uint32 => cast_from_uint256_to_uint32(val_slice),
+            FheUintType::Uint64 => cast_from_uint256_to_uint64(val_slice),
+            FheUintType::Uint128 => cast_from_uint256_to_uint128(val_slice),
+            FheUintType::Uint256 => Ok(val_slice.to_vec()),
         },
     };
-
-    let result = handle_c_error_binary(inner_result, err_msg);
-    UnmanagedVector::new(Some(result))
+    inner_result
 }
 
 #[no_mangle]
@@ -430,7 +488,7 @@ fn perform_cmux(
     if_false_slice: &[u8],
 ) -> Result<Vec<u8>, RustError> {
     // Encrypt a 0 value as a base for creating a mask.
-    let mut mask = trivial_encrypt_safe(0, uint_type)?;
+    let mut mask = trivial_encrypt_safe(U256::zero(), uint_type)?;
     // Subtract the control slice from the mask, effectively creating an encryption of (0 - control).
     mask = math_operation_helper(mask.as_slice(), control_slice, Op::Sub, uint_type)?;
 
@@ -547,13 +605,13 @@ pub unsafe extern "C" fn expand_compressed(
 
 #[no_mangle]
 pub unsafe extern "C" fn trivial_encrypt(
-    msg: u64,
+    msg: &PlaintextNumber,
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
     check_and_refresh_server_key_macro!(err_msg);
 
-    let r = trivial_encrypt_safe(msg, int_type);
+    let r = trivial_encrypt_safe(msg.into(), int_type);
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
@@ -561,11 +619,12 @@ pub unsafe extern "C" fn trivial_encrypt(
 
 #[no_mangle]
 pub unsafe extern "C" fn encrypt(
-    msg: u64,
+    msg: &PlaintextNumber,
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
 ) -> UnmanagedVector {
-    let r = encrypt_safe(msg, int_type);
+    let big_number = U256::from(msg.as_slice());
+    let r = encrypt_safe(big_number, int_type);
 
     let result = handle_c_error_binary(r, err_msg);
     UnmanagedVector::new(Some(result))
@@ -576,7 +635,7 @@ pub unsafe extern "C" fn decrypt(
     ciphertext: ByteSliceView,
     int_type: FheUintType,
     err_msg: Option<&mut UnmanagedVector>,
-) -> u64 {
+) -> PlaintextNumber {
     let ciphertext_slice = ciphertext.read();
 
     if ciphertext_slice.is_none() {
@@ -585,7 +644,7 @@ pub unsafe extern "C" fn decrypt(
             RustError::generic_error("ciphertext cannot be empty"),
             err_msg,
         );
-        return 0;
+        return [0u8; 32];
     }
 
     let r = decrypt_safe(ciphertext_slice.unwrap(), int_type);
