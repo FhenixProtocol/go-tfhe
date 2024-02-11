@@ -1,12 +1,31 @@
 use std::env;
+use std::path::{PathBuf};
 use std::time::SystemTime;
 
 pub const LOG_LEVEL_ENV_VAR: &str = "LOG_LEVEL";
 pub const LOG_FILE_ENV_VAR: &str = "LOG_FILE";
 
-pub(crate) fn init_logger() -> Result<(), fern::InitError> {
+#[derive(Debug)]
+pub enum LogError {
+    HomeDirError(homedir::GetHomeError),
+    OpenFileError(std::io::Error),
+    FernError(log::SetLoggerError),
+}
+
+pub(crate) fn init_logger() -> Result<(), LogError> {
     let default_log_level = log::LevelFilter::Info;
-    let default_log_file = "go-tfhe.log";
+
+    let my_home = homedir::get_my_home().map_err(|e| LogError::HomeDirError(e))?;
+
+    let default_log_file = match my_home {
+        Some(mut home) => {
+            home.push("go-tfhe.log");
+            home
+        }
+        None => {
+            PathBuf::from("go-tfhe.log")
+        }
+    };
 
     fern::Dispatch::new()
         .format(|out, message, record| {
@@ -20,10 +39,10 @@ pub(crate) fn init_logger() -> Result<(), fern::InitError> {
         .level(get_log_level(default_log_level))
         .chain(std::io::stderr())
         .chain(
-            fern::log_file(
-                get_logfile(default_log_file)
-            )?)
-        .apply()?;
+            fern::log_file(get_logfile(default_log_file))
+                .map_err(|e| LogError::OpenFileError(e))?
+        )
+        .apply().map_err(|e| LogError::FernError(e))?;
 
     Ok(())
 }
@@ -55,10 +74,13 @@ pub fn get_log_level(default: log::LevelFilter) -> log::LevelFilter {
     }
 }
 
-pub fn get_logfile(default: &str) -> String {
+pub fn get_logfile(default: PathBuf) -> PathBuf {
     // TODO: read from config when it is implemented
-    match env::var(LOG_FILE_ENV_VAR) {
-        Ok(env_file) => env_file,
-        Err(_) => default.to_string(),
-    }
+    let logfile = match env::var(LOG_FILE_ENV_VAR) {
+        Ok(env_file) => PathBuf::from(env_file),
+        Err(_) => default,
+    };
+
+    println!("go-tfhe log file: {:?}", logfile);
+    logfile
 }
