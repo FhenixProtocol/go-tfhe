@@ -13,11 +13,13 @@ use tfhe::{
 use tfhe::prelude::*;
 use tfhe::ClientKey;
 
+use std::panic::catch_unwind;
+
 pub fn expand_compressed_safe(
     ciphertext: &[u8],
     int_type: FheUintType,
 ) -> Result<Vec<u8>, RustError> {
-    match int_type {
+    let result = catch_unwind(|| match int_type {
         FheUintType::Uint8 => {
             let value: FheUint8 = deserialize_fhe_uint8(ciphertext, true).map_err(|e| {
                 RustError::generic_error(format!("failed deserializing compressed u8: {:?}", e))
@@ -45,6 +47,15 @@ pub fn expand_compressed_safe(
                 RustError::generic_error(format!("failed serializing compressed value: {:?}", e))
             })
         }
+    });
+
+    match result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::math_panic(format!(
+            "panic in expand compressed: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     }
 }
 pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
@@ -53,7 +64,7 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
         None => Err(RustError::generic_error("public key not set")), // Return an error or handle this case appropriately.
     }?;
 
-    match int_type {
+    let result = catch_unwind(|| match int_type {
         FheUintType::Uint8 => {
             _encrypt_impl::<_, CompactFheUint8, FheUint8>(msg as u8, true, public_key)
         }
@@ -63,15 +74,33 @@ pub fn encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustErro
         FheUintType::Uint32 => {
             _encrypt_impl::<_, CompactFheUint32, FheUint32>(msg as u32, true, public_key)
         }
+    });
+
+    match result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::math_panic(format!(
+            "panic in encrypt_safe: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     }
 }
 
 pub fn trivial_encrypt_safe(msg: u64, int_type: FheUintType) -> Result<Vec<u8>, RustError> {
     GlobalKeys::refresh_server_key_for_thread();
-    match int_type {
+    let result = catch_unwind(|| match int_type {
         FheUintType::Uint8 => _encrypt_trivial_impl::<_, FheUint8>(msg as u8),
         FheUintType::Uint16 => _encrypt_trivial_impl::<_, FheUint16>(msg as u16),
         FheUintType::Uint32 => _encrypt_trivial_impl::<_, FheUint32>(msg as u32),
+    });
+
+    match result {
+        Ok(Ok(x)) => Ok(x),
+        Ok(Err(e)) => Err(e),
+        Err(e) => Err(RustError::math_panic(format!(
+            "panic in trivial encrypt: {:#?}",
+            e.downcast_ref::<&str>()
+        ))),
     }
 }
 
@@ -81,30 +110,23 @@ pub fn decrypt_safe(ciphertext: &[u8], int_type: FheUintType) -> Result<u64, Rus
         None => Err(RustError::generic_error("client key not set")),
     }?;
 
-    let res = match int_type {
+    catch_unwind(|| match int_type {
         FheUintType::Uint8 => _impl_decrypt_u8(
-            deserialize_fhe_uint8(ciphertext, false).map_err(|err| {
-                log::error!("failed decrypting u8: {:?}", err);
-                RustError::generic_error("Failed decrypting u8")
-            })?,
+            deserialize_fhe_uint8(ciphertext, false).expect("failed deserializing u8"),
             client_key,
         ),
         FheUintType::Uint16 => _impl_decrypt_u16(
-            deserialize_fhe_uint16(ciphertext, false).map_err(|err| {
-                log::error!("failed decrypting u16: {:?}", err);
-                RustError::generic_error("Failed decrypting u16")
-            })?,
+            deserialize_fhe_uint16(ciphertext, false).expect("failed deserializing u16"),
             client_key,
         ),
         FheUintType::Uint32 => _impl_decrypt_u32(
-            deserialize_fhe_uint32(ciphertext, false).map_err(|err| {
-                log::error!("failed decrypting u32: {:?}", err);
-                RustError::generic_error("Failed decrypting u32")
-            })?,
+            deserialize_fhe_uint32(ciphertext, false).expect("failed deserializing u32"),
             client_key,
         ),
-    };
-    Ok(res)
+    }).map_err(|e| {
+        log::error!("Panic occurred during decryption: {:#?}", e);
+        RustError::generic_error("Panic occurred during decryption")
+    })
 }
 
 fn _encrypt_trivial_impl<T, Expanded>(value: T) -> Result<Vec<u8>, RustError>

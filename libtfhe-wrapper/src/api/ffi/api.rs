@@ -317,15 +317,14 @@ fn unary_operation_helper(
         FheUintType::Uint32 => unary_op_uint32(lhs_slice, operation),
     });
 
-    let result = match result_may_panic {
+    match result_may_panic {
         Ok(Ok(x)) => Ok(x),
         Ok(Err(e)) => Err(e),
         Err(e) => Err(RustError::math_panic(format!(
             "panic in math operation: {:#?}",
             e.downcast_ref::<&str>()
         ))),
-    };
-    result
+    }
 }
 
 #[no_mangle]
