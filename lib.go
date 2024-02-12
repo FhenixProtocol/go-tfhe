@@ -34,7 +34,7 @@ func LoadServerKey(serverKeyBytes []byte) (bool, error) {
 // It checks if the keys are initialized before performing decryption
 func Decrypt(ciphertext Ciphertext) (uint64, error) {
 	if len(ciphertext.Serialization) == 0 {
-		return 0, fmt.Errorf("cannot check require without encrypted bytes")
+		return 0, fmt.Errorf("cannot decrypt without encrypted bytes")
 	}
 
 	result, err := oracleStorage.Decrypt(&ciphertext)
