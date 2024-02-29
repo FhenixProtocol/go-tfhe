@@ -3,10 +3,8 @@
 package api
 
 import (
-	"math/big"
-	"strconv"
-
 	"github.com/fhenixprotocol/go-tfhe/internal/api/amd64"
+	"math/big"
 )
 
 func mathOperation(lhs []byte, rhs []byte, uintType uint8, op uint32) ([]byte, error) {
@@ -61,19 +59,13 @@ func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath s
 	return amd64.GenerateFheKeys(clientKeyPath, serverKeyPath, publicKeyPath)
 }
 
-func LibTfheVersion() uint32 {
+func LibTfheVersion() string {
 	result, err := amd64.LibTfheVersion()
-
 	if err != nil {
 		panic(err)
 	}
 
-	asInt, err := strconv.ParseInt(result, 10, 32)
-	if err != nil {
-		panic(err)
-	}
-
-	return uint32(asInt)
+	return result
 }
 
 func InitLogger() {
