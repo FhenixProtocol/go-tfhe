@@ -81,6 +81,7 @@ pub fn get_logfile(default: PathBuf) -> PathBuf {
         Err(_) => default,
     };
 
+    // todo remove
     println!("go-tfhe log file: {:?}", logfile);
     logfile
 }

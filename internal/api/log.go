@@ -1,5 +1,6 @@
 package api
 
+import "C"
 import "github.com/sirupsen/logrus"
 
 type Logger interface {
@@ -15,6 +16,7 @@ var logger Logger = DefaultLogger{logger: logrus.New()}
 
 func SetLogger(loggerToSet Logger) {
 	logger = loggerToSet
+	C.init_logger()
 }
 
 // DefaultLogger is a default logger to allow someone to use the lib without setting the logger it from outside.

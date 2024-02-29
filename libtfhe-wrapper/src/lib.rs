@@ -15,13 +15,3 @@ pub(crate) mod logger;
 #[macro_use]
 pub(crate) mod math;
 pub(crate) mod serialization;
-
-use ctor::ctor;
-
-#[ctor]
-fn init_logger() {
-    match logger::init_logger() {
-        Ok(_) => (),
-        Err(e) => eprintln!("Failed to initialize logger: {:?}", e),
-    }
-}
