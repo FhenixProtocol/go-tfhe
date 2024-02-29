@@ -71,3 +71,7 @@ func GenerateFheKeys(clientKeyPath string, serverKeyPath string, publicKeyPath s
 func LibTfheVersion() uint32 {
 	return wasm.LibTfheVersion()
 }
+
+func InitLogger() uint32 {
+	return wasm.InitLogger()
+}

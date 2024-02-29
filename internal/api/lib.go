@@ -27,17 +27,14 @@ func unaryMathOperation(lhs []byte, uintType uint8, op uint32) ([]byte, error) {
 
 func DeserializeServerKey(serverKeyBytes []byte) (bool, error) {
 	return amd64.DeserializeServerKey(serverKeyBytes)
-
 }
 
 func DeserializeClientKey(clientKeyBytes []byte) (bool, error) {
 	return amd64.DeserializeClientKey(clientKeyBytes)
-
 }
 
 func DeserializePublicKey(publicKeyBytes []byte) (bool, error) {
 	return amd64.DeserializePublicKey(publicKeyBytes)
-
 }
 
 func GetPublicKey() ([]byte, error) {
@@ -77,4 +74,8 @@ func LibTfheVersion() uint32 {
 	}
 
 	return uint32(asInt)
+}
+
+func InitLogger() {
+	amd64.InitLogger()
 }
