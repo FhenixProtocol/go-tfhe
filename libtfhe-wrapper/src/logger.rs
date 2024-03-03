@@ -19,11 +19,11 @@ pub(crate) fn init_logger() -> Result<(), LogError> {
 
     let default_log_file = match my_home {
         Some(mut home) => {
-            home.push("go-tfhe.log");
+            home.push("go-fhe.log");
             home
         }
         None => {
-            PathBuf::from("go-tfhe.log")
+            PathBuf::from("go-fhe.log")
         }
     };
 
@@ -81,6 +81,5 @@ pub fn get_logfile(default: PathBuf) -> PathBuf {
         Err(_) => default,
     };
 
-    println!("go-tfhe log file: {:?}", logfile);
     logfile
 }

@@ -68,7 +68,7 @@ func main() {
 
 func Version() error {
 	libtfheVersion := tfhelib.Version()
-	fmt.Printf("Tfhe-rs version: %d\n", libtfheVersion)
+	fmt.Printf("Tfhe-rs version: %s\n", libtfheVersion)
 	return nil
 }
 

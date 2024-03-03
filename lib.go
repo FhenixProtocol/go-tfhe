@@ -321,6 +321,6 @@ func GenerateRequireKeys(homeDir string, privateKeyPath string, publicKeyPath st
 	return nil
 }
 
-func Version() uint32 {
+func Version() string {
 	return api.LibTfheVersion()
 }

@@ -173,3 +173,5 @@ void destroy_unmanaged_vector(struct UnmanagedVector v);
  * The string is owned by the lib and must not be mutated or destroyed by the caller.
  */
 const char *version(void);
+
+void init_logger(void);

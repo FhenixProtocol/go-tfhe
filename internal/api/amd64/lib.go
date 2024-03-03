@@ -247,3 +247,7 @@ func errorWithMessage(err error, b C.UnmanagedVector) error {
 	}
 	return fmt.Errorf("%s", string(msg))
 }
+
+func InitLogger() {
+	C.init_logger()
+}

@@ -5,10 +5,10 @@ import (
 )
 
 //go:wasmimport env get_version
-func hostGetVersion() uint32 {
-	return 0
+func hostGetVersion() string {
+	return "0"
 }
 
-func LibTfheVersion() uint32 {
+func LibTfheVersion() string {
 	return hostGetVersion()
 }

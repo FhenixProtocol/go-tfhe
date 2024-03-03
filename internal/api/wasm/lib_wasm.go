@@ -139,3 +139,7 @@ func GetPublicKey() ([]byte, error) {
 	// TODO: Implement the logic here
 	return nil, nil
 }
+
+func InitLogger() error {
+	return nil
+}
