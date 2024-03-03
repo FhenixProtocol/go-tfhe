@@ -5,7 +5,6 @@ package amd64
 */
 import "C"
 
-func InitLogger() error {
+func InitLogger() {
 	C.init_logger()
-	return nil
 }
